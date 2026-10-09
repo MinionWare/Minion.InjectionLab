@@ -24,7 +24,5 @@
     <SolidColorBrush x:Key="Brush.CodeBg" Color="{DynamicResource Color.CodeBg}"/>
     <SolidColorBrush x:Key="Brush.CodeText" Color="{DynamicResource Color.CodeText}"/>
     <SolidColorBrush x:Key="Brush.CodeKeyword" Color="{DynamicResource Color.CodeKeyword}"/>
-    <SolidColorBrush x:Key="Brush.CodeHighlightBg" Color="{DynamicResource Color.CodeHighlightBg}"/>
-    <SolidColorBrush x:Key="Brush.CodeHighlightText" Color="{DynamicResource Color.CodeHighlightText}"/>
 
 </ResourceDictionary>

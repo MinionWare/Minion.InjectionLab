@@ -7,14 +7,24 @@ using Minion.InjectionLab.Wpf.ViewModels;
 namespace Minion.InjectionLab.Wpf.Behaviors;
 
 /// <summary>
-/// Draws a highlighter-style background wash behind whichever spans of the editor's text came
-/// verbatim from the form fields — layered on top of AvalonEdit's normal syntax highlighting,
-/// so "this is your input" stays visible regardless of what color the SQL/C#/PowerShell
-/// highlighter assigned the same text (string, keyword, etc).
+/// Draws a dashed outline box around whichever spans of the editor's text came verbatim from
+/// the form fields — layered on top of AvalonEdit's normal syntax highlighting. An outline
+/// (rather than a filled background or a foreground color) never changes the text's own syntax
+/// color, so it reads as "this is your input" without being mistaken for a string/keyword/error.
 /// </summary>
 public sealed class UserInputBackgroundRenderer : IBackgroundRenderer
 {
-    private static readonly Brush HighlightBrush = new SolidColorBrush(Color.FromArgb(0xDF, 0xE8, 0xC5, 0x47));
+    private static readonly Pen OutlinePen = CreatePen();
+
+    private static Pen CreatePen()
+    {
+        var pen = new Pen(new SolidColorBrush(Color.FromRgb(0xE0, 0x5C, 0xC9)), 1.4)
+        {
+            DashStyle = DashStyles.Dot
+        };
+        pen.Freeze();
+        return pen;
+    }
 
     public ObservableCollection<SqlSegment>? Segments { get; set; }
 
@@ -35,7 +45,7 @@ public sealed class UserInputBackgroundRenderer : IBackgroundRenderer
                 builder.AddSegment(textView, new TextSegment { StartOffset = offset, Length = length });
                 var geometry = builder.CreateGeometry();
                 if (geometry != null)
-                    drawingContext.DrawGeometry(HighlightBrush, null, geometry);
+                    drawingContext.DrawGeometry(null, OutlinePen, geometry);
             }
             offset += length;
         }

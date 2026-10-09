@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\SqlHighlighting.xshd" />
+    <EmbeddedResource Include="Resources\CSharpHighlighting.xshd" />
+    <EmbeddedResource Include="Resources\PowerShellHighlighting.xshd" />
   </ItemGroup>
 
   <PropertyGroup>

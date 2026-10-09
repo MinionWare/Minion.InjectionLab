@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="MinionCSharp" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+  <!-- Minimal C# definition for the generated code snippets — just enough for comments,
+       strings, and the handful of keywords those snippets actually use. Not a complete
+       C# grammar. Uses the same palette as SqlHighlighting.xshd so comments/strings/keywords
+       read consistently across every code tab. -->
+
+  <Color name="Comment" foreground="#6A9955" exampleText="// comment"/>
+  <Color name="String" foreground="#CE9178" exampleText="&quot;literal&quot;"/>
+  <Color name="Keyword" foreground="#569CD6" fontWeight="bold" exampleText="var"/>
+  <Color name="Type" foreground="#4EC9B0" exampleText="SqlCommand"/>
+
+  <RuleSet>
+    <Span color="Comment" begin="//"/>
+    <Span color="Comment" multiline="true">
+      <Begin>/\*</Begin>
+      <End>\*/</End>
+    </Span>
+
+    <Span color="String">
+      <Begin>"</Begin>
+      <End>"</End>
+    </Span>
+
+    <Rule color="Type">
+      \b(SqlCommand|SqlConnection|SqlDataReader|SqlParameter|SqlDbType)\b
+    </Rule>
+
+    <Keywords color="Keyword">
+      <Word>var</Word>
+      <Word>const</Word>
+      <Word>using</Word>
+      <Word>new</Word>
+      <Word>return</Word>
+      <Word>string</Word>
+      <Word>int</Word>
+      <Word>bool</Word>
+      <Word>null</Word>
+      <Word>true</Word>
+      <Word>false</Word>
+      <Word>if</Word>
+      <Word>else</Word>
+      <Word>public</Word>
+      <Word>private</Word>
+      <Word>static</Word>
+      <Word>void</Word>
+      <Word>class</Word>
+    </Keywords>
+  </RuleSet>
+</SyntaxDefinition>

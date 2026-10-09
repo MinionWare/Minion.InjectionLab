@@ -1,5 +1,4 @@
 using System.Windows;
-using ICSharpCode.AvalonEdit.Highlighting;
 using Minion.InjectionLab.Wpf.Services;
 using Minion.InjectionLab.Wpf.ViewModels;
 
@@ -12,8 +11,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = new MainViewModel();
 
-        SqlEditor.SyntaxHighlighting = SqlHighlightingLoader.Sql;
-        CSharpEditor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("C#");
-        PowerShellEditor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("PowerShell");
+        SqlEditor.SyntaxHighlighting = CodeHighlightingLoader.Sql;
+        CSharpEditor.SyntaxHighlighting = CodeHighlightingLoader.CSharp;
+        PowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
     }
 }

@@ -222,9 +222,9 @@
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate>
                                                                             <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" Margin="0,0,16,0">
-                                                                                <Run Text="{Binding Key}" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                                                <Run Text="{Binding Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
                                                                                 <Run Text="="/>
-                                                                                <Run Text="{Binding Value}" Foreground="{DynamicResource Brush.Accent}"/>
+                                                                                <Run Text="{Binding Value, Mode=OneTime}" Foreground="{DynamicResource Brush.Accent}"/>
                                                                             </TextBlock>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
@@ -277,9 +277,9 @@
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate>
                                                                             <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" Margin="0,0,16,0">
-                                                                                <Run Text="{Binding Key}" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                                                <Run Text="{Binding Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
                                                                                 <Run Text="="/>
-                                                                                <Run Text="{Binding Value}" Foreground="{DynamicResource Brush.Critical}"/>
+                                                                                <Run Text="{Binding Value, Mode=OneTime}" Foreground="{DynamicResource Brush.Critical}"/>
                                                                             </TextBlock>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
@@ -353,8 +353,8 @@
                                     </TabItem>
                                 </TabControl>
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                    <Border Background="{DynamicResource Brush.CodeHighlightBg}" Width="14" Height="14" CornerRadius="3" Margin="0,0,6,0"/>
-                                    <TextBlock Text="= exactly what came from the form above — live, as you type." Style="{StaticResource Text.Muted}"/>
+                                    <Border Width="14" Height="14" CornerRadius="3" Margin="0,0,6,0" BorderThickness="1.4" BorderBrush="#E05CC9" Background="Transparent"/>
+                                    <TextBlock Text="= dotted outline around exactly what came from the form above — live, as you type." Style="{StaticResource Text.Muted}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>

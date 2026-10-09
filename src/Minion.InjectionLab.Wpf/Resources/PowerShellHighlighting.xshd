@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="MinionPowerShell" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+  <!-- Minimal PowerShell definition for the generated code snippets — comments, strings,
+       $variables, and the cmdlets/keywords those snippets actually use. Not a complete
+       PowerShell grammar. Same palette as the SQL/C# definitions for consistency. -->
+
+  <Color name="Comment" foreground="#6A9955" exampleText="# comment"/>
+  <Color name="String" foreground="#CE9178" exampleText="'literal'"/>
+  <Color name="Keyword" foreground="#569CD6" fontWeight="bold" exampleText="New-Object"/>
+  <Color name="Variable" foreground="#9CDCFE" exampleText="$username"/>
+
+  <RuleSet>
+    <Span color="Comment" begin="#"/>
+    <Span color="Comment" multiline="true">
+      <Begin>&lt;#</Begin>
+      <End>#&gt;</End>
+    </Span>
+
+    <Span color="String">
+      <Begin>'</Begin>
+      <End>'</End>
+    </Span>
+    <Span color="String">
+      <Begin>"</Begin>
+      <End>"</End>
+    </Span>
+
+    <Rule color="Variable">
+      \$[\w]+
+    </Rule>
+
+    <Keywords color="Keyword">
+      <Word>New-Object</Word>
+      <Word>Invoke-Sqlcmd</Word>
+      <Word>if</Word>
+      <Word>else</Word>
+      <Word>foreach</Word>
+      <Word>return</Word>
+      <Word>function</Word>
+      <Word>param</Word>
+    </Keywords>
+  </RuleSet>
+</SyntaxDefinition>
