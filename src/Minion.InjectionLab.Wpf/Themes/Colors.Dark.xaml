@@ -25,7 +25,11 @@
     <!-- Code highlighting (generated SQL view) -->
     <Color x:Key="Color.CodeBg">#10131A</Color>
     <Color x:Key="Color.CodeText">#D4D8E0</Color>
-    <Color x:Key="Color.CodeInjected">#FF8A80</Color>
     <Color x:Key="Color.CodeKeyword">#5AA7FF</Color>
+
+    <!-- Highlighter marker for "this text came from the form fields" — a background wash, not a
+         foreground color, so it never gets confused with string-literal red or error red. -->
+    <Color x:Key="Color.CodeHighlightBg">#DFE8C547</Color>
+    <Color x:Key="Color.CodeHighlightText">#1B1F27</Color>
 
 </ResourceDictionary>

@@ -19,6 +19,33 @@ public sealed class AttackScenario
     /// <summary>Builds the parameterized/defended equivalent (SQL text + how params bind).</summary>
     public required Func<IReadOnlyDictionary<string, string>, string> BuildFixedSql { get; init; }
 
+    /// <summary>The C# (ADO.NET) that would produce the vulnerable SQL above.</summary>
+    public Func<IReadOnlyDictionary<string, string>, string>? BuildVulnerableCSharp { get; init; }
+
+    /// <summary>The C# (ADO.NET) fix — parameters, not concatenation.</summary>
+    public Func<IReadOnlyDictionary<string, string>, string>? BuildFixedCSharp { get; init; }
+
+    /// <summary>The PowerShell (e.g. Invoke-Sqlcmd / SqlClient from PS) that would produce the vulnerable SQL.</summary>
+    public Func<IReadOnlyDictionary<string, string>, string>? BuildVulnerablePowerShell { get; init; }
+
+    /// <summary>The PowerShell fix — parameters, not string building.</summary>
+    public Func<IReadOnlyDictionary<string, string>, string>? BuildFixedPowerShell { get; init; }
+
+    /// <summary>Label for the "live app" mock preview (e.g. "Customer Login", "Product Search").</summary>
+    public string MockAppLabel { get; init; } = "Demo App";
+
+    /// <summary>
+    /// What a normal, non-malicious user would type here — used to show the "proper call"
+    /// result side-by-side with whatever the visitor actually typed, so the contrast is visible.
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? BaselineValues { get; init; }
+
+    /// <summary>The branches shown in the live "decision path" diagram (null hides it for this scenario).</summary>
+    public IReadOnlyList<DecisionPathDef>? DecisionPaths { get; init; }
+
+    /// <summary>Given the current (unsubmitted) field values, returns the Key of the active DecisionPathDef.</summary>
+    public Func<IReadOnlyDictionary<string, string>, string>? ClassifyInput { get; init; }
+
     /// <summary>Rule-based narration of what the vulnerable version would do with this input.</summary>
     public required Func<IReadOnlyDictionary<string, string>, SimulationResult> SimulateVulnerable { get; init; }
 

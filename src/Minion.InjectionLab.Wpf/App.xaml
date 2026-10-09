@@ -15,6 +15,11 @@
 
             <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter"/>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <conv:EnumEqualsConverter x:Key="EnumEqualsConverter"/>
+            <conv:NotEmptyToVisibilityConverter x:Key="NotEmptyToVisibilityConverter"/>
+            <conv:SeverityToIconConverter x:Key="SeverityToIconConverter"/>
+            <conv:PathKindToBrushConverter x:Key="PathKindToBrushConverter"/>
+            <conv:PathActiveConverter x:Key="PathActiveConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

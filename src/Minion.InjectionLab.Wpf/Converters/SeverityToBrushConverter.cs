@@ -12,6 +12,7 @@ public sealed class SeverityToBrushConverter : IValueConverter
     {
         var key = value switch
         {
+            Severity.Success => "Brush.Accent",
             Severity.Blocked => "Brush.Blocked",
             Severity.Warning => "Brush.Warning",
             Severity.Critical => "Brush.Critical",

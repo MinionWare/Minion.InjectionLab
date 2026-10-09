@@ -10,7 +10,7 @@ namespace Minion.InjectionLab.Wpf.ViewModels;
 
 /// <summary>
 /// Wraps one AttackScenario with mutable field values, the fix on/off state, and the
-/// computed SQL + simulation output. Everything recomputes live as the user types.
+/// computed SQL/C#/PowerShell + simulation output. Everything recomputes live as the user types.
 /// </summary>
 public partial class AttackViewModel : ObservableObject
 {
@@ -28,10 +28,56 @@ public partial class AttackViewModel : ObservableObject
     private ObservableCollection<SqlSegment> sqlSegments = new();
 
     [ObservableProperty]
+    private string generatedCSharp = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<SqlSegment> cSharpSegments = new();
+
+    [ObservableProperty]
+    private string generatedPowerShell = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<SqlSegment> powerShellSegments = new();
+
+    public bool HasCodeSamples => Scenario.BuildVulnerableCSharp != null || Scenario.BuildVulnerablePowerShell != null;
+
+    public bool HasDecisionPaths => Scenario.DecisionPaths is { Count: > 0 };
+
+    /// <summary>Live, pre-submit: which DecisionPathDef.Key the current (unsubmitted) input would take.</summary>
+    [ObservableProperty]
+    private string? activePathKey;
+
+    /// <summary>What happens with YOUR input — only populated once you hit Submit.</summary>
+    [ObservableProperty]
     private SimulationResult? result;
+
+    /// <summary>What happens with a normal, non-malicious user's input — the "proper call" comparison.</summary>
+    [ObservableProperty]
+    private SimulationResult? normalResult;
+
+    public bool HasBaseline => Scenario.BaselineValues is { Count: > 0 };
+
+    /// <summary>Toggled by the "View results" button under the YOU card.</summary>
+    [ObservableProperty]
+    private bool showResultRows;
+
+    /// <summary>Toggled by the "View results" button under the NORMAL USER card.</summary>
+    [ObservableProperty]
+    private bool showNormalResultRows;
+
+    /// <summary>False until Submit is clicked (or re-clicked after the input/fix changes) — drives the "fill this in and hit Submit" placeholder.</summary>
+    [ObservableProperty]
+    private bool hasSubmitted;
+
+    /// <summary>Bumped on every Submit so the view can trigger a "flash"/shake animation off a real change notification.</summary>
+    [ObservableProperty]
+    private int resultVersion;
 
     [ObservableProperty]
     private bool isChallengeMode;
+
+    [ObservableProperty]
+    private DifficultyLevel difficulty = DifficultyLevel.Beginner;
 
     [ObservableProperty]
     private int revealedHintCount;
@@ -43,25 +89,54 @@ public partial class AttackViewModel : ObservableObject
     private ObservableCollection<string> revealedHints = new();
 
     public bool HasHints => Scenario.Hints is { Count: > 0 };
-    public bool HasMoreHints => Scenario.Hints is { } h && RevealedHintCount < h.Count;
+
+    public int HintBudget => Scenario.Hints is not { Count: > 0 } hints ? 0 : Difficulty switch
+    {
+        DifficultyLevel.Beginner => hints.Count,
+        DifficultyLevel.Intermediate => Math.Max(1, (hints.Count + 1) / 2),
+        DifficultyLevel.Expert => 1,
+        _ => hints.Count
+    };
+
+    public bool HasMoreHints => RevealedHintCount < HintBudget;
+    public bool CanRevealAnswer => Difficulty != DifficultyLevel.Expert;
 
     public AttackViewModel(AttackScenario scenario)
     {
         Scenario = scenario;
         Fields = new ObservableCollection<FieldValueViewModel>(
-            scenario.Fields.Select(f => new FieldValueViewModel(f)));
+            scenario.Fields.Select(f => new FieldValueViewModel(f,
+                scenario.BaselineValues != null && scenario.BaselineValues.TryGetValue(f.Key, out var baseline) ? baseline : null)));
 
         foreach (var f in Fields)
-            f.PropertyChanged += (_, __) => Recompute();
+            f.PropertyChanged += (_, __) => OnFieldEdited();
 
-        Recompute();
+        RecomputeCode();
     }
 
-    partial void OnIsFixAppliedChanged(bool value) => Recompute();
+    private void OnFieldEdited()
+    {
+        RecomputeCode();
+        HasSubmitted = false; // input changed since the last reveal — stale until they submit again
+    }
+
+    partial void OnIsFixAppliedChanged(bool value)
+    {
+        RecomputeCode();
+        HasSubmitted = false; // the fix changed — make them re-submit to see the new outcome
+    }
 
     partial void OnIsChallengeModeChanged(bool value)
     {
         if (value) ResetChallenge();
+    }
+
+    partial void OnDifficultyChanged(DifficultyLevel value)
+    {
+        OnPropertyChanged(nameof(HintBudget));
+        OnPropertyChanged(nameof(HasMoreHints));
+        OnPropertyChanged(nameof(CanRevealAnswer));
+        ResetChallenge();
     }
 
     partial void OnRevealedHintCountChanged(int value)
@@ -72,14 +147,24 @@ public partial class AttackViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleResultRows() => ShowResultRows = !ShowResultRows;
+
+    [RelayCommand]
+    private void ToggleNormalResultRows() => ShowNormalResultRows = !ShowNormalResultRows;
+
+    [RelayCommand]
     private void RevealNextHint()
     {
-        if (Scenario.Hints is { } hints && RevealedHintCount < hints.Count)
+        if (RevealedHintCount < HintBudget)
             RevealedHintCount++;
     }
 
     [RelayCommand]
-    private void RevealAnswer() => IsAnswerRevealed = true;
+    private void RevealAnswer()
+    {
+        if (CanRevealAnswer)
+            IsAnswerRevealed = true;
+    }
 
     [RelayCommand]
     private void ResetChallenge()
@@ -88,43 +173,91 @@ public partial class AttackViewModel : ObservableObject
         IsAnswerRevealed = false;
         foreach (var f in Fields)
             f.Value = string.Empty;
+        HasSubmitted = false;
+        ShowResultRows = false;
+        ShowNormalResultRows = false;
     }
 
-    private void Recompute()
+    /// <summary>Puts the scenario back exactly how it looked when you first opened it — fix off, defaults restored.</summary>
+    [RelayCommand]
+    private void ResetScenario()
+    {
+        IsFixApplied = false;
+        RevealedHintCount = 0;
+        IsAnswerRevealed = false;
+        HasSubmitted = false;
+        ShowResultRows = false;
+        ShowNormalResultRows = false;
+        foreach (var f in Fields)
+            f.Value = f.Field.DefaultValue;
+        RecomputeCode();
+    }
+
+    /// <summary>The "moment" — runs both the baseline (normal user) and your actual input through the
+    /// simulator and reveals both outcomes side by side, with the view animating the reveal.</summary>
+    [RelayCommand]
+    private void Submit()
     {
         var values = Fields.ToDictionary(f => f.Field.Key, f => f.Value ?? string.Empty);
+        ShowResultRows = false;
+        ShowNormalResultRows = false;
+
+        Result = IsFixApplied ? Scenario.SimulateFixed(values) : Scenario.SimulateVulnerable(values);
+
+        if (Scenario.BaselineValues is { Count: > 0 } baseline)
+        {
+            NormalResult = IsFixApplied
+                ? Scenario.SimulateFixed(baseline)
+                : Scenario.SimulateVulnerable(baseline);
+        }
+
+        HasSubmitted = true;
+        ResultVersion++;
+    }
+
+    private void RecomputeCode()
+    {
+        var values = Fields.ToDictionary(f => f.Field.Key, f => f.Value ?? string.Empty);
+        var rawValues = values.Values.Where(v => !string.IsNullOrEmpty(v));
 
         GeneratedSql = IsFixApplied
             ? Scenario.BuildFixedSql(values)
             : Scenario.BuildVulnerableSql(values);
+        SqlSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedSql, rawValues));
 
-        Result = IsFixApplied
-            ? Scenario.SimulateFixed(values)
-            : Scenario.SimulateVulnerable(values);
+        var csharpBuilder = IsFixApplied ? Scenario.BuildFixedCSharp : Scenario.BuildVulnerableCSharp;
+        GeneratedCSharp = csharpBuilder?.Invoke(values) ?? string.Empty;
+        CSharpSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedCSharp, rawValues));
 
-        SqlSegments = new ObservableCollection<SqlSegment>(
-            BuildSegments(GeneratedSql, values.Values.Where(v => !string.IsNullOrEmpty(v))));
+        var psBuilder = IsFixApplied ? Scenario.BuildFixedPowerShell : Scenario.BuildVulnerablePowerShell;
+        GeneratedPowerShell = psBuilder?.Invoke(values) ?? string.Empty;
+        PowerShellSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedPowerShell, rawValues));
+
+        // Classification reflects the nature of the typed input itself, not whether the fix is on —
+        // so it's computed here too but independent of IsFixApplied.
+        ActivePathKey = Scenario.ClassifyInput?.Invoke(values);
     }
 
     /// <summary>
-    /// Naive but effective: walks the generated SQL left to right and marks any span that
+    /// Naive but effective: walks the generated text left to right and marks any span that
     /// matches one of the raw field values as user input, so the view can color it distinctly
-    /// from the SQL the app itself wrote.
+    /// from the code the app itself wrote — works for SQL, C#, and PowerShell alike.
     /// </summary>
-    private static List<SqlSegment> BuildSegments(string sql, IEnumerable<string> rawValues)
+    private static List<SqlSegment> BuildSegments(string text, IEnumerable<string> rawValues)
     {
         var needles = rawValues.Where(v => v.Length > 0).Distinct().OrderByDescending(v => v.Length).ToList();
         var segments = new List<SqlSegment>();
+        if (text.Length == 0) return segments;
         int i = 0;
 
-        while (i < sql.Length)
+        while (i < text.Length)
         {
             int bestIndex = -1;
             string? bestNeedle = null;
 
             foreach (var needle in needles)
             {
-                int idx = sql.IndexOf(needle, i, StringComparison.Ordinal);
+                int idx = text.IndexOf(needle, i, StringComparison.Ordinal);
                 if (idx >= 0 && (bestIndex == -1 || idx < bestIndex))
                 {
                     bestIndex = idx;
@@ -134,12 +267,12 @@ public partial class AttackViewModel : ObservableObject
 
             if (bestIndex == -1 || bestNeedle == null)
             {
-                segments.Add(new SqlSegment(sql[i..], false));
+                segments.Add(new SqlSegment(text[i..], false));
                 break;
             }
 
             if (bestIndex > i)
-                segments.Add(new SqlSegment(sql[i..bestIndex], false));
+                segments.Add(new SqlSegment(text[i..bestIndex], false));
 
             segments.Add(new SqlSegment(bestNeedle, true));
             i = bestIndex + bestNeedle.Length;
