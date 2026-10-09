@@ -12,8 +12,18 @@ public static class AttackCatalog
     public static IReadOnlyList<AttackScenario> All { get; } = new List<AttackScenario>
     {
         TautologyLoginScenario.Create(),
-        // Next up: UnionSelectScenario, StackedQueriesScenario, BlindBooleanScenario,
-        // TimeBasedBlindScenario, DynamicSqlStoredProcScenario, IdentifierInjectionScenario,
-        // SecondOrderScenario, StoredPayloadXssScenario, SqlAgentJobStepScenario, ...
+        UnionSelectScenario.Create(),
+        StackedQueriesScenario.Create(),
+        BooleanBlindScenario.Create(),
+        TimeBasedBlindScenario.Create(),
+        NumericInjectionScenario.Create(),
+        OrderByIdentifierScenario.Create(),
+        DynamicSqlStoredProcScenario.Create(),
+        SecondOrderScenario.Create(),
+        LikeWildcardScenario.Create(),
+        // Next up: comment truncation/error-based (classic/in-band), out-of-band (xp_dirtree/
+        // OPENROWSET), hex/char encoding + Unicode smuggling (delivery/obfuscation), the stored
+        // payload -> rendered-page scenario, post-injection impact (xp_cmdshell/linked-server/
+        // privilege escalation), SQL Agent job step -> admin, non-SQL injection (v1.1).
     };
 }

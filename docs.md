@@ -91,7 +91,25 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
-## Features built so far (all on the one scenario, Tautology/Login Bypass)
+## Scenarios built so far (9)
+
+Classic/in-band: Tautology/Login Bypass, UNION-Based Injection, Stacked Queries,
+Numeric Injection (no quotes needed), LIKE Wildcard Abuse.
+
+Blind/inferential: Boolean-Blind Injection, Time-Based Blind Injection.
+
+Where parameters don't help: Identifier Injection (ORDER BY), Dynamic SQL
+Inside a Stored Procedure.
+
+Delivery/obfuscation: Second-Order Injection.
+
+The left nav groups scenarios by `AttackScenario.Category` via
+`CollectionViewSource.GetDefaultView` + `PropertyGroupDescription` in
+`MainWindow.xaml.cs` (not pure XAML — the default view trick lets the existing
+`{Binding Attacks}` keep working unchanged). `Converters/CategoryDisplayConverter.cs`
+turns the enum into a friendly header ("Where Parameters Don't Help", etc).
+
+## Features built so far (all scenarios)
 
 - Fix on/off toggle, with SQL/C#/PowerShell all updating live as you type.
 - The live "decision path" diagram (sidebar): three branches — Correct
@@ -131,27 +149,26 @@ file for the market scan that confirmed the gap.
    decision-path diagram, submit/result panels, and challenge panel are all
    generic over `AttackScenario`.
 
-## Planned attack catalog (status: only Tautology/Login Bypass is built)
+## Planned attack catalog (remaining — 9 of ~30+ built so far)
 
-Classic/in-band: comment truncation, UNION, stacked queries, numeric
-injection, LIKE wildcard abuse, INSERT/UPDATE/DELETE injection, TOP/OFFSET
-and HAVING/GROUP BY injection.
+Classic/in-band (built: Tautology, UNION, stacked queries, numeric,
+LIKE wildcard): comment truncation, error-based, INSERT/UPDATE/DELETE
+injection, TOP/OFFSET and HAVING/GROUP BY injection.
 
-Blind/inferential: boolean blind, time-based blind (`WAITFOR DELAY`),
-error-based.
+Blind/inferential (built: boolean, time-based): error-based blind variants.
 
 Out-of-band: DNS/HTTP exfil via `xp_dirtree` / `OPENROWSET`.
 
-Delivery/obfuscation: second-order, hex/char encoding, Unicode/homoglyph
-smuggling, comment/whitespace obfuscation, truncation attacks, and the
-"stored payload renders as code on a web page" scenario (the hex-in-the-DB
+Delivery/obfuscation (built: second-order): hex/char encoding, Unicode/
+homoglyph smuggling, comment/whitespace obfuscation, truncation attacks, and
+the "stored payload renders as code on a web page" scenario (the hex-in-the-DB
 story — needs a small mock "rendered page" panel to land visually; the
 `LeakedRows` grid machinery already built for "View results" can likely
 double as the "what got written to the page" preview).
 
-Where parameters don't help: identifier injection (table/column/ORDER BY),
-dynamic SQL in stored procs (`EXEC(@sql)` vs `sp_executesql`), `QUOTENAME`'s
-128-char limit, ownership chaining/`EXECUTE AS`.
+Where parameters don't help (built: ORDER BY identifier injection, dynamic
+SQL in a stored proc): `QUOTENAME`'s 128-char limit, ownership chaining/
+`EXECUTE AS`.
 
 Post-injection impact: `xp_cmdshell`, linked-server pivoting, privilege
 escalation to sysadmin — shown as narration/mechanics only, not a working
@@ -201,9 +218,6 @@ lost.
 - "Secure the stored procedure" challenge mode (separate from per-attack
   try-it-yourself — this is the bigger "harden this whole proc" exercise).
 - Mock rendered-page panel for the stored-payload-as-web-content scenario.
-- Category grouping in the left nav (currently flat; fine while there's
-  only one scenario, needs `CollectionViewSource` grouping once there are
-  more).
 - Per-theme AvalonEdit syntax colors (currently fixed/dark-tuned regardless
   of app theme — see Architecture note above).
 - Difficulty levels that change puzzle *content*, not just hint budget.
