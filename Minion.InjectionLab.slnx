@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Minion.InjectionLab.Core/Minion.InjectionLab.Core.csproj" />
+    <Project Path="src/Minion.InjectionLab.Wpf/Minion.InjectionLab.Wpf.csproj" />
+  </Folder>
+</Solution>
