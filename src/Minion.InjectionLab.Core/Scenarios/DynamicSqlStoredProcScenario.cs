@@ -194,6 +194,16 @@ public static class DynamicSqlStoredProcScenario
             "The fact that this runs inside a stored procedure doesn't change the mechanics at all.",
             "This is still a LIKE '%...%' query under the hood — close the string the same way you would anywhere else."
         },
-        ChallengeAnswer = "Acme%' UNION SELECT UserName, PasswordHash, NULL, NULL FROM Users--"
+        ChallengeAnswer = "Acme%' UNION SELECT UserName, PasswordHash, NULL, NULL FROM Users--",
+
+        TerminologyNote = "\"Dynamic SQL\" is the general T-SQL term for a statement assembled and compiled at " +
+                           "runtime (via EXEC or sp_executesql) rather than written statically into the " +
+                           "procedure. Being inside a stored procedure doesn't make dynamic SQL safe by itself — " +
+                           "the proc can still build the unsafe string the exact same way application code would.",
+        References = new[]
+        {
+            new ExternalReference { Label = "Microsoft Learn — sp_executesql (Transact-SQL)", Url = "https://learn.microsoft.com/sql/relational-databases/system-stored-procedures/sp-executesql-transact-sql" },
+            new ExternalReference { Label = "Microsoft Learn — SQL Injection (official security guidance, covers stored procedures)", Url = "https://learn.microsoft.com/sql/relational-databases/security/sql-injection" }
+        }
     };
 }

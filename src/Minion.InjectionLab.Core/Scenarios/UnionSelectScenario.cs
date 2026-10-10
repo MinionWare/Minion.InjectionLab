@@ -246,6 +246,15 @@ public static class UnionSelectScenario
             "Once you know the column count, point those columns at a table other than Products.",
             "dbo.Users has UserId, UserName, and PasswordHash — three columns, same as this query."
         },
-        ChallengeAnswer = "' UNION SELECT UserId, UserName, PasswordHash FROM Users --"
+        ChallengeAnswer = "' UNION SELECT UserId, UserName, PasswordHash FROM Users --",
+
+        TerminologyNote = "Named directly after the SQL UNION operator it abuses — UNION's actual job is " +
+                           "combining the results of two unrelated SELECT statements into one result set. The " +
+                           "attack just supplies the second SELECT itself.",
+        References = new[]
+        {
+            new ExternalReference { Label = "PortSwigger Web Security Academy — SQL injection UNION attacks", Url = "https://portswigger.net/web-security/sql-injection/union-attacks" },
+            new ExternalReference { Label = "OWASP — SQL Injection Prevention Cheat Sheet", Url = "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet" }
+        }
     };
 }

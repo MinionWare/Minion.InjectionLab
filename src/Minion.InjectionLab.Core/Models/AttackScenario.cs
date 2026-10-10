@@ -70,6 +70,14 @@ public sealed class AttackScenario
     public required string WhyTheFixWorks { get; init; }    // mechanics of the defense
     public required IReadOnlyList<string> SamplePayloads { get; init; }
 
+    /// <summary>Where this attack's name comes from — the term itself, not its mechanics (that's
+    /// HowItWorks). Every scenario has one, same as every scenario has at least one reference.</summary>
+    public required string TerminologyNote { get; init; }
+
+    /// <summary>Independent, external sources backing this scenario's terminology and claims —
+    /// OWASP, PortSwigger, vendor docs, or the original academic literature, never just this app.</summary>
+    public required IReadOnlyList<ExternalReference> References { get; init; }
+
     // ---- Try-it-yourself mode ----
     public string? ChallengeGoal { get; init; }             // "Make the login succeed without a valid password"
     public IReadOnlyList<string>? Hints { get; init; }       // progressively revealing

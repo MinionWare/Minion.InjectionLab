@@ -185,6 +185,16 @@ public static class StackedQueriesScenario
             "T-SQL batches can hold more than one statement — what character separates them?",
             "Whatever you put after that character runs as its own independent statement, not part of the WHERE clause."
         },
-        ChallengeAnswer = "1007; DROP TABLE Orders--"
+        ChallengeAnswer = "1007; DROP TABLE Orders--",
+
+        TerminologyNote = "\"Stacked\" describes statements piled up one after another in a single batch, " +
+                           "separated by semicolons — the same idea some literature calls \"batched\" or " +
+                           "\"piggy-backed\" queries, since the extra statement rides along on the back of the " +
+                           "original request.",
+        References = new[]
+        {
+            new ExternalReference { Label = "PortSwigger — SQL injection cheat sheet (see \"Batched (or stacked) queries\")", Url = "https://portswigger.net/web-security/sql-injection/cheat-sheet" },
+            new ExternalReference { Label = "Halfond, Viegas & Orso — \"A Classification of SQL Injection Attacks and Countermeasures\" (classifies this as \"piggy-backed queries\")", Url = "https://sites.cc.gatech.edu/home/orso/papers/halfond.viegas.orso.ISSSE06.pdf" }
+        }
     };
 }

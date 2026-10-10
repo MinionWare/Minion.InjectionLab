@@ -167,6 +167,16 @@ public static class NumericInjectionScenario
             "This value is never wrapped in quotes to begin with — so there's nothing to \"break out\" of.",
             "You don't need a quote to add a condition that's always true."
         },
-        ChallengeAnswer = "42 OR 1=1"
+        ChallengeAnswer = "42 OR 1=1",
+
+        TerminologyNote = "Named for where the injection lands: a numeric (unquoted) column, not a quoted " +
+                           "string. There's no quote mark to escape and no quote-stripping filter to get past — " +
+                           "the value is concatenated bare, so the attack is often even simpler than a " +
+                           "string-context one.",
+        References = new[]
+        {
+            new ExternalReference { Label = "PortSwigger Web Security Academy — SQL injection (see the unquoted/numeric context example)", Url = "https://portswigger.net/web-security/sql-injection" },
+            new ExternalReference { Label = "OWASP — SQL Injection Prevention Cheat Sheet", Url = "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet" }
+        }
     };
 }

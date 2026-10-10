@@ -185,6 +185,16 @@ public static class BooleanBlindScenario
             "You don't need to see data to prove the input is being evaluated as SQL — just flip the answer.",
             "Add a condition that's always false, the same way you'd add one that's always true."
         },
-        ChallengeAnswer = "1007 AND 1=2--"
+        ChallengeAnswer = "1007 AND 1=2--",
+
+        TerminologyNote = "\"Blind\" because the response never shows data or a database error — the only " +
+                           "observable signal is which of two outcomes you get. \"Boolean\" specifies which " +
+                           "signal: a true/false (yes/no) difference in the page itself, as opposed to the " +
+                           "time-based variant's measurable delay.",
+        References = new[]
+        {
+            new ExternalReference { Label = "OWASP — Blind SQL Injection", Url = "https://owasp.org/www-community/attacks/Blind_SQL_Injection" },
+            new ExternalReference { Label = "PortSwigger Web Security Academy — Blind SQL injection", Url = "https://portswigger.net/web-security/sql-injection/blind" }
+        }
     };
 }

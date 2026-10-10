@@ -109,6 +109,28 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Terminology & further reading (per scenario)
+
+Every `AttackScenario` now carries two more required fields, same consistency
+rule as everything else — `required` on the model forces every scenario file
+to fill them in, there's no way to add an 11th scenario and forget:
+
+- `TerminologyNote` (string) — where the attack's *name* comes from (e.g. why
+  "tautology", why "second-order"), as distinct from `HowItWorks` (the
+  mechanics).
+- `References` (`IReadOnlyList<ExternalReference>`) — independent, external
+  sources (OWASP, PortSwigger, Microsoft Learn, or the original Halfond/
+  Viegas/Orso classification paper) backing that terminology and the
+  scenario's claims. Every URL was checked with a live web search before
+  being added — several guessed-at URLs (owasp.org's old `SQL_Injection` and
+  `Second_Order_SQL_Injection` attack pages) turned out to be dead/moved, so
+  those scenarios cite the Halfond paper and PortSwigger instead.
+
+Rendered as a "Where the name comes from" card under How it works/Why the fix
+works, with real clickable `Hyperlink`s (`MainWindow.xaml.cs`'s
+`Hyperlink_RequestNavigate` shells out via `Process.Start` — WPF's
+`Hyperlink` doesn't open a browser on its own).
+
 ## Opening wizard (Tutorial)
 
 A from-scratch, assume-nothing walkthrough that opens automatically on first

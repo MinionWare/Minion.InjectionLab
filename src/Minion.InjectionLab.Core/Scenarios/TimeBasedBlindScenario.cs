@@ -164,6 +164,16 @@ public static class TimeBasedBlindScenario
             "If there's nothing to read, the signal has to come from something you can measure instead.",
             "SQL Server can be told to simply wait before continuing — what statement does that?"
         },
-        ChallengeAnswer = "1007; WAITFOR DELAY '0:0:5'--"
+        ChallengeAnswer = "1007; WAITFOR DELAY '0:0:5'--",
+
+        TerminologyNote = "Still \"blind\" — no data or error ever comes back — but here the oracle is " +
+                           "\"time-based\": the signal is a measurable delay (WAITFOR DELAY) instead of a " +
+                           "visible true/false difference, used when even that much of a difference isn't " +
+                           "observable.",
+        References = new[]
+        {
+            new ExternalReference { Label = "OWASP — Blind SQL Injection (covers the time-based variant)", Url = "https://owasp.org/www-community/attacks/Blind_SQL_Injection" },
+            new ExternalReference { Label = "PortSwigger Web Security Academy — Blind SQL injection", Url = "https://portswigger.net/web-security/sql-injection/blind" }
+        }
     };
 }

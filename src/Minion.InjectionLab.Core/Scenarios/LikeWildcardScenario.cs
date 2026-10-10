@@ -195,6 +195,16 @@ public static class LikeWildcardScenario
             "The LIKE operator has its own wildcard characters, completely separate from SQL syntax.",
             "What single character matches absolutely anything in a LIKE pattern?"
         },
-        ChallengeAnswer = "%"
+        ChallengeAnswer = "%",
+
+        TerminologyNote = "This isn't classic injection at all — no quote ever breaks, no keyword ever gets " +
+                           "added. It abuses SQL's own LIKE pattern language: % and _ are wildcards inside a " +
+                           "LIKE pattern, so passing them through unescaped lets user input change what the " +
+                           "pattern *matches*, even though the query's structure never changes.",
+        References = new[]
+        {
+            new ExternalReference { Label = "Microsoft Learn — LIKE (Transact-SQL), including the ESCAPE clause", Url = "https://learn.microsoft.com/sql/t-sql/language-elements/like-transact-sql" },
+            new ExternalReference { Label = "OWASP — SQL Injection Prevention Cheat Sheet", Url = "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet" }
+        }
     };
 }

@@ -186,6 +186,16 @@ public static class OrderByIdentifierScenario
             "ORDER BY accepts more than just a column name — it accepts a whole expression.",
             "What ends a statement and lets a new one begin?"
         },
-        ChallengeAnswer = "Name; WAITFOR DELAY '0:0:5'--"
+        ChallengeAnswer = "Name; WAITFOR DELAY '0:0:5'--",
+
+        TerminologyNote = "Named for what's being injected: an identifier (a column or table name) rather " +
+                           "than a value. That distinction matters because @parameter placeholders only ever " +
+                           "bind as data — there's no parameterized way to say \"this identifier\" at all, which " +
+                           "is why allow-listing is the only real fix here.",
+        References = new[]
+        {
+            new ExternalReference { Label = "Microsoft Learn — QUOTENAME (Transact-SQL)", Url = "https://learn.microsoft.com/sql/t-sql/functions/quotename-transact-sql" },
+            new ExternalReference { Label = "OWASP — SQL Injection Prevention Cheat Sheet", Url = "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet" }
+        }
     };
 }

@@ -208,6 +208,16 @@ public static class SecondOrderScenario
             "The profile form itself is already safe — don't look for the bug there.",
             "Think about what happens to this value the next time some other feature reads it back out of the database."
         },
-        ChallengeAnswer = "Robert'); DROP TABLE AuditLog;--"
+        ChallengeAnswer = "Robert'); DROP TABLE AuditLog;--",
+
+        TerminologyNote = "\"Second-order\" because the payload does nothing on its first pass — it's only " +
+                           "stored. The actual injection happens on a later, separate query that reuses the " +
+                           "stored value, which is what makes it so easy to miss: the input that looked safe and " +
+                           "the query that gets exploited are never the same request.",
+        References = new[]
+        {
+            new ExternalReference { Label = "Halfond, Viegas & Orso — \"A Classification of SQL Injection Attacks and Countermeasures\" (classifies second-order injection as its own mechanism)", Url = "https://sites.cc.gatech.edu/home/orso/papers/halfond.viegas.orso.ISSSE06.pdf" },
+            new ExternalReference { Label = "OWASP — SQL Injection Prevention Cheat Sheet", Url = "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet" }
+        }
     };
 }

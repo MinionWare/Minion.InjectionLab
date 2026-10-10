@@ -301,6 +301,18 @@ public static class TautologyLoginScenario
             "Once you close the string, you can add your own condition to the WHERE clause.",
             "A condition that's always true, followed by a comment marker, discards the rest of the query."
         },
-        ChallengeAnswer = "' OR 1=1 --"
+        ChallengeAnswer = "' OR 1=1 --",
+
+        TerminologyNote = "\"Tautology\" is a term borrowed from formal logic: a statement that's true no " +
+                           "matter what the variables are (like \"1=1\" or \"'1'='1'\"). This technique injects " +
+                           "exactly that kind of always-true condition into a WHERE clause, so it passes " +
+                           "regardless of the real data — the name describes the logical trick, not the SQL " +
+                           "syntax used to deliver it.",
+        References = new[]
+        {
+            new ExternalReference { Label = "Halfond, Viegas & Orso — \"A Classification of SQL Injection Attacks and Countermeasures\" (the paper that formalized this category)", Url = "https://sites.cc.gatech.edu/home/orso/papers/halfond.viegas.orso.ISSSE06.pdf" },
+            new ExternalReference { Label = "PortSwigger Web Security Academy — SQL injection", Url = "https://portswigger.net/web-security/sql-injection" },
+            new ExternalReference { Label = "OWASP — SQL Injection Prevention Cheat Sheet", Url = "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet" }
+        }
     };
 }

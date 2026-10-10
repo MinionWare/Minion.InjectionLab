@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Navigation;
 using ICSharpCode.AvalonEdit;
 using Minion.InjectionLab.Wpf.Behaviors;
 using Minion.InjectionLab.Wpf.Converters;
@@ -61,6 +63,12 @@ public partial class MainWindow : Window
 
     private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         => new AboutWindow { Owner = this }.ShowDialog();
+
+    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        e.Handled = true;
+    }
 
     private void TrackAttack(AttackViewModel? attack)
     {
