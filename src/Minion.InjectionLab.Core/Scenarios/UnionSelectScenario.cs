@@ -9,13 +9,20 @@ public static class UnionSelectScenario
 
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var s = f["search"].ToLowerInvariant();
-        if (s.Contains("union") && s.Contains("select"))
-            // A UNION that names a real table (FROM ...) is the actual breach. NULL-only columns
-            // with no FROM are just confirming the column count — reconnaissance, not a leak yet.
-            return s.Contains("from") ? "injection" : "probe";
-        if (s.Contains("order by")) return "probe";
-        return "normal";
+        var raw = f["search"];
+        var s = raw.ToLowerInvariant();
+        bool hasUnion = s.Contains("union") && s.Contains("select");
+        bool hasOrderBy = s.Contains("order by");
+        if (!hasUnion && !hasOrderBy) return "normal";
+
+        // The template's own closing "%';" always follows the injection point — without a
+        // trailing comment to swallow it, the batch never actually parses.
+        if (!raw.TrimEnd().EndsWith("--")) return "malformed";
+
+        // A UNION that names a real table (FROM ...) is the actual breach. NULL-only columns
+        // with no FROM are just confirming the column count — reconnaissance, not a leak yet.
+        if (hasUnion) return s.Contains("from") ? "injection" : "probe";
+        return "probe";
     }
 
     public static AttackScenario Create() => new()
@@ -33,6 +40,7 @@ public static class UnionSelectScenario
         {
             new DecisionPathDef { Key = "normal", Label = "Normal search", Icon = "🔍", Kind = PathKind.Safe },
             new DecisionPathDef { Key = "probe", Label = "Column-count probe", Icon = "🔎", Kind = PathKind.Neutral },
+            new DecisionPathDef { Key = "malformed", Label = "Broken syntax", Icon = "⚠", Kind = PathKind.Neutral },
             new DecisionPathDef { Key = "injection", Label = "UNION targeting a real table", Icon = "💉", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
@@ -73,6 +81,14 @@ public static class UnionSelectScenario
                           "substituting real column names from a table worth reading.",
                 RowCountLabel = "3 rows — 2 products + 1 row of NULLs"
             },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "SQL Server throws a syntax error here",
+                Detail = "The template's own closing \"%';\" still follows your text, and nothing commented it out. " +
+                          "The database sees a garbled string literal and refuses to run the batch — no probe, no " +
+                          "breach, just an error. UNION/ORDER BY injection still needs that trailing comment."
+            },
             _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results.", RowCountLabel = "2 rows" }
         },
 
@@ -92,6 +108,13 @@ public static class UnionSelectScenario
                 Detail = "There's no SQL text left to count columns in: the whole value, NULLs and all, is just a " +
                           "literal string being searched for in the Name column."
             },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Blocked,
+                Headline = "No products match",
+                Detail = "Parameterized or not, this particular attempt was never going to parse as SQL anyway — it " +
+                          "fails the same clean way any non-matching search does."
+            },
             _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results, unaffected by the fix.", RowCountLabel = "2 rows" }
         },
 
@@ -110,7 +133,8 @@ public static class UnionSelectScenario
         {
             "' ORDER BY 4--",
             "' UNION SELECT NULL,NULL,NULL --",
-            "' UNION SELECT UserId, UserName, PasswordHash FROM Users --"
+            "' UNION SELECT UserId, UserName, PasswordHash FROM Users --",
+            "' UNION SELECT UserId, UserName, PasswordHash FROM Users"
         },
 
         ChallengeGoal = "Make the product search return usernames and password hashes instead of products.",

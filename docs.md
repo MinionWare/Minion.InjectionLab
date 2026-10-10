@@ -131,6 +131,57 @@ turns the enum into a friendly header ("Where Parameters Don't Help", etc).
   baseline defaults, hints/answer/results all cleared.
 - Dark/light theme toggle.
 
+## Syntax realism: payloads must actually neutralize what follows them
+
+Several templates put original query text *after* the injection point (e.g.
+Tautology's `' AND PasswordHash = '{p}';`, UNION/LIKE's trailing `%';`). A
+payload that doesn't comment that out (usually with `--`) wouldn't actually
+run cleanly in real SQL Server — it errors out, or just doesn't achieve a
+full bypass. Scenarios where this matters (Tautology, UnionSelect,
+DynamicSqlStoredProc, SecondOrder, LikeWildcard's SQLi branch) classify this
+as a distinct `"malformed"` path — a warning-severity "this would throw a
+syntax error" outcome — not the full breach. Scenarios whose templates don't
+need a trailing comment to work (StackedQueries, BooleanBlind, TimeBasedBlind,
+NumericInjection, OrderByIdentifier — all numeric/unquoted contexts where the
+only trailing text is a bare `;`) don't need this check. When writing a new
+scenario, check whether the template leaves anything live after the
+injection point, and if so, require the payload to close it out before
+classifying as a full "injection".
+
+## Multiple fixes, graded (Models/FixGrade.cs, FixOption.cs)
+
+Not every attack has exactly one fix. LikeWildcardScenario is the reference
+example: parameterizing alone (`FixGrade.Partial`, with a `Gap` explaining
+what's still broken) stops SQL injection but not wildcard abuse; escaping `%`/
+`_`/`[` on top of that (`FixGrade.Best`) closes both holes. A scenario opts in
+by setting `AttackScenario.Fixes` (a list of `FixOption`, each with its own
+`BuildSql`/`Simulate`/optional C#+PowerShell builders, a `Grade`, and a `Gap`)
+instead of the legacy single `BuildFixedSql`/`SimulateFixed`. Those legacy
+fields are now optional — `AttackViewModel` synthesizes a single Best-grade
+`FixOption` from them when a scenario doesn't set `Fixes`, so none of the
+other 8 scenarios needed to change.
+
+The view model exposes this uniformly as `CurrentFixIndex` (-1 = vulnerable,
+0..N-1 = `Fixes[i]`), with `IsFixApplied` kept as a bool wrapper for
+backward compatibility with the simple on/off toggle. `MainWindow.xaml` shows
+the plain toggle when `HasMultipleFixes` is false, or a segmented
+"Compare: ⚠ Vulnerable / Fix A / Fix B" row when true, plus a callout showing
+the selected fix's `Gap` if it has one. **Known limitation**: the XAML
+currently hard-codes exactly two fix-option buttons (`Fixes[0]`, `Fixes[1]`)
+rather than iterating an arbitrary-length list — fine for now since only
+LikeWildcard uses more than one fix, but revisit (an `ItemsControl` +
+`AlternationIndex` binding, same pattern as the decision-path diagram) if a
+future scenario needs three or more.
+
+## Gotcha: `Run.Text` bindings default to TwoWay
+
+Learned twice in this session: a plain `<Run Text="{Binding SomeProperty}"/>`
+defaults to a `TwoWay` binding in this WPF version, and crashes at the moment
+the `Run` becomes visible if `SomeProperty` (or anything in its path, like a
+`KeyValuePair.Key`/`.Value`, or a computed get-only property) has no setter.
+Always give `Run.Text` bindings an explicit `Mode=OneTime` or `Mode=OneWay`.
+(`TextBlock.Text` does not have this problem — only `Run.Text` does.)
+
 ## Adding a new attack scenario
 
 1. Create `Core/Scenarios/<Name>Scenario.cs` with a static `Create()` that

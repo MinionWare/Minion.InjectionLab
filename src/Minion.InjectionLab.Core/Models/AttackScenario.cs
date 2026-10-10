@@ -16,8 +16,14 @@ public sealed class AttackScenario
     /// <summary>Builds the raw, concatenated SQL a naive app would send.</summary>
     public required Func<IReadOnlyDictionary<string, string>, string> BuildVulnerableSql { get; init; }
 
-    /// <summary>Builds the parameterized/defended equivalent (SQL text + how params bind).</summary>
-    public required Func<IReadOnlyDictionary<string, string>, string> BuildFixedSql { get; init; }
+    /// <summary>
+    /// Builds the parameterized/defended equivalent (SQL text + how params bind). Used directly
+    /// for scenarios with exactly one real fix. Scenarios with more than one fix worth comparing
+    /// (a Partial one and a Best one, say) should leave this null and populate <see cref="Fixes"/>
+    /// instead — the view model synthesizes a single-entry Fixes list from this field when Fixes
+    /// is empty, so existing single-fix scenarios never need to change.
+    /// </summary>
+    public Func<IReadOnlyDictionary<string, string>, string>? BuildFixedSql { get; init; }
 
     /// <summary>The C# (ADO.NET) that would produce the vulnerable SQL above.</summary>
     public Func<IReadOnlyDictionary<string, string>, string>? BuildVulnerableCSharp { get; init; }
@@ -49,8 +55,16 @@ public sealed class AttackScenario
     /// <summary>Rule-based narration of what the vulnerable version would do with this input.</summary>
     public required Func<IReadOnlyDictionary<string, string>, SimulationResult> SimulateVulnerable { get; init; }
 
-    /// <summary>Rule-based narration of what the fixed version does with the same input.</summary>
-    public required Func<IReadOnlyDictionary<string, string>, SimulationResult> SimulateFixed { get; init; }
+    /// <summary>Rule-based narration of what the fixed version does with the same input. See the
+    /// note on <see cref="BuildFixedSql"/> — leave null and use <see cref="Fixes"/> for multi-fix scenarios.</summary>
+    public Func<IReadOnlyDictionary<string, string>, SimulationResult>? SimulateFixed { get; init; }
+
+    /// <summary>
+    /// More than one real fix to compare side by side, each independently graded (Partial/Good/
+    /// Best) with its own remaining gap explained. Leave empty and use BuildFixedSql/SimulateFixed
+    /// instead when there's really just one fix worth showing.
+    /// </summary>
+    public IReadOnlyList<FixOption> Fixes { get; init; } = Array.Empty<FixOption>();
 
     public required string HowItWorks { get; init; }       // mechanics of the attack
     public required string WhyTheFixWorks { get; init; }    // mechanics of the defense

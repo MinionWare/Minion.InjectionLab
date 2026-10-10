@@ -94,16 +94,45 @@
 
                 <!-- Controls row -->
                 <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+                  <StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0" VerticalAlignment="Center">
+                        <!-- Single-fix scenarios: the simple on/off switch -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0" VerticalAlignment="Center"
+                                    Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
                             <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsFixApplied}" VerticalAlignment="Center"/>
                             <TextBlock Text="Apply the fix" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
                         </StackPanel>
+
+                        <!-- Multi-fix scenarios: compare vulnerable vs. each real fix, graded -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0" VerticalAlignment="Center"
+                                    Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Compare:" Margin="0,0,10,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            <ToggleButton Content="⚠ Vulnerable" Style="{StaticResource Button.Segment}"
+                                          IsChecked="{Binding IsVulnerableSelected, Mode=OneWay}"
+                                          Command="{Binding SetFixIndexCommand}" CommandParameter="-1"/>
+                            <ToggleButton Content="{Binding Fixes[0].Label}" Style="{StaticResource Button.Segment}" Margin="4,0,0,0"
+                                          IsChecked="{Binding IsFix0Selected, Mode=OneWay}"
+                                          Command="{Binding SetFixIndexCommand}" CommandParameter="0"/>
+                            <ToggleButton Content="{Binding Fixes[1].Label}" Style="{StaticResource Button.Segment}" Margin="4,0,0,0"
+                                          IsChecked="{Binding IsFix1Selected, Mode=OneWay}"
+                                          Command="{Binding SetFixIndexCommand}" CommandParameter="1"/>
+                        </StackPanel>
+
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsChallengeMode}" VerticalAlignment="Center"/>
                             <TextBlock Text="Try it yourself" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
                         </StackPanel>
                     </StackPanel>
+
+                    <!-- What the currently-selected fix still misses, if anything -->
+                    <Border Margin="0,12,0,0" Padding="10,8" CornerRadius="6" Background="{DynamicResource Brush.AccentMuted}"
+                            Visibility="{Binding CurrentFixGap, Converter={StaticResource NotEmptyToVisibilityConverter}}">
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Warning}">
+                            <Run Text="⚠ This fix doesn't cover: " FontWeight="Bold"/>
+                            <Run Text="{Binding CurrentFixGap, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                  </StackPanel>
                 </Border>
 
                 <!-- Challenge panel -->
@@ -118,7 +147,7 @@
                                 <DataTemplate>
                                     <TextBlock Style="{StaticResource Text.Muted}" Margin="0,2,0,2">
                                         <Run Text="Hint: " FontWeight="SemiBold"/>
-                                        <Run Text="{Binding}"/>
+                                        <Run Text="{Binding Mode=OneTime}"/>
                                     </TextBlock>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -127,7 +156,7 @@
                         <TextBlock Style="{StaticResource Text.Body}" Margin="0,8,0,0"
                                    Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Run Text="Answer: " FontWeight="SemiBold"/>
-                            <Run Text="{Binding Scenario.ChallengeAnswer}" FontFamily="{StaticResource Font.Code}"/>
+                            <Run Text="{Binding Scenario.ChallengeAnswer, Mode=OneTime}" FontFamily="{StaticResource Font.Code}"/>
                         </TextBlock>
 
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">

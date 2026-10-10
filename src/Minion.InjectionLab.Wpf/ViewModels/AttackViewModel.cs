@@ -18,8 +18,35 @@ public partial class AttackViewModel : ObservableObject
 
     public ObservableCollection<FieldValueViewModel> Fields { get; }
 
+    /// <summary>
+    /// Always has at least one entry. Scenarios that set Scenario.Fixes (more than one real fix
+    /// worth comparing) use those directly; scenarios using the legacy single BuildFixedSql/
+    /// SimulateFixed get a single synthesized Best-grade entry wrapping them, so the rest of this
+    /// view model never needs to special-case "does this scenario have Fixes or not".
+    /// </summary>
+    private readonly IReadOnlyList<FixOption> _fixes;
+    public IReadOnlyList<FixOption> Fixes => _fixes;
+    public bool HasMultipleFixes => _fixes.Count > 1;
+
+    /// <summary>-1 = vulnerable (no fix applied); 0..N-1 = index into Fixes.</summary>
     [ObservableProperty]
-    private bool isFixApplied;
+    private int currentFixIndex = -1;
+
+    /// <summary>Backward-compatible on/off view of CurrentFixIndex, for the simple toggle switch
+    /// used by every scenario with exactly one fix.</summary>
+    public bool IsFixApplied
+    {
+        get => CurrentFixIndex >= 0;
+        set => CurrentFixIndex = value ? 0 : -1;
+    }
+
+    public bool IsVulnerableSelected => CurrentFixIndex < 0;
+    public bool IsFix0Selected => CurrentFixIndex == 0;
+    public bool IsFix1Selected => CurrentFixIndex == 1;
+
+    /// <summary>What the currently-selected fix still misses — null when vulnerable, or when the
+    /// selected fix has no known gap (Best grade).</summary>
+    public string? CurrentFixGap => CurrentFixIndex >= 0 && CurrentFixIndex < _fixes.Count ? _fixes[CurrentFixIndex].Gap : null;
 
     [ObservableProperty]
     private string generatedSql = string.Empty;
@@ -108,6 +135,22 @@ public partial class AttackViewModel : ObservableObject
             scenario.Fields.Select(f => new FieldValueViewModel(f,
                 scenario.BaselineValues != null && scenario.BaselineValues.TryGetValue(f.Key, out var baseline) ? baseline : null)));
 
+        _fixes = scenario.Fixes.Count > 0
+            ? scenario.Fixes
+            : new[]
+            {
+                new FixOption
+                {
+                    Label = "Parameterized query",
+                    Grade = FixGrade.Best,
+                    Gap = null,
+                    BuildSql = scenario.BuildFixedSql ?? (_ => string.Empty),
+                    Simulate = scenario.SimulateFixed ?? (_ => new SimulationResult { Severity = Severity.Blocked, Headline = "Fixed", Detail = "" }),
+                    BuildCSharp = scenario.BuildFixedCSharp,
+                    BuildPowerShell = scenario.BuildFixedPowerShell
+                }
+            };
+
         foreach (var f in Fields)
             f.PropertyChanged += (_, __) => OnFieldEdited();
 
@@ -120,10 +163,22 @@ public partial class AttackViewModel : ObservableObject
         HasSubmitted = false; // input changed since the last reveal — stale until they submit again
     }
 
-    partial void OnIsFixAppliedChanged(bool value)
+    partial void OnCurrentFixIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(IsFixApplied));
+        OnPropertyChanged(nameof(IsVulnerableSelected));
+        OnPropertyChanged(nameof(IsFix0Selected));
+        OnPropertyChanged(nameof(IsFix1Selected));
+        OnPropertyChanged(nameof(CurrentFixGap));
         RecomputeCode();
         HasSubmitted = false; // the fix changed — make them re-submit to see the new outcome
+    }
+
+    [RelayCommand]
+    private void SetFixIndex(string indexText)
+    {
+        if (int.TryParse(indexText, out var idx))
+            CurrentFixIndex = idx;
     }
 
     partial void OnIsChallengeModeChanged(bool value)
@@ -182,7 +237,7 @@ public partial class AttackViewModel : ObservableObject
     [RelayCommand]
     private void ResetScenario()
     {
-        IsFixApplied = false;
+        CurrentFixIndex = -1;
         RevealedHintCount = 0;
         IsAnswerRevealed = false;
         HasSubmitted = false;
@@ -202,13 +257,13 @@ public partial class AttackViewModel : ObservableObject
         ShowResultRows = false;
         ShowNormalResultRows = false;
 
-        Result = IsFixApplied ? Scenario.SimulateFixed(values) : Scenario.SimulateVulnerable(values);
+        var active = CurrentFixIndex >= 0 && CurrentFixIndex < _fixes.Count ? _fixes[CurrentFixIndex] : null;
+
+        Result = active != null ? active.Simulate(values) : Scenario.SimulateVulnerable(values);
 
         if (Scenario.BaselineValues is { Count: > 0 } baseline)
         {
-            NormalResult = IsFixApplied
-                ? Scenario.SimulateFixed(baseline)
-                : Scenario.SimulateVulnerable(baseline);
+            NormalResult = active != null ? active.Simulate(baseline) : Scenario.SimulateVulnerable(baseline);
         }
 
         HasSubmitted = true;
@@ -220,21 +275,21 @@ public partial class AttackViewModel : ObservableObject
         var values = Fields.ToDictionary(f => f.Field.Key, f => f.Value ?? string.Empty);
         var rawValues = values.Values.Where(v => !string.IsNullOrEmpty(v));
 
-        GeneratedSql = IsFixApplied
-            ? Scenario.BuildFixedSql(values)
-            : Scenario.BuildVulnerableSql(values);
+        var active = CurrentFixIndex >= 0 && CurrentFixIndex < _fixes.Count ? _fixes[CurrentFixIndex] : null;
+
+        GeneratedSql = active != null ? active.BuildSql(values) : Scenario.BuildVulnerableSql(values);
         SqlSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedSql, rawValues));
 
-        var csharpBuilder = IsFixApplied ? Scenario.BuildFixedCSharp : Scenario.BuildVulnerableCSharp;
+        var csharpBuilder = active != null ? active.BuildCSharp : Scenario.BuildVulnerableCSharp;
         GeneratedCSharp = csharpBuilder?.Invoke(values) ?? string.Empty;
         CSharpSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedCSharp, rawValues));
 
-        var psBuilder = IsFixApplied ? Scenario.BuildFixedPowerShell : Scenario.BuildVulnerablePowerShell;
+        var psBuilder = active != null ? active.BuildPowerShell : Scenario.BuildVulnerablePowerShell;
         GeneratedPowerShell = psBuilder?.Invoke(values) ?? string.Empty;
         PowerShellSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedPowerShell, rawValues));
 
-        // Classification reflects the nature of the typed input itself, not whether the fix is on —
-        // so it's computed here too but independent of IsFixApplied.
+        // Classification reflects the nature of the typed input itself, not whether a fix is
+        // selected — so it's computed here too but independent of CurrentFixIndex.
         ActivePathKey = Scenario.ClassifyInput?.Invoke(values);
     }
 

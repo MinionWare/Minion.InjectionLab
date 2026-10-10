@@ -10,17 +10,32 @@ public static class TautologyLoginScenario
     private const string BaselineUser = "alice";
     private const string BaselinePassword = "correct-horse-battery-99";
 
-    /// <summary>The three paths any input takes: a real login, an ordinary failed login, or an attack.
-    /// Shared by ClassifyInput (live, pre-submit) and both Simulate functions (post-submit), so the
-    /// live diagram and the final narration always agree.</summary>
+    // Our fictional baseline values never contain a quote character, so any quote at all signals
+    // an attempted string-literal breakout — tautology-style ("' OR 1=1") or truncation-style
+    // ("admin'"), it doesn't matter which.
+    private static bool LooksLikeBreakoutAttempt(string s) => s.Contains('\'');
+
+    // T-SQL's only single-line comment marker is "--" (unlike MySQL's "#", which does nothing
+    // special here and would just be a stray character).
+    private static bool EndsWithComment(string s) => s.TrimEnd().EndsWith("--");
+
+    /// <summary>The four paths any input takes: a real login, an ordinary failed login, a properly
+    /// terminated attack, or a near-miss that never neutralizes the rest of the query. Shared by
+    /// ClassifyInput (live, pre-submit) and both Simulate functions (post-submit), so the live
+    /// diagram and the final narration always agree.</summary>
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var combined = (f["username"] + " " + f["password"]).ToLowerInvariant();
-        bool looksLikeTautology = combined.Contains("or 1=1") || combined.Contains("or '1'='1")
-                                   || combined.Contains("or 1 = 1") || (combined.Contains("--") && combined.Contains("or "));
-        if (looksLikeTautology) return "injection";
+        var username = f["username"];
+        var password = f["password"];
 
-        if (f["username"] == BaselineUser && f["password"] == BaselinePassword) return "correct";
+        var payloadField = LooksLikeBreakoutAttempt(username) ? username
+            : LooksLikeBreakoutAttempt(password) ? password
+            : null;
+
+        if (payloadField != null)
+            return EndsWithComment(payloadField) ? "injection" : "malformed";
+
+        if (username == BaselineUser && password == BaselinePassword) return "correct";
 
         return "incorrect";
     }
@@ -67,6 +82,7 @@ public static class TautologyLoginScenario
         {
             new DecisionPathDef { Key = "correct", Label = "Correct credentials", Icon = "🔑", Kind = PathKind.Safe },
             new DecisionPathDef { Key = "incorrect", Label = "Wrong password", Icon = "🚫", Kind = PathKind.Neutral },
+            new DecisionPathDef { Key = "malformed", Label = "Broken syntax", Icon = "⚠", Kind = PathKind.Neutral },
             new DecisionPathDef { Key = "injection", Label = "SQL injection pattern", Icon = "💉", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
@@ -134,6 +150,15 @@ public static class TautologyLoginScenario
                 RowCountLabel = "1 row",
                 LeakedRows = FakeOwnRow(f["username"])
             },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "Login fails — and the real app would likely throw a SQL error",
+                Detail = "There's a quote character here, so something is breaking out of the string literal — but " +
+                          "without a trailing \"--\" to neutralize whatever the template puts after it (the rest of " +
+                          "the WHERE clause), this either errors outright or simply fails to defeat both checks. " +
+                          "Close, but SQL still has to parse — \"looks right\" isn't the same as \"is right\"."
+            },
             _ => new SimulationResult
             {
                 Severity = Severity.Info,
@@ -162,6 +187,13 @@ public static class TautologyLoginScenario
                 RowCountLabel = "1 row",
                 LeakedRows = FakeOwnRow(f["username"])
             },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Blocked,
+                Headline = "Invalid username or password",
+                Detail = "Parameterized or not, this particular attempt was never going to work anyway — but now " +
+                          "it fails the same clean way any wrong input does, instead of risking a confusing error."
+            },
             _ => new SimulationResult
             {
                 Severity = Severity.Info,
@@ -175,7 +207,9 @@ public static class TautologyLoginScenario
             "The app builds the query by concatenating raw text into the SQL string instead of treating it as data. " +
             "A quote character (') closes the string literal early, so anything typed after it is parsed as SQL, not as a password. " +
             "'OR 1=1' adds a condition that is always true, and '--' turns the rest of the line into a comment, discarding whatever " +
-            "the original query intended to check next.",
+            "the original query intended to check next. That trailing comment isn't optional flavor — without it, whatever the " +
+            "template puts after the injection point (here, the rest of the password check) is still live SQL, and the attempt " +
+            "either errors out or quietly fails to fully bypass the login.",
 
         WhyTheFixWorks =
             "Parameterized queries (sp_executesql, or a parameterized ADO.NET/Dapper/EF command) send the SQL text and the " +
@@ -186,9 +220,9 @@ public static class TautologyLoginScenario
         SamplePayloads = new[]
         {
             "' OR 1=1 --",
-            "' OR '1'='1",
+            "' OR '1'='1' --",
             "admin'--",
-            "' OR 1=1#"
+            "' OR 1=1"
         },
 
         ChallengeGoal = "Log in as any user without knowing a real password.",

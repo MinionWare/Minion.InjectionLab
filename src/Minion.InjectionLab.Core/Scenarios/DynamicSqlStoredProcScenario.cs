@@ -9,8 +9,12 @@ public static class DynamicSqlStoredProcScenario
 
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var s = f["customerName"].ToLowerInvariant();
-        if (s.Contains('\'') && (s.Contains("union") || s.Contains("drop") || s.Contains(';'))) return "injection";
+        var raw = f["customerName"];
+        var s = raw.ToLowerInvariant();
+        if (s.Contains('\'') && (s.Contains("union") || s.Contains("drop") || s.Contains(';')))
+            // The proc's own template closes with %''''' after the injection point — without a
+            // trailing comment, that leftover text breaks the batch instead of running cleanly.
+            return raw.TrimEnd().EndsWith("--") ? "injection" : "malformed";
         return "normal";
     }
 
@@ -28,6 +32,7 @@ public static class DynamicSqlStoredProcScenario
         DecisionPaths = new[]
         {
             new DecisionPathDef { Key = "normal", Label = "Normal search", Icon = "🏢", Kind = PathKind.Safe },
+            new DecisionPathDef { Key = "malformed", Label = "Broken syntax", Icon = "⚠", Kind = PathKind.Neutral },
             new DecisionPathDef { Key = "injection", Label = "Injection inside the proc", Icon = "💉", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
@@ -44,8 +49,9 @@ public static class DynamicSqlStoredProcScenario
            $"DECLARE @Pattern NVARCHAR(102) = N'%' + @Name + N'%';  -- @Name = '{f["customerName"]}'\n" +
             "EXEC sp_executesql @sql, N'@Pattern NVARCHAR(102)', @Pattern;",
 
-        SimulateVulnerable = f => Classify(f) == "injection"
-            ? new SimulationResult
+        SimulateVulnerable = f => Classify(f) switch
+        {
+            "injection" => new SimulationResult
             {
                 Severity = Severity.Critical,
                 Headline = "The dynamic SQL inside the stored procedure gets rewritten — same as any ad hoc query",
@@ -53,19 +59,29 @@ public static class DynamicSqlStoredProcScenario
                           "and EXEC()s it raw, which is exactly as exploitable as any other concatenated query. The " +
                           "'it's a proc, it's parameterized by definition' assumption is simply false.",
                 AffectedAssets = new[] { "dbo.Users — exposed through a 'safe-looking' stored procedure" }
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search." },
+            },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "EXEC(@sql) throws a syntax error here",
+                Detail = "The proc's own template closes with %''''' right after your text, and nothing commented " +
+                          "it out. SQL Server rejects the garbled string before it ever runs — no breach, just an error."
+            },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search." }
+        },
 
-        SimulateFixed = f => Classify(f) == "injection"
-            ? new SimulationResult
+        SimulateFixed = f => Classify(f) switch
+        {
+            "injection" or "malformed" => new SimulationResult
             {
                 Severity = Severity.Blocked,
                 Headline = "sp_executesql keeps @Pattern as a value — the proc is still dynamic, but safely",
                 Detail = "The query shape can still vary at runtime (that's what makes it 'dynamic SQL'), but the " +
                           "customer's name is passed as a declared parameter, so it can never break out of the " +
                           "string it's bound into."
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search, unaffected by the fix." },
+            },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search, unaffected by the fix." }
+        },
 
         HowItWorks =
             "A stored procedure is just a named, pre-compiled batch of T-SQL — it has no special immunity to " +

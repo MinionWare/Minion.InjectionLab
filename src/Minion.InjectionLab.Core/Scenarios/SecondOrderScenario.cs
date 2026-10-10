@@ -7,8 +7,12 @@ public static class SecondOrderScenario
 {
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var s = f["displayName"].ToLowerInvariant();
-        if (s.Contains('\'') && (s.Contains("drop") || s.Contains("union") || s.Contains(';'))) return "injection";
+        var raw = f["displayName"];
+        var s = raw.ToLowerInvariant();
+        if (s.Contains('\'') && (s.Contains("drop") || s.Contains("union") || s.Contains(';')))
+            // The admin report's template closes with " logged in'" right after this value —
+            // without a trailing comment, that text is still live SQL and breaks the batch.
+            return raw.TrimEnd().EndsWith("--") ? "injection" : "malformed";
         return "normal";
     }
 
@@ -26,6 +30,7 @@ public static class SecondOrderScenario
         DecisionPaths = new[]
         {
             new DecisionPathDef { Key = "normal", Label = "Ordinary name", Icon = "🙂", Kind = PathKind.Safe },
+            new DecisionPathDef { Key = "malformed", Label = "Broken syntax", Icon = "⚠", Kind = PathKind.Neutral },
             new DecisionPathDef { Key = "injection", Label = "Payload stored for later", Icon = "⏳", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
@@ -44,8 +49,9 @@ public static class SecondOrderScenario
             "SELECT * FROM dbo.AuditLog WHERE Description = @Description;\n" +
            $"@Description = N'User {f["displayName"]} logged in'",
 
-        SimulateVulnerable = f => Classify(f) == "injection"
-            ? new SimulationResult
+        SimulateVulnerable = f => Classify(f) switch
+        {
+            "injection" => new SimulationResult
             {
                 Severity = Severity.Critical,
                 Headline = "The payload sat safely in the database until an unrelated feature trusted it",
@@ -53,18 +59,29 @@ public static class SecondOrderScenario
                           "features, often owned by different people. The profile form really is safe — the bug is " +
                           "entirely in the second feature treating already-stored data as implicitly trustworthy.",
                 AffectedAssets = new[] { "dbo.AuditLog — statement executes whenever an admin views recent activity" }
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, nothing unusual happens later either." },
+            },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "The activity report throws a syntax error when an admin views it",
+                Detail = "The report's own template still has \" logged in'\" right after your stored name, and " +
+                          "nothing commented it out. It saved fine in Step 1 — the error only shows up later, in " +
+                          "Step 2, which makes this class of bug annoying to track down."
+            },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, nothing unusual happens later either." }
+        },
 
-        SimulateFixed = f => Classify(f) == "injection"
-            ? new SimulationResult
+        SimulateFixed = f => Classify(f) switch
+        {
+            "injection" or "malformed" => new SimulationResult
             {
                 Severity = Severity.Blocked,
                 Headline = "The activity report treats the stored name as a literal value too",
                 Detail = "Step 1 was never the problem. Fixing Step 2 — the query that actually concatenates — closes " +
                           "the hole regardless of what gets stored in Step 1."
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, unaffected by the fix." },
+            },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, unaffected by the fix." }
+        },
 
         HowItWorks =
             "Second-order injection splits the attack across two steps: the data is stored safely (often through a " +

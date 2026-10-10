@@ -2,16 +2,24 @@ using Minion.InjectionLab.Core.Models;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
-/// <summary>LIKE wildcard abuse: parameterization alone doesn't neutralize % and _ — those are LIKE's own syntax.</summary>
+/// <summary>
+/// LIKE wildcard abuse: parameterization alone doesn't neutralize % and _ — those are LIKE's own
+/// syntax. This is the flagship "more than one fix, not all equally complete" scenario.
+/// </summary>
 public static class LikeWildcardScenario
 {
     private const string Baseline = "widget";
 
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var s = f["search"].ToLowerInvariant();
-        if (s.Contains('\'') && (s.Contains(" or ") || s.Contains("--") || s.Contains("union"))) return "injection";
-        if (f["search"].Contains('%') || f["search"].Contains('_')) return "wildcard";
+        var raw = f["search"];
+        var s = raw.ToLowerInvariant();
+        bool looksLikeSqlBreakout = s.Contains('\'') && (s.Contains(" or ") || s.Contains("union"));
+        if (looksLikeSqlBreakout)
+            // Without a trailing comment, the template's own closing "%';" after this value never
+            // gets neutralized — the batch would be a syntax error, not a clean bypass.
+            return s.TrimEnd().EndsWith("--") ? "injection" : "malformed";
+        if (raw.Contains('%') || raw.Contains('_')) return "wildcard";
         return "normal";
     }
 
@@ -30,18 +38,65 @@ public static class LikeWildcardScenario
         {
             new DecisionPathDef { Key = "normal", Label = "Normal search", Icon = "🔍", Kind = PathKind.Safe },
             new DecisionPathDef { Key = "wildcard", Label = "Wildcard abuse", Icon = "🌀", Kind = PathKind.Neutral },
+            new DecisionPathDef { Key = "malformed", Label = "Broken syntax", Icon = "🚫", Kind = PathKind.Neutral },
             new DecisionPathDef { Key = "injection", Label = "SQL injection", Icon = "💉", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
 
         BuildVulnerableSql = f => $"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE '%{f["search"]}%';",
 
-        BuildFixedSql = f =>
+        // Two real fixes, not equally complete — this is the point of the scenario.
+        Fixes = new[]
         {
-            var escaped = f["search"].Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
-            return "-- Parameterized AND with LIKE's own wildcard characters escaped first:\n" +
-                   "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern ESCAPE '\\';\n\n" +
-                  $"@Pattern = N'%{escaped}%'  -- your literal %, _, and [ are now just characters to search for";
+            new FixOption
+            {
+                Label = "⚠ Parameterized only",
+                Grade = FixGrade.Partial,
+                Gap = "Doesn't escape LIKE's own wildcard characters — a parameterized search for \"%\" still " +
+                      "matches every single row, and \"_\" still matches any one character.",
+                BuildSql = f =>
+                    "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
+                   $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
+                Simulate = f => Classify(f) switch
+                {
+                    "injection" or "malformed" => new SimulationResult { Severity = Severity.Blocked, Headline = "No products match", Detail = "Parameterized — the quote-breakout attempt is just a literal search string now." },
+                    "wildcard" => new SimulationResult
+                    {
+                        Severity = Severity.Warning,
+                        Headline = "Still matches every product — parameters don't stop this",
+                        Detail = "The value is safely bound as data, so there's no SQL injection here. But LIKE still " +
+                                  "interprets '%' inside that bound value as its own wildcard — parameterization " +
+                                  "protects against SQL syntax, not against LIKE's pattern-matching syntax.",
+                        RowCountLabel = "all rows"
+                    },
+                    _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search, unaffected by the fix." }
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Parameterized + wildcards escaped",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                {
+                    var escaped = f["search"].Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+                    return "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern ESCAPE '\\';\n\n" +
+                          $"@Pattern = N'%{escaped}%'  -- your literal %, _, and [ are now just characters to search for";
+                },
+                Simulate = f => Classify(f) switch
+                {
+                    "injection" or "malformed" => new SimulationResult { Severity = Severity.Blocked, Headline = "No products match", Detail = "Parameterized — the quote-breakout attempt is just a literal search string now." },
+                    "wildcard" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "Treated as a literal percent sign — no products match",
+                        Detail = "Escaping %, _, and [ before building the LIKE pattern makes them literal characters " +
+                                  "to search for, not wildcard syntax. Both fixes are needed — this one adds the " +
+                                  "piece parameterization alone was missing."
+                    },
+                    _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search, unaffected by the fix." }
+                }
+            }
         },
 
         SimulateVulnerable = f => Classify(f) switch
@@ -51,8 +106,17 @@ public static class LikeWildcardScenario
                 Severity = Severity.Critical,
                 Headline = "Full SQL injection — this query was never parameterized at all",
                 Detail = "Alongside the wildcard quirk, this version is still built by concatenation, so an ordinary " +
-                          "quote-breakout bypass works exactly like any other search box.",
+                          "quote-breakout bypass works exactly like any other search box — as long as the rest of " +
+                          "the original query is properly commented out.",
                 AffectedAssets = new[] { "Full query bypass — not just a wildcard-matching quirk" }
+            },
+            "malformed" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "SQL Server throws a syntax error here",
+                Detail = "Close, but the template's own closing \"%';\" still follows your text, and it was never " +
+                          "commented out. The database sees an unclosed/garbled string literal and refuses to run " +
+                          "the batch at all — no bypass, just an error.",
             },
             "wildcard" => new SimulationResult
             {
@@ -67,37 +131,26 @@ public static class LikeWildcardScenario
             _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search." }
         },
 
-        SimulateFixed = f => Classify(f) switch
-        {
-            "injection" => new SimulationResult { Severity = Severity.Blocked, Headline = "No products match", Detail = "Parameterized — the quote-breakout attempt is just a literal search string now." },
-            "wildcard" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "Treated as a literal percent sign — no products match",
-                Detail = "Escaping %, _, and [ before building the LIKE pattern makes them literal characters to " +
-                          "search for, not wildcard syntax — this is a separate fix from parameterization, and both " +
-                          "are needed."
-            },
-            _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search, unaffected by the fix." }
-        },
-
         HowItWorks =
             "LIKE has its own tiny syntax, independent of SQL itself: % matches any run of characters, _ matches " +
             "exactly one, and [ starts a character-class. None of that is neutralized by parameterizing the query — " +
             "parameters stop the value from being re-parsed as SQL, but LIKE still re-parses it as a *pattern*. A " +
             "search box that lets users submit raw % or _ can be made to match far more (or more expensive) data " +
-            "than intended, even in an otherwise fully parameterized app.",
+            "than intended, even in an otherwise fully parameterized app. And as always, a SQL-injection attempt " +
+            "still needs to neutralize whatever the template puts after the injection point — usually with a " +
+            "trailing comment — or it just breaks the query outright instead of bypassing it.",
 
         WhyTheFixWorks =
-            "Escape the user's literal %, _, and [ characters (commonly by wrapping them in brackets, e.g. '%' → " +
-            "'[%]') before building the LIKE pattern, and specify an ESCAPE clause. Combined with parameterization, " +
-            "this makes the search behave exactly as the box implies: searching for literal text, nothing more.",
+            "Two independent fixes are needed here, which is why this scenario has two to compare: parameterize " +
+            "the query (stops SQL injection), AND escape the user's literal %, _, and [ characters before building " +
+            "the LIKE pattern (stops wildcard abuse). Either one alone leaves a real gap.",
 
         SamplePayloads = new[]
         {
             "%",
             "_idget",
-            "' OR 1=1--"
+            "' OR 1=1 --",
+            "' OR 1=1"
         },
 
         ChallengeGoal = "Get the search box to return every single product, without using a quote character or the word OR.",
