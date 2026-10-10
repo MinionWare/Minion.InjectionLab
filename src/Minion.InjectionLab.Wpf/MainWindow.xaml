@@ -147,20 +147,20 @@
             </Grid.Background>
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="620">
-                <Grid x:Name="WelcomeIconGrid" HorizontalAlignment="Center" Width="220" Height="220"
+                <Grid x:Name="WelcomeIconGrid" HorizontalAlignment="Center" Width="440" Height="440"
                       RenderTransformOrigin="0.5,0.5" Opacity="0">
                     <Grid.RenderTransform>
                         <ScaleTransform ScaleX="0.4" ScaleY="0.4"/>
                     </Grid.RenderTransform>
 
-                    <Ellipse Width="220" Height="220" Fill="{DynamicResource Brush.Accent}" Opacity="0.22">
+                    <Ellipse Width="440" Height="440" Fill="{DynamicResource Brush.Accent}" Opacity="0.22">
                         <Ellipse.Effect>
-                            <BlurEffect Radius="50"/>
+                            <BlurEffect Radius="70"/>
                         </Ellipse.Effect>
                     </Ellipse>
-                    <Image Source="Resources/Branding/AppIcon.png" Width="160" Height="160" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image Source="Resources/Branding/AppIcon.png" Width="320" Height="320" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Image.Effect>
-                            <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="6" Opacity="0.45"/>
+                            <DropShadowEffect Color="Black" BlurRadius="32" ShadowDepth="8" Opacity="0.45"/>
                         </Image.Effect>
                     </Image>
                 </Grid>
