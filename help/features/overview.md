@@ -50,13 +50,15 @@ hints (budget depends on difficulty), and an answer you can reveal if
 you're stuck — except on Expert, where you're on your own. See
 **[Challenge Mode](../challenge-mode.md)**.
 
-## 🏆 Quiz Mode — devise your own attack
+## 🏆 Quiz Mode — a real quiz across the whole catalog
 
-Three capstone missions, one per difficulty, with open-ended grading —
-no single canonical answer, any payload that genuinely achieves the goal
-counts. Expert is a full recon-then-exploit chain: no schema given, you
-have to discover the real tables and columns yourself before you can
-steal anything. See **[Quiz Mode](../quiz-mode.md)**.
+Six random scenarios every session, drawn live from all 26 — no fixed
+question set, no hand-authored quiz content, graded by the exact same
+classification that drives the decision-path diagram everywhere else.
+Difficulty controls how much guidance you get, not which questions appear:
+Beginner shows the full picture, Intermediate drops the goal and hints,
+and Expert gives you nothing but a bare form — recognizing the technique
+yourself is the test. See **[Quiz Mode](../quiz-mode.md)**.
 
 ## 📚 Nothing here is made up
 

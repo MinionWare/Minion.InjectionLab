@@ -4,7 +4,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:vm="clr-namespace:Minion.InjectionLab.Wpf.ViewModels"
-        xmlns:core="clr-namespace:Minion.InjectionLab.Core.Models;assembly=Minion.InjectionLab.Core"
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
         Title="Quiz Mode" Height="820" Width="900" MinHeight="640" MinWidth="760"
@@ -18,12 +17,21 @@
 
         <!-- ================= HEADER ================= -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <StackPanel Orientation="Horizontal">
-                <Image Source="Resources/Branding/AppIcon.png" Width="28" Height="28" Margin="0,0,10,0"/>
-                <TextBlock Text="🏆 Quiz Mode" Style="{StaticResource Text.H1}" FontSize="20" VerticalAlignment="Center"/>
-            </StackPanel>
-            <TextBlock Text="Devise your own attack — any payload that genuinely achieves the goal counts, not just one fixed answer."
-                       Style="{StaticResource Text.Muted}" Margin="0,4,0,12"/>
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="Resources/Branding/AppIcon.png" Width="28" Height="28" Margin="0,0,10,0"/>
+                    <TextBlock Text="🏆 Quiz Mode" Style="{StaticResource Text.H1}" FontSize="20" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"
+                           Visibility="{Binding IsSessionComplete, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                    <Run Text="Score: "/><Run Text="{Binding Score, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding QuestionCount, Mode=OneWay}"/>
+                </TextBlock>
+            </Grid>
+            <TextBlock Style="{StaticResource Text.Muted}" Margin="0,4,0,12" TextWrapping="Wrap">
+                A real, randomly-drawn quiz across the whole attack catalog — no single fixed answer, no
+                re-used questions. Higher difficulty shows you less: Expert gives you only a bare form and
+                nothing else. Recognizing the technique is the test.
+            </TextBlock>
 
             <Border Background="{DynamicResource Brush.Bg2}" CornerRadius="16" Padding="3" HorizontalAlignment="Left">
                 <UniformGrid Columns="3">
@@ -40,53 +48,72 @@
             </Border>
         </StackPanel>
 
-        <!-- ================= MISSION ================= -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <!-- ================= SESSION COMPLETE ================= -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Visibility="{Binding IsSessionComplete, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="🏁 Quiz complete" Style="{StaticResource Text.H1}" FontSize="26" HorizontalAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Center" FontSize="20" Margin="0,10,0,0">
+                <Run Text="Final score: "/><Run Text="{Binding Score, Mode=OneWay}" FontWeight="Bold"/><Run Text=" / "/><Run Text="{Binding QuestionCount, Mode=OneWay}"/>
+            </TextBlock>
+            <Button Content="🔁  New quiz (fresh random questions)" Style="{StaticResource Button.Primary}" Padding="20,11"
+                    Margin="0,22,0,0" Command="{Binding StartSessionCommand}"/>
+        </StackPanel>
+
+        <!-- ================= QUESTION ================= -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsSessionComplete, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
             <StackPanel>
-                <ItemsControl ItemsSource="{Binding MissionsInTier}" Margin="0,0,0,10"
-                              Visibility="{Binding HasMultipleMissions, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type core:QuizMission}">
-                            <Button Content="{Binding Title}" Margin="0,0,8,0" Padding="12,6" FontSize="12"
-                                    Command="{Binding DataContext.SelectMissionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <TextBlock Style="{StaticResource Text.Muted}" FontWeight="Bold">
+                    <Run Text="Question "/><Run Text="{Binding QuestionNumber, Mode=OneWay}"/><Run Text=" of "/><Run Text="{Binding QuestionCount, Mode=OneWay}"/>
+                </TextBlock>
 
-                <TextBlock Text="{Binding CurrentMission.Title, Mode=OneWay}" Style="{StaticResource Text.H2}" FontSize="18"/>
-                <TextBlock Text="{Binding CurrentMission.Briefing, Mode=OneWay}" Style="{StaticResource Text.Body}" Margin="0,4,0,0"/>
+                <TextBlock Text="{Binding CurrentQuestion.Title, Mode=OneWay}" Style="{StaticResource Text.H2}" FontSize="18" Margin="0,4,0,0"
+                           Visibility="{Binding ShowTitleAndCategory, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-                <Border Style="{StaticResource Card}" Margin="0,10,0,0" Background="{DynamicResource Brush.AccentMuted}">
+                <TextBlock Text="{Binding CurrentQuestion.Premise, Mode=OneWay}" Style="{StaticResource Text.Body}" Margin="0,4,0,0"
+                           Visibility="{Binding ShowPremise, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <TextBlock Text="Something in this form may not be as safe as it looks. Find out." Style="{StaticResource Text.Body}" Margin="0,4,0,0"
+                           Visibility="{Binding ShowPremise, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" FontStyle="Italic"/>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0" Background="{DynamicResource Brush.AccentMuted}"
+                        Visibility="{Binding ShowGoalAndHints, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Style="{StaticResource Text.Body}" TextWrapping="Wrap">
                         <Run Text="🎯 Goal: " FontWeight="Bold"/>
-                        <Run Text="{Binding CurrentMission.Goal, Mode=OneWay}"/>
+                        <Run Text="{Binding CurrentQuestion.ChallengeGoal, Mode=OneWay}"/>
                     </TextBlock>
                 </Border>
 
-                <!-- Field inputs -->
-                <ItemsControl ItemsSource="{Binding Fields}" Margin="0,16,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:FieldValueViewModel}">
-                            <StackPanel Margin="0,0,0,10" MaxWidth="480" HorizontalAlignment="Left">
-                                <TextBlock Text="{Binding Field.Label}" Style="{StaticResource Text.Muted}" Margin="0,0,0,4"/>
-                                <TextBox Style="{StaticResource TextBox.Field}" FontFamily="{StaticResource Font.Code}"
-                                         Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"/>
+                <!-- Mock app preview -->
+                <Border Margin="0,14,0,0" CornerRadius="10" Background="{DynamicResource Brush.Bg2}"
+                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                    <StackPanel>
+                        <Border Background="{DynamicResource Brush.Bg0}" CornerRadius="10,10,0,0" Padding="12,8">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="10" Height="10" Fill="#FF5F57" Margin="0,0,6,0"/>
+                                <Ellipse Width="10" Height="10" Fill="#FEBC2E" Margin="0,0,6,0"/>
+                                <Ellipse Width="10" Height="10" Fill="#28C840" Margin="0,0,14,0"/>
+                                <TextBlock Text="{Binding CurrentQuestion.MockAppLabel, Mode=OneWay}" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
                             </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding Fields}" Margin="16">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:FieldValueViewModel}">
+                                    <StackPanel Margin="0,0,0,10" MaxWidth="480" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding Field.Label}" Style="{StaticResource Text.Muted}" Margin="0,0,0,4"/>
+                                        <TextBox Style="{StaticResource TextBox.Field}" FontFamily="{StaticResource Font.Code}"
+                                                 Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
 
                 <Button Content="▶  Submit" Style="{StaticResource Button.Primary}" HorizontalAlignment="Left" Padding="22,9"
-                        FontSize="14" Command="{Binding SubmitCommand}"/>
+                        FontSize="14" Command="{Binding SubmitCommand}" Margin="0,14,0,0"/>
 
                 <!-- What actually runs -->
-                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                <Border Style="{StaticResource Card}" Margin="0,14,0,0">
                     <StackPanel>
                         <TextBlock Text="What actually runs" Style="{StaticResource Text.H2}"/>
                         <TabControl Margin="0,8,0,0" MinHeight="90">
@@ -114,57 +141,45 @@
 
                 <!-- Outcome -->
                 <Border Margin="0,16,0,0" CornerRadius="8" Padding="14" BorderThickness="1.5"
-                        Visibility="{Binding LastOutcome, Converter={StaticResource NotEmptyToVisibilityConverter}}">
+                        Visibility="{Binding HasSubmittedCurrent, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Critical}"/>
                             <Setter Property="Background" Value="{DynamicResource Brush.Bg2}"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding LastOutcome.Succeeded}" Value="True">
+                                <DataTrigger Binding="{Binding CurrentSolved}" Value="True">
                                     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blocked}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
                     <StackPanel>
-                        <TextBlock Text="{Binding LastOutcome.Headline, Mode=OneWay}" FontWeight="Bold" FontSize="14" TextWrapping="Wrap">
+                        <TextBlock Text="{Binding OutcomeHeadline, Mode=OneWay}" FontWeight="Bold" FontSize="14" TextWrapping="Wrap">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="{DynamicResource Brush.Critical}"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LastOutcome.Succeeded}" Value="True">
+                                        <DataTrigger Binding="{Binding CurrentSolved}" Value="True">
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.Blocked}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBlock Text="{Binding LastOutcome.Detail, Mode=OneWay}" Style="{StaticResource Text.Body}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding OutcomeDetail, Mode=OneWay}" Style="{StaticResource Text.Body}" Margin="0,6,0,0"/>
+                        <TextBlock Text="✅ Solved — this counts toward your score" Foreground="{DynamicResource Brush.Blocked}" FontWeight="Bold" Margin="0,8,0,0"
+                                   Visibility="{Binding CurrentSolved, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <TextBlock Text="Not yet — adjust your payload and submit again, or move on." Style="{StaticResource Text.Muted}" Margin="0,8,0,0"
+                                   Visibility="{Binding CurrentSolved, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Discovered facts (Expert recon) -->
+                <!-- Hints (Beginner only) -->
                 <Border Style="{StaticResource Card}" Margin="0,14,0,0"
-                        Visibility="{Binding DiscoveredFacts, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                    <StackPanel>
-                        <TextBlock Text="🔎 Discovered so far" Style="{StaticResource Text.H2}"/>
-                        <ItemsControl ItemsSource="{Binding DiscoveredFacts}" Margin="0,6,0,0">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Mode=OneTime}" FontFamily="{StaticResource Font.Code}" FontSize="12"
-                                               Foreground="{DynamicResource Brush.Accent}" Margin="0,2,0,2"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-
-                <!-- Hints -->
-                <Border Style="{StaticResource Card}" Margin="0,14,0,0"
-                        Visibility="{Binding HasHints, Converter={StaticResource BoolToVisibilityConverter}}">
+                        Visibility="{Binding ShowGoalAndHints, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="Stuck?" Style="{StaticResource Text.H2}"/>
-                        <ItemsControl ItemsSource="{Binding RevealedHints}" Margin="0,4,0,8">
+                        <ItemsControl ItemsSource="{Binding CurrentQuestion.Hints}" Margin="0,4,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Style="{StaticResource Text.Muted}" Margin="0,2,0,2">
@@ -174,11 +189,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button Content="💡 Give me a hint" Command="{Binding RevealNextHintCommand}" IsEnabled="{Binding HasMoreHints}" HorizontalAlignment="Left"/>
                     </StackPanel>
                 </Border>
 
-                <Button Content="↺  Reset mission" Command="{Binding ResetCommand}" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+                <Button Content="Next question →" Style="{StaticResource Button.Primary}" Padding="20,10" FontSize="13"
+                        HorizontalAlignment="Left" Margin="0,18,0,0" Command="{Binding NextQuestionCommand}"/>
             </StackPanel>
         </ScrollViewer>
     </Grid>

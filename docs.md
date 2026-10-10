@@ -109,55 +109,43 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
-## Quiz Mode
+## Quiz Mode (v2 — rewritten from hand-authored missions to a real catalog-driven quiz)
 
-A separate window (`QuizWindow`/`QuizViewModel`, opened via `View > Quiz
-mode` or a left-nav button) offering capstone missions
-(`Core/Models/QuizMission.cs`, content in `Core/Quiz/QuizContent.cs`),
-grouped by `QuizDifficulty`. Deliberately a third, distinct content model
-from both `AttackScenario` (the catalog) and `TutorialStep`/`TutorialDemo`
-(the wizard). A tier can hold more than one mission —
-`QuizViewModel.MissionsInTier` + a `SelectMissionCommand` drive a small
-mission-picker row in the UI (`HasMultipleMissions`, hidden entirely when a
-tier only has one) — Expert currently has two, built for very different
-reasons (see below).
+The first version (`QuizMission`/`QuizOutcome`/`QuizContent`, a handful of
+hand-authored missions) was replaced outright after feedback that it felt
+like "the same few questions" and didn't use the size of the catalog at
+all — with 26 scenarios built, there's no reason to hand-author quiz
+content separately. **Those Core files are deleted; `QuizDifficulty.cs` is
+the only survivor.**
 
-- **Open-ended grading, not a canonical answer.** `QuizMission.Evaluate`
-  takes the submitted field values *and* a running `IReadOnlySet<string>`
-  of facts discovered so far, and returns a `QuizOutcome` (succeeded?,
-  narration, newly-discovered facts to add to that set). Per-attack
-  Challenge Mode grades against one `ChallengeAnswer` string; a quiz
-  mission accepts any payload shape that actually achieves the goal —
-  Beginner's "Lazy Login" mission explicitly accepts either a tautology or
-  comment-truncation bypass, not just one.
-- **Expert, mission 1 — a genuine multi-stage recon-then-exploit chain**
-  ("Steal the Payment Data") against one search box with no schema given
-  up front: column-count probe → `INFORMATION_SCHEMA.TABLES` enumeration →
-  `INFORMATION_SCHEMA.COLUMNS` enumeration of a specific table → final
-  UNION exfiltration referencing what was actually discovered.
-- **Expert, mission 2 — a tiered, multi-field form** ("The Guarded Admin
-  Form"), added after feedback that a single goal wasn't enough at this
-  difficulty: four fields in one combined query, only one of which
-  (`@AccountId`) is a real bound parameter — the other three are
-  differently exploitable (`SortBy`/ORDER BY → 🥉 Bronze, `Notes`/UNION
-  reaching low-value columns → 🥈 Silver, `Reference`/UNION reaching
-  `CreditCardNumber` → 🥇 Gold). **What you're able to get back *is* the
-  goal** — there's no single pass/fail, your best tier is tracked and
-  reported, and it persists across attempts via the same discovered-facts
-  mechanism mission 1 uses (`"BRONZE: ..."`/`"SILVER: ..."`/`"GOLD: ..."`
-  prefixed facts, checked with `.StartsWith(...)` to find the best tier
-  reached so far, old or new).
-- In both Expert missions, each stage/tier's `NewlyDiscovered` facts
-  accumulate in `QuizViewModel._discovered` (passed back into `Evaluate` on
-  the next submit) and mirror into an observable `DiscoveredFacts` list the
-  UI shows as "🔎 Discovered so far." Grading uses the same plain regex/
-  `Contains` classification style as every scenario's `Classify()` —
-  verified against each mission's sample payloads via direct PowerShell
-  regex tests before shipping, same as the hex-decode logic earlier in the
-  project.
-- `QuizWindow` reuses `FieldValueViewModel` (from the main catalog view
-  models) for field inputs, and `TextBox.Selectable` for the generated
-  SQL/C#/PowerShell tabs — no new infrastructure needed for either.
+`QuizWindow`/`QuizViewModel` (opened via `View > Quiz mode` or a left-nav
+button) now draws questions **live from `AttackCatalog.All`** — every
+scenario already carries everything a question needs, for free:
+
+- **A question is "solved" via the exact same classification the in-app
+  decision-path diagram already uses.** `Submit` calls the scenario's own
+  `ClassifyInput(values)`, looks up the matching `DecisionPathDef`, and
+  counts it solved if that path's `Kind == PathKind.Malicious`. Zero new
+  grading logic to maintain per scenario — correctness here is already
+  guaranteed by every scenario's existing, working decision-path diagram.
+- **A session is 6 scenarios, chosen at random (`OrderBy(_ => Random.Next())
+  .Take(6)`)** from the full catalog, no repeats within a session, fresh
+  draw every time you start a new quiz or change difficulty.
+- **Difficulty controls how much of the scenario's own content is shown,
+  not which scenarios appear or how grading works:**
+  - Beginner: title, category, premise, goal, and hints — the full
+    picture, same as per-attack Challenge Mode.
+  - Intermediate: premise only — you know the story, not which named
+    technique applies or what the goal is.
+  - Expert: **just the bare mock form.** No premise, no title, no goal, no
+    hints. Recognizing what's wrong and crafting a working payload with
+    zero guidance is the entire test — matching the explicit ask that
+    Expert "shouldn't give them all that much info at all."
+- `QuizViewModel` reuses `FieldValueViewModel`, `TextBox.Selectable`, and
+  each scenario's own `BuildVulnerableSql`/`CSharp`/`PowerShell` + `
+  SimulateVulnerable` directly — no new Core model, no new content
+  authoring, the entire feature is ~190 lines of view model composing
+  pieces that already existed for the main catalog.
 
 ## Git remote
 
