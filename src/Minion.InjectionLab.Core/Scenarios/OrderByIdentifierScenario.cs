@@ -52,9 +52,8 @@ public static class OrderByIdentifierScenario
                 {
                     var s = f["sortColumn"];
                     bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
-                    return "-- Allow-list check, but a Contains() instead of an exact match:\n" +
-                           "if (AllowList.Any(c => sortColumn.Contains(c))) { /* ok, proceed */ }\n\n" +
-                           (passesCheck ? $"SELECT * FROM dbo.Products ORDER BY {s};  -- passed the check, concatenated raw" : "-- rejected, doesn't contain any allow-listed name at all");
+                    var guard = "if (!AllowList.Any(c => sortColumn.Contains(c)))\n    reject();\n\n";
+                    return passesCheck ? guard + $"SELECT * FROM dbo.Products ORDER BY {s};" : guard.TrimEnd();
                 },
                 Simulate = f =>
                 {

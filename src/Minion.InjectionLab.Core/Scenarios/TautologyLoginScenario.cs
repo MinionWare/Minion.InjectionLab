@@ -112,9 +112,8 @@ public static class TautologyLoginScenario
                 BuildSql = f =>
                 {
                     bool blocked = f["username"].Contains("OR") || f["password"].Contains("OR");
-                    return "-- Naive defense: reject the request if the raw input contains \"OR\"\n" +
-                           $"if (username.Contains(\"OR\") || password.Contains(\"OR\")) {{ reject(); }}\n\n" +
-                           (blocked ? "-- blocked before reaching SQL at all" : VulnerableSql(f));
+                    var guard = "if (username.Contains(\"OR\") || password.Contains(\"OR\"))\n    reject();\n\n";
+                    return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
                 },
                 Simulate = f =>
                 {

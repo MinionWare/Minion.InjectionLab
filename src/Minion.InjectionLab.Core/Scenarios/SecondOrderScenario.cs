@@ -61,9 +61,8 @@ public static class SecondOrderScenario
                 {
                     var s = f["displayName"];
                     bool blocked = s.Contains("DROP") || s.Contains("UNION");
-                    return "-- Naive defense, checked when the admin report runs Step 2:\n" +
-                           "if (storedName.Contains(\"DROP\") || storedName.Contains(\"UNION\")) { skip(); }\n\n" +
-                           (blocked ? "-- skipped before Step 2 even builds its query" : Step2Sql(f));
+                    var guard = "if (storedName.Contains(\"DROP\") || storedName.Contains(\"UNION\"))\n    skip();\n\n";
+                    return blocked ? guard.TrimEnd() : guard + Step2Sql(f);
                 },
                 Simulate = f =>
                 {

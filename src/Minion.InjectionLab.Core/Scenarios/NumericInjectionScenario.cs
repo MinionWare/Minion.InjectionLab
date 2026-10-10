@@ -54,9 +54,8 @@ public static class NumericInjectionScenario
                 BuildSql = f =>
                 {
                     bool blocked = f["productId"].Contains("OR");
-                    return "-- Naive defense: reject the request if the raw input contains \"OR\"\n" +
-                           "if (productId.Contains(\"OR\")) { reject(); }\n\n" +
-                           (blocked ? "-- blocked before reaching SQL at all" : $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};");
+                    var guard = "if (productId.Contains(\"OR\"))\n    reject();\n\n";
+                    return blocked ? guard.TrimEnd() : guard + $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};";
                 },
                 Simulate = f =>
                 {

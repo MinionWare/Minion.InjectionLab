@@ -64,9 +64,8 @@ public static class UnionSelectScenario
                 BuildSql = f =>
                 {
                     bool blocked = f["search"].Contains("UNION");
-                    return "-- Naive defense: reject the request if the raw input contains \"UNION\"\n" +
-                           "if (search.Contains(\"UNION\")) { reject(); }\n\n" +
-                           (blocked ? "-- blocked before reaching SQL at all" : VulnerableSql(f));
+                    var guard = "if (search.Contains(\"UNION\"))\n    reject();\n\n";
+                    return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
                 },
                 Simulate = f =>
                 {

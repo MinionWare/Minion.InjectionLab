@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -13,6 +14,9 @@ namespace Minion.InjectionLab.Wpf.Behaviors;
 /// </summary>
 public static class AvalonEditBehavior
 {
+    // Belt-and-suspenders: only reapply the Loaded-time hook once per editor instance.
+    private static readonly HashSet<TextEditor> LoadedHooked = new();
+
     public static readonly DependencyProperty BoundTextProperty =
         DependencyProperty.RegisterAttached("BoundText", typeof(string), typeof(AvalonEditBehavior),
             new PropertyMetadata(string.Empty, OnBoundTextChanged));
@@ -23,9 +27,21 @@ public static class AvalonEditBehavior
     private static void OnBoundTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not TextEditor editor) return;
-        var newText = e.NewValue as string ?? string.Empty;
-        if (editor.Document.Text != newText)
-            editor.Document.Text = newText;
+        ApplyText(editor, e.NewValue as string ?? string.Empty);
+
+        // AvalonEdit's Document can be touched again during template application, which can
+        // happen after this callback fires for the very first bound value — reapply once the
+        // control is actually loaded so the first value can't get silently lost.
+        if (LoadedHooked.Add(editor))
+        {
+            editor.Loaded += (s, _) => ApplyText((TextEditor)s!, GetBoundText((TextEditor)s!));
+        }
+    }
+
+    private static void ApplyText(TextEditor editor, string text)
+    {
+        if (editor.Document.Text != text)
+            editor.Document.Text = text;
     }
 
     public static readonly DependencyProperty HighlightSegmentsProperty =

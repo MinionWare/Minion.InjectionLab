@@ -61,9 +61,8 @@ public static class DynamicSqlStoredProcScenario
                 BuildSql = f =>
                 {
                     bool blocked = f["customerName"].Contains("UNION");
-                    return "-- Naive defense, still inside the proc:\n" +
-                           "IF @Name LIKE '%UNION%' RETURN; -- reject and bail out\n\n" +
-                           (blocked ? "-- blocked before @sql is even built" : RuntimeSql(f));
+                    var guard = "IF @Name LIKE '%UNION%' RETURN;\n\n";
+                    return blocked ? guard.TrimEnd() : guard + RuntimeSql(f);
                 },
                 Simulate = f =>
                 {
