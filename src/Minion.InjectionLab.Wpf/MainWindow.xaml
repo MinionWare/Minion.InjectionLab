@@ -125,8 +125,60 @@
             </DockPanel>
         </Border>
 
-        <!-- ================= RIGHT CONTENT ================= -->
-        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+        <!-- ================= WELCOME SCREEN ================= -->
+        <!-- Shown instead of jumping straight into a scenario — DataContext here is still the
+             MainViewModel (nothing below overrides it), unlike the scenario ScrollViewer next to it. -->
+        <Grid Grid.Row="1" Grid.Column="1"
+              Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                <Image Source="Resources/Branding/AppIcon.png" Width="140" Height="140" HorizontalAlignment="Center"/>
+
+                <Button HorizontalAlignment="Center" Margin="0,22,0,0" Padding="0" Background="Transparent" BorderThickness="0"
+                        Cursor="Hand" ToolTip="minionware.net" Click="MinionwareLogo_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter/>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="26"/>
+                </Button>
+
+                <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="30"
+                           HorizontalAlignment="Center" Margin="0,18,0,4"/>
+                <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
+                           Style="{StaticResource Text.Muted}" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+
+                <Border Style="{StaticResource Card}" Margin="0,26,0,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🛡" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="This app never touches a real database" Style="{StaticResource Text.H2}" FontSize="14"/>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Text.Body}" Margin="0,6,0,0" TextWrapping="Wrap">
+                            It never opens a database connection and never executes anything. Every query, every
+                            result, every "leaked row" is a string this app built and a rule-based narration of
+                            what a real SQL Server engine would do with it — safe to run anywhere, with nothing
+                            to break and nothing to point at something real.
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock HorizontalAlignment="Center" Margin="0,18,0,0" Style="{StaticResource Text.Muted}" FontSize="12">
+                    <Run Text="{Binding AttackCount, Mode=OneWay}"/><Run Text=" attacks · 6 categories · SQL, C#, and PowerShell, every time"/>
+                </TextBlock>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+                    <Button Content="🎓  Start the tutorial" Style="{StaticResource Button.Primary}" Padding="18,10" Margin="0,0,10,0"
+                            Click="TutorialButton_Click"/>
+                    <Button Content="📂  Browse the attack catalog" Padding="18,10"
+                            Command="{Binding BrowseCatalogCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <!-- ================= RIGHT CONTENT (a scenario is selected) ================= -->
+        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Margin="28,24,28,32" DataContext="{Binding SelectedAttack}">
 
                 <!-- Header -->

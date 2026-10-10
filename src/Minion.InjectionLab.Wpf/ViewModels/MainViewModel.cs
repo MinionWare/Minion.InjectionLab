@@ -19,13 +19,22 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private DifficultyLevel difficulty = DifficultyLevel.Beginner;
 
+    /// <summary>Drives the welcome screen vs. the scenario view in the main content area — null
+    /// until the reader picks something, either from the list or the welcome screen's own button.</summary>
+    public bool HasSelectedAttack => SelectedAttack != null;
+
+    public int AttackCount => Attacks.Count;
+
     public MainViewModel()
     {
         Attacks = new ObservableCollection<AttackViewModel>(
             AttackCatalog.All.Select(a => new AttackViewModel(a)));
 
-        SelectedAttack = Attacks.FirstOrDefault();
+        // Open on the welcome screen rather than jumping straight into the first scenario —
+        // SelectedAttack starts null on purpose.
     }
+
+    partial void OnSelectedAttackChanged(AttackViewModel? value) => OnPropertyChanged(nameof(HasSelectedAttack));
 
     partial void OnDifficultyChanged(DifficultyLevel value)
     {
@@ -42,4 +51,7 @@ public partial class MainViewModel : ObservableObject
         if (System.Enum.TryParse<DifficultyLevel>(level, out var parsed))
             Difficulty = parsed;
     }
+
+    [RelayCommand]
+    private void BrowseCatalog() => SelectedAttack = Attacks.FirstOrDefault();
 }

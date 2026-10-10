@@ -109,6 +109,30 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Welcome screen
+
+The app no longer jumps straight into the first scenario — `MainViewModel`
+starts with `SelectedAttack = null` on purpose, and the right-hand content
+area in `MainWindow.xaml` now has two layered, mutually-exclusive panels in
+the same Grid cell (`Grid.Row="1" Grid.Column="1"`), both visibility-bound
+to a new `MainViewModel.HasSelectedAttack` bool (raised from a
+`OnSelectedAttackChanged` partial method):
+
+- The **welcome screen** (`Visibility`, inverted) — mascot icon, clickable
+  Minionware wordmark, title/tagline, a "this never touches a real
+  database" safety card, an attack-count line, and two buttons:
+  **Start the tutorial** (reuses `TutorialButton_Click`) and **Browse the
+  attack catalog** (`MainViewModel.BrowseCatalogCommand`, which just sets
+  `SelectedAttack = Attacks.FirstOrDefault()`).
+- The **scenario ScrollViewer** (`Visibility`, not inverted) — unchanged
+  content, still sets its own `DataContext="{Binding SelectedAttack}"`
+  internally; the welcome `Grid` deliberately does *not* override
+  DataContext, since it binds straight to `MainViewModel` properties.
+
+Picking anything in the left-nav list still works exactly as before (binds
+`SelectedAttack` directly) — the welcome screen is only ever seen before
+the first pick, or if `SelectedAttack` is ever cleared back to null again.
+
 ## Help content (`help/` folder) + interim help wiring
 
 `help/` is a standalone Markdown tree (21 files) with `mkdocs.yml` as the
