@@ -19,6 +19,14 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // Height/Width in XAML are a preferred starting size, not a guarantee — on a screen whose
+        // work area is shorter (smaller display, taskbar, scaling), CenterScreen would otherwise
+        // center a too-tall window so its top sits above y=0, off-screen. Clamp to what actually fits.
+        var workArea = SystemParameters.WorkArea;
+        Height = Math.Min(Height, workArea.Height);
+        Width = Math.Min(Width, workArea.Width);
+
         var viewModel = new MainViewModel();
         DataContext = viewModel;
 
