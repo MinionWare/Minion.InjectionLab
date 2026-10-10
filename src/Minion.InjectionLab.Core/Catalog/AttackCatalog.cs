@@ -24,8 +24,18 @@ public static class AttackCatalog
         OutOfBandExfilScenario.Create(),
         HexEncodedBypassScenario.Create(),
         SqlAgentCmdExecScenario.Create(),
-        // Next up: comment truncation/error-based (classic/in-band), Unicode/homoglyph smuggling
-        // (delivery/obfuscation), the stored payload -> rendered-page scenario, post-injection
-        // impact (xp_cmdshell/linked-server/privilege escalation), non-SQL injection (v1.1).
+        CommentTruncationScenario.Create(),
+        ErrorBasedScenario.Create(),
+        InsertUpdateInjectionScenario.Create(),
+        ErrorBasedBlindScenario.Create(),
+        CommentWhitespaceObfuscationScenario.Create(),
+        TruncationAttackScenario.Create(),
+        QuotenameLimitScenario.Create(),
+        ExecuteAsEscalationScenario.Create(),
+        XpCmdshellRceScenario.Create(),
+        // Next up: Unicode/homoglyph smuggling, TOP/OFFSET/HAVING injection, the stored-payload
+        // -> rendered-page scenario (arguably XSS riding on a SQLi delivery mechanism — needs a
+        // design call first), linked-server pivoting, non-SQL injection (v1.1), historical
+        // SQL Server OS-level CVEs (v2, history + citations only).
     };
 }

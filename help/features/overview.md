@@ -7,7 +7,7 @@ app — what SQL injection is, why it matters, and four core techniques
 taught through five live, interactive demos. See
 **[The Opening Tutorial](../getting-started/tutorial-wizard.md)**.
 
-## 🗂️ Thirteen real attacks, six categories, all fully built out
+## 🗂️ Twenty-two real attacks, seven categories, all fully built out
 
 Every single entry in the catalog — no exceptions — gets:
 
@@ -20,15 +20,11 @@ Every single entry in the catalog — no exceptions — gets:
 - **Where the name comes from** — the terminology explained, backed by
   real, clickable, externally-verified sources.
 - Sample payloads and a full **Challenge Mode**.
-
-Ten of the thirteen also carry a **Partial** fix alongside the real
-**Best** fix, graded and color-coded (🔴 red for still-vulnerable, 🟡 amber
-for Partial, 🟢 green for Best), with the Partial fix's exact remaining gap
-spelled out in plain English. The other three (Stacked Queries,
-Boolean-Blind, and Time-Based Blind) are deliberately single-fix — for
-those specific techniques, there's no honest "weaker-but-real" mitigation
-to contrast against the real fix, and inventing one would undercut the
-lesson rather than teach it.
+- A **Partial** fix alongside the real **Best** fix, graded and
+  color-coded (🔴 red for still-vulnerable, 🟡 amber for Partial, 🟢 green
+  for Best), with the Partial fix's exact remaining gap spelled out in
+  plain English — never a straw man, always a mitigation real teams
+  genuinely ship.
 
 See the full **[Attack Catalog](../catalog/overview.md)**.
 

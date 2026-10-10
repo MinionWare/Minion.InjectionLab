@@ -109,6 +109,33 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Git remote
+
+The repo is now published at https://github.com/MinionWare/Minion.InjectionLab
+(public, under the MinionWare org) — previously this was a local-only repo
+with no remote, so every commit had nowhere to push to. `origin` is set up
+and `master` is tracking it.
+
+## Nine more scenarios (13 → 22)
+
+Built in one batch after being asked, pointedly, why "do as many scenarios
+as you can" had only produced 3 new ones despite ~20 still being listed as
+backlog. All nine follow the exact same consistency rule as every other
+scenario (SQL+C#+PowerShell, Partial+Best fixes, terminology, verified
+external references, challenge mode): `CommentTruncationScenario`,
+`ErrorBasedScenario`, `InsertUpdateInjectionScenario`,
+`ErrorBasedBlindScenario`, `CommentWhitespaceObfuscationScenario`,
+`TruncationAttackScenario`, `QuotenameLimitScenario`,
+`ExecuteAsEscalationScenario`, `XpCmdshellRceScenario` — see the "Planned
+attack catalog" section below for what each one teaches and what's still
+deliberately deferred (Unicode/homoglyph smuggling was *not* built this
+round — couldn't find a technique specific enough to T-SQL's tokenizer to
+teach as verified fact rather than a guess; TOP/OFFSET/HAVING injection and
+non-SQL injection are lower-priority and explicitly still open).
+`help/` (catalog overview, mkdocs nav, and one page per new scenario) was
+updated in the same pass to stay in sync — see "Help content" below for
+why that folder exists at all.
+
 ## Welcome screen
 
 The app no longer jumps straight into the first scenario — `MainViewModel`
@@ -423,14 +450,18 @@ the Beginner-level version — a known, documented simplification).
   pattern — it's a real, complete fix for a *different* problem than the one
   still open.
 
-**Deliberately left single-fix, with the reasoning written into their
-`HowItWorks`/comments**: StackedQueries (blacklisting the one required
-character, `;`, doesn't have a clean realistic bypass in this simplified
-single-field demo — unlike a keyword, there's no case-variation trick for a
-punctuation character), BooleanBlind and TimeBasedBlind (blind techniques
-work precisely *because* they don't depend on any one keyword, so there's no
-honest "weaker-but-real" mitigation to contrast against parameterization —
-inventing one would be dishonest to the lesson).
+**Update, now stale**: this section used to note that StackedQueries,
+BooleanBlind, and TimeBasedBlind were deliberately left single-fix (no
+realistic Partial mitigation to contrast against parameterization, for
+each one's own stated reason). That's no longer true — all three gained a
+real Partial fix during the full-consistency pass later in the project
+(StackedQueries: blocking `;`, bypassed by a semicolon-free tautology;
+BooleanBlind/TimeBasedBlind: blocking `AND`, bypassed by `OR` or an
+unlisted casing). **Every scenario in the catalog has exactly two
+`FixOption`s (Partial + Best) — there are no single-fix scenarios left.**
+Leaving the old reasoning above (struck through in spirit, not deleted) as
+a record of a design decision that was later revisited, not because it's
+still accurate.
 
 ## Gotcha: `Run.Text` bindings default to TwoWay
 
@@ -459,45 +490,66 @@ Always give `Run.Text` bindings an explicit `Mode=OneTime` or `Mode=OneWay`.
    decision-path diagram, submit/result panels, and challenge panel are all
    generic over `AttackScenario`.
 
-## Planned attack catalog (remaining — 13 of ~30+ built so far)
+## Planned attack catalog (remaining — 22 of ~30+ built so far)
 
-Classic/in-band (built: Tautology, UNION, stacked queries, numeric,
-LIKE wildcard): comment truncation, error-based, INSERT/UPDATE/DELETE
-injection, TOP/OFFSET and HAVING/GROUP BY injection.
+Classic/in-band (built: Tautology, UNION, stacked queries, numeric, LIKE
+wildcard, `CommentTruncationScenario` — a known username plus a comment
+marker erases the password check entirely, no always-true trick needed;
+`ErrorBasedScenario` — `CONVERT`/`CAST` type-conversion failures leak a
+subquery's result straight into a visible error message;
+`InsertUpdateInjectionScenario` — the same bug in a write statement, closing
+the Bio value's quote to add a second column assignment and self-promote to
+Administrator): TOP/OFFSET and HAVING/GROUP BY injection.
 
-Blind/inferential (built: boolean, time-based): error-based blind variants.
+Blind/inferential (built: boolean, time-based, `ErrorBasedBlindScenario` —
+a conditional `CASE WHEN ... THEN 1/0 ELSE 1 END` makes "did the request
+error out at all" the oracle, for responses with zero visible difference
+and no measurable delay either).
 
 Out-of-band (built: `OutOfBandExfilScenario` — DNS egress via
 `xp_dirtree`/`xp_subdirs`, the response never changes at all so it's the
 "when even blind techniques give you nothing" scenario; `OPENROWSET`-based
 HTTP egress still open).
 
-Delivery/obfuscation (built: second-order, `HexEncodedBypassScenario` — a
-quote-character blacklist defeated by feeding the real command to `EXEC()`
-as a 0x-hex literal, which SQL Server decodes and runs untouched): Unicode/
-homoglyph smuggling, comment/whitespace obfuscation, truncation attacks, and
-the "stored payload renders as code on a web page" scenario (the hex-in-the-DB
-story — needs a small mock "rendered page" panel to land visually; the
-`LeakedRows` grid machinery already built for "View results" can likely
-double as the "what got written to the page" preview). Note: `HexEncodedBypassScenario`
-covers the WAF/filter-evasion half of the original "hex-stored-payload" idea;
-the rendered-page/stored-XSS half is still open and is arguably a different
-vulnerability class (XSS) riding in on a SQLi-shaped delivery mechanism,
-worth a design decision before building it.
+Delivery/obfuscation (built: second-order, `HexEncodedBypassScenario`,
+`CommentWhitespaceObfuscationScenario` — SQL Server treats `/**/` as
+whitespace, so `UNION/**/SELECT` evades a filter matching the literal
+phrase "UNION SELECT" with a real space; `TruncationAttackScenario` — SQL
+Server itself errors on oversized VARCHAR inserts rather than silently
+truncating like MySQL, but the identical bug reappears the moment app code
+pre-truncates defensively, combined with SQL Server's own trailing-space-
+insensitive string comparison): Unicode/homoglyph smuggling (skipped for
+now — couldn't find a technique specific to T-SQL's keyword tokenizer
+solid enough to teach as fact rather than guess), the "stored payload
+renders as code on a web page" scenario (the hex-in-the-DB story — still
+arguably a different vulnerability class, XSS, riding on a SQLi-shaped
+delivery mechanism; needs a design call before building it).
 
 Where parameters don't help (built: ORDER BY identifier injection, dynamic
-SQL in a stored proc): `QUOTENAME`'s 128-char limit, ownership chaining/
-`EXECUTE AS`.
+SQL in a stored proc, `QuotenameLimitScenario` — QUOTENAME is a real fix for
+identifier injection but was never built to validate the identifier is a
+real one; past 128 characters (`sysname`'s own limit) it silently returns
+NULL, which poisons an entire concatenated command string into a silent
+no-op; `ExecuteAsEscalationScenario` — a proc created `WITH EXECUTE AS
+OWNER` means any injection reaching it runs with the owner's privileges,
+not the caller's deliberately narrow ones).
 
-Post-injection impact: `xp_cmdshell`, linked-server pivoting, privilege
-escalation to sysadmin — shown as narration/mechanics only, not a working
-attack recipe. `SimulationResult.AffectedAssets` already exists for the
-"blast radius" lines this needs (e.g. "Login 'webapp' added to sysadmin").
+Post-injection impact (built: `XpCmdshellRceScenario` — a sysadmin-level
+connection plus a stacked `EXEC xp_cmdshell` call is full, direct operating-
+system command execution, the actual ceiling of what SQL injection can
+reach): linked-server pivoting via `OPENQUERY`/`EXECUTE AT`.
 
 SQL Server Agent/jobs (built: `SqlAgentCmdExecScenario` — a backup file name
 woven into a CmdExec job step's command string; this is plain OS command
 injection reached through SQL Server Agent rather than SQL injection itself,
 and the fix is "don't shell out at all", not a better filter).
+
+Still explicitly deferred: TOP/OFFSET/HAVING injection (a narrower variant
+of numeric/identifier injection already covered), Unicode/homoglyph
+smuggling (no T-SQL-specific technique verified solid enough to teach yet),
+non-SQL injection (NoSQL/LDAP/XPath/ORM/header/log injection — a different
+vulnerability family, flagged v1.1), and historical SQL Server OS-level
+CVEs (v2, explicitly "history + citations, not exploit code").
 
 Non-SQL injection (v1.1): NoSQL (`$where`/`$ne`), LDAP, XPath, ORM bypass
 (`FromSqlRaw` + interpolation), header/cookie injection, log injection.

@@ -27,17 +27,27 @@ nav:
           - Stacked Queries: catalog/stacked-queries.md
           - Numeric Injection: catalog/numeric-injection.md
           - LIKE Wildcard Abuse: catalog/like-wildcard-abuse.md
+          - Comment Truncation: catalog/comment-truncation.md
+          - Error-Based Injection: catalog/error-based-injection.md
+          - INSERT/UPDATE Injection: catalog/insert-update-injection.md
       - Blind / Inferential:
           - Boolean-Blind Injection: catalog/boolean-blind-injection.md
           - Time-Based Blind Injection: catalog/time-based-blind-injection.md
+          - Error-Based Blind Injection: catalog/error-based-blind-injection.md
       - Where Parameters Don't Help:
           - Identifier Injection (ORDER BY): catalog/order-by-identifier-injection.md
           - Dynamic SQL in a Stored Procedure: catalog/dynamic-sql-stored-procedure.md
+          - QUOTENAME's 128-Character Limit: catalog/quotename-limit.md
+          - EXECUTE AS Escalation: catalog/execute-as-escalation.md
       - Delivery & Obfuscation:
           - Second-Order Injection: catalog/second-order-injection.md
           - Hex-Encoded Literal Bypass: catalog/hex-encoded-bypass.md
+          - Comment/Whitespace Obfuscation: catalog/comment-whitespace-obfuscation.md
+          - Truncation Attack: catalog/truncation-attack.md
       - Out-of-Band:
           - Out-of-Band Exfiltration (DNS): catalog/out-of-band-exfiltration.md
+      - Post-Injection Impact:
+          - xp_cmdshell Remote Code Execution: catalog/xp-cmdshell-rce.md
       - SQL Server Agent & Jobs:
           - CmdExec Job Step Escalation: catalog/sql-agent-cmdexec-escalation.md
   - Challenge Mode: challenge-mode.md

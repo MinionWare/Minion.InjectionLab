@@ -1,6 +1,6 @@
 # Attack Catalog
 
-Thirteen techniques, six categories. Every one gets real SQL/C#/PowerShell,
+Twenty-two techniques, seven categories. Every one gets real SQL/C#/PowerShell,
 graded fixes where there's more than one honest mitigation to compare, full
 terminology and external references, and a hands-on challenge.
 
@@ -19,6 +19,12 @@ direct form of injection.
   when the injection point is already unquoted.
 - **[LIKE Wildcard Abuse](like-wildcard-abuse.md)** — not classic
   injection at all: abusing SQL's own pattern-matching wildcards.
+- **[Comment Truncation](comment-truncation.md)** — one known username and
+  a comment marker, no always-true condition required.
+- **[Error-Based Injection](error-based-injection.md)** — a type-conversion
+  failure leaks its value straight into a visible error message.
+- **[INSERT/UPDATE Injection](insert-update-injection.md)** — the same bug
+  in a write statement, escalating a profile update to an admin account.
 
 ## Blind / Inferential
 
@@ -28,6 +34,9 @@ No data, no error — just a yes/no, and that's still enough.
   true/false difference is the whole channel.
 - **[Time-Based Blind Injection](time-based-blind-injection.md)** — when
   even that much isn't visible, a measurable delay becomes the signal.
+- **[Error-Based Blind Injection](error-based-blind-injection.md)** — when
+  there's no delay either, whether the request errors out at all is the
+  oracle.
 
 ## Where Parameters Don't Help
 
@@ -37,6 +46,11 @@ Parameters only ever bind as *data* — some things in SQL aren't data at all.
   column and table names can't be parameterized, full stop.
 - **[Dynamic SQL in a Stored Procedure](dynamic-sql-stored-procedure.md)**
   — being inside a proc doesn't make string-built SQL safe.
+- **[QUOTENAME's 128-Character Limit](quotename-limit.md)** — the
+  textbook-correct identifier fix has a documented edge case of its own.
+- **[EXECUTE AS Escalation](execute-as-escalation.md)** — a procedure
+  secured to run as a privileged account hands that same privilege to
+  whatever gets injected into it.
 
 ## Delivery & Obfuscation
 
@@ -46,6 +60,10 @@ Getting a payload past a filter without changing what it ultimately does.
   stored safely, then fires later in a completely different query.
 - **[Hex-Encoded Literal Bypass](hex-encoded-bypass.md)** — a quote-filter
   that's blind to a payload that never contains a literal quote at all.
+- **[Comment/Whitespace Obfuscation](comment-whitespace-obfuscation.md)** —
+  SQL Server treats a comment exactly like the space it replaced.
+- **[Truncation Attack](truncation-attack.md)** — defensive pre-truncation,
+  plus a trailing-space quirk, collides a new account with an existing one.
 
 ## Out-of-Band
 
@@ -53,6 +71,13 @@ For when the response gives you *nothing* — not even a timing difference.
 
 - **[Out-of-Band Exfiltration (DNS)](out-of-band-exfiltration.md)** — the
   proof (and the data) leaves through an entirely separate channel.
+
+## Post-Injection Impact
+
+The ceiling, not the floor: what injection can escalate all the way to.
+
+- **[xp_cmdshell Remote Code Execution](xp-cmdshell-rce.md)** — a sysadmin
+  connection plus one stacked statement is a full OS command shell.
 
 ## SQL Server Agent & Jobs
 
@@ -68,5 +93,6 @@ operating system.
 Not sure where to start? The **[Opening Tutorial](../getting-started/tutorial-wizard.md)**
 covers the concept behind the first four categories in about five minutes.
 Already comfortable with the basics? **Out-of-Band**, **Hex-Encoded Literal
-Bypass**, and **CmdExec Job Step Escalation** are the ones that tend to
-surprise people who think they already know SQL injection cold.
+Bypass**, **QUOTENAME's 128-Character Limit**, and **xp_cmdshell Remote Code
+Execution** are the ones that tend to surprise people who think they already
+know SQL injection cold.
