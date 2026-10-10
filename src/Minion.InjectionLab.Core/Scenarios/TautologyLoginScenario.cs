@@ -98,8 +98,14 @@ public static class TautologyLoginScenario
             "using var cmd = new SqlCommand(sql, connection);\n" +
             "using var reader = cmd.ExecuteReader(); // whatever `username`/`password` contain becomes SQL",
 
+        BuildVulnerablePowerShell = f =>
+            "$sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
+           $"       \"WHERE UserName = '$username' AND PasswordHash = '$password';\"\n\n" +
+            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
+
         // Two real fixes people actually ship, not equally complete: a keyword blacklist (looks
-        // like a fix, isn't one) vs. real parameterization.
+        // like a fix, isn't one) vs. real parameterization. Each shows SQL *and* C#/PowerShell so
+        // the code tabs stay consistent regardless of which fix is selected.
         Fixes = new[]
         {
             new FixOption
@@ -114,6 +120,25 @@ public static class TautologyLoginScenario
                     bool blocked = f["username"].Contains("OR") || f["password"].Contains("OR");
                     var guard = "if (username.Contains(\"OR\") || password.Contains(\"OR\"))\n    reject();\n\n";
                     return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
+                },
+                BuildCSharp = f =>
+                {
+                    bool blocked = f["username"].Contains("OR") || f["password"].Contains("OR");
+                    var guard = "if (username.Contains(\"OR\") || password.Contains(\"OR\"))\n    throw new SecurityException();\n\n";
+                    var vulnerable = "var sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
+                                     "           \"WHERE UserName = '\" + username + \"' AND PasswordHash = '\" + password + \"';\";\n\n" +
+                                     "using var cmd = new SqlCommand(sql, connection);\n" +
+                                     "using var reader = cmd.ExecuteReader();";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
+                BuildPowerShell = f =>
+                {
+                    bool blocked = f["username"].Contains("OR") || f["password"].Contains("OR");
+                    var guard = "if ($username.Contains(\"OR\") -or $password.Contains(\"OR\")) { throw \"rejected\" }\n\n";
+                    var vulnerable = "$sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
+                                      "       \"WHERE UserName = '$username' AND PasswordHash = '$password';\"\n\n" +
+                                      "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
                 },
                 Simulate = f =>
                 {

@@ -57,6 +57,14 @@ public static class NumericInjectionScenario
                     var guard = "if (productId.Contains(\"OR\"))\n    reject();\n\n";
                     return blocked ? guard.TrimEnd() : guard + $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};";
                 },
+                BuildCSharp = f =>
+                {
+                    bool blocked = f["productId"].Contains("OR");
+                    var guard = "if (productId.Contains(\"OR\"))\n    throw new SecurityException();\n\n";
+                    var vulnerable = "var sql = $\"SELECT * FROM dbo.Products WHERE ProductId = {productId}\";\n" +
+                                     "using var cmd = new SqlCommand(sql, connection);";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
                 Simulate = f =>
                 {
                     bool filterCaughtIt = f["productId"].Contains("OR");

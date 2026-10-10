@@ -356,9 +356,7 @@
                                         <Border Style="{StaticResource CodeBlock}" Margin="0,10,0,0" Padding="0">
                                             <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="False"
                                                                    WordWrap="True" FontFamily="{StaticResource Font.Code}" FontSize="13"
-                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"
-                                                                   behaviors:AvalonEditBehavior.BoundText="{Binding GeneratedSql}"
-                                                                   behaviors:AvalonEditBehavior.HighlightSegments="{Binding SqlSegments}"/>
+                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"/>
                                         </Border>
                                     </TabItem>
                                     <TabItem Header="C#" Style="{StaticResource TabItem.Code}"
@@ -366,9 +364,7 @@
                                         <Border Style="{StaticResource CodeBlock}" Margin="0,10,0,0" Padding="0">
                                             <avalonEdit:TextEditor x:Name="CSharpEditor" IsReadOnly="True" ShowLineNumbers="False"
                                                                    WordWrap="True" FontFamily="{StaticResource Font.Code}" FontSize="13"
-                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"
-                                                                   behaviors:AvalonEditBehavior.BoundText="{Binding GeneratedCSharp}"
-                                                                   behaviors:AvalonEditBehavior.HighlightSegments="{Binding CSharpSegments}"/>
+                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"/>
                                         </Border>
                                     </TabItem>
                                     <TabItem Header="PowerShell" Style="{StaticResource TabItem.Code}"
@@ -376,9 +372,7 @@
                                         <Border Style="{StaticResource CodeBlock}" Margin="0,10,0,0" Padding="0">
                                             <avalonEdit:TextEditor x:Name="PowerShellEditor" IsReadOnly="True" ShowLineNumbers="False"
                                                                    WordWrap="True" FontFamily="{StaticResource Font.Code}" FontSize="13"
-                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"
-                                                                   behaviors:AvalonEditBehavior.BoundText="{Binding GeneratedPowerShell}"
-                                                                   behaviors:AvalonEditBehavior.HighlightSegments="{Binding PowerShellSegments}"/>
+                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"/>
                                         </Border>
                                     </TabItem>
                                 </TabControl>

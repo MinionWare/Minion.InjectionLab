@@ -75,6 +75,24 @@ file for the market scan that confirmed the gap.
       the pane background/default foreground follow the theme. Fully theming
       AvalonEdit per app-theme is a fair chunk of extra work — TODO if it
       turns out light mode reads poorly.
+    - **The editors' text is set explicitly from `MainWindow.xaml.cs`, not
+      via XAML data binding.** The first attempt bound a custom `BoundText`
+      attached property to `GeneratedSql`/etc. in XAML; this produced blank
+      or stale text intermittently (reliably reproducible on certain
+      scenario/fix-tab combinations, "fixed itself" after navigating away and
+      back on others) that was never fully root-caused through code review
+      alone — plausibly an AvalonEdit `Document` re-initialization during
+      template application racing the binding's first value, but that's a
+      hypothesis, not a confirmed diagnosis. Rather than keep patching an
+      unreliable mechanism, `MainWindow` now subscribes directly to the
+      tracked `AttackViewModel`'s `PropertyChanged` and calls
+      `editor.Document.Text = ...` itself whenever `GeneratedSql`/
+      `GeneratedCSharp`/`GeneratedPowerShell`/their `*Segments` change, and
+      re-subscribes whenever `SelectedAttack` changes. `HighlightSegments`
+      stays an attached property (`AvalonEditBehavior`), but is now also set
+      explicitly from code (`SetHighlightSegments(...)`), not bound in XAML.
+      If a new code pane is ever added, wire it into `SyncCodePanes()`/
+      `OnAttackPropertyChanged`, not through a XAML binding.
   - `Behaviors/ImpactBehavior.cs` — the "wow" layer: an attached `Trigger`
     (bumped `ResultVersion`) + `Severity` pair that plays a shake + red glow
     on breach, or a calm green/blue glow + pop on a blocked/successful
