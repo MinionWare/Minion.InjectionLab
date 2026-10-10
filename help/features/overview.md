@@ -1,5 +1,14 @@
 # Feature List
 
+## 👋 A welcome screen that actually welcomes you
+
+The app opens on a dedicated welcome screen, not straight into a
+scenario — the mascot icon pops in with a soft glow and a slight
+overshoot animation, the Minionware wordmark follows a beat later, then
+the title fades in. Click the app icon/title in the nav any time to come
+back "home" and watch it again. It covers the whole window on purpose —
+no picking a scenario from the list underneath until you're ready.
+
 ## 🎓 A real tutorial, not just a wall of text
 
 A nine-step, assume-nothing wizard opens the first time you launch the
@@ -89,5 +98,5 @@ the real answer, not a guess.
 
 ## 🧭 A real menu bar, because you need to be able to close the thing
 
-`File`, `View`, `Help`, and `Minionware` — exit, theme toggle, the
-tutorial, about, feature list, and a link out to more Minionware tools.
+`File`, `View`, `Help`, and `Minionware` — exit, theme toggle, Quiz mode,
+the tutorial, about, feature list, and a link out to more Minionware tools.

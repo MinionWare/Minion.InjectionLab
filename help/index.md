@@ -37,9 +37,12 @@ just strings, built in front of you.
    you just want the concept taught cleanly before diving into specifics.
 3. **[Feature List](features/overview.md)** — the full tour of what this
    app can do.
-4. **[Attack Catalog](catalog/overview.md)** — thirteen real techniques,
+4. **[Attack Catalog](catalog/overview.md)** — twenty-six real techniques,
    each with full mechanics, graded fixes, and a "try it yourself"
    challenge.
+5. **[Quiz Mode](quiz-mode.md)** — once the catalog feels familiar, test
+   yourself: six random scenarios, difficulty controlling how much you're
+   told going in, nothing controlling which scenarios can show up.
 
 ## The honest disclaimer
 

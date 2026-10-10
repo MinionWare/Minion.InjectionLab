@@ -1,8 +1,9 @@
 # The Opening Tutorial
 
-Minion.InjectionLab opens with a nine-step wizard — **"How SQL Injection
-Actually Works"** — built to teach the underlying concept once, clearly,
-assuming you've never heard the term before. It's deliberately simpler than
+On first launch, this nine-step wizard — **"How SQL Injection Actually
+Works"** — pops up automatically on top of the [welcome screen](welcome.md),
+built to teach the underlying concept once, clearly, assuming you've never
+heard the term before. It's deliberately simpler than
 the real [attack catalog](../catalog/overview.md): five of the nine steps
 carry a tiny, single-field live demo (type something, see the real SQL it
 builds and a plain-English, color-coded read of what just happened), and
@@ -38,5 +39,7 @@ menu bar, any time. It never shows itself automatically again after the
 first run.
 
 Once you've been through it, the **[Attack Catalog](../catalog/overview.md)**
-is where the real depth lives — thirteen techniques, each with full
-SQL/C#/PowerShell, graded fixes, and a hands-on challenge.
+is where the real depth lives — twenty-six techniques, each with full
+SQL/C#/PowerShell, graded fixes, and a hands-on challenge. When you're
+comfortable with it, **[Quiz Mode](../quiz-mode.md)** tests you across all
+of them at once.

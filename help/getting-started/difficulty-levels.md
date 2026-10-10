@@ -44,3 +44,11 @@ difficulty means *less* help, not more attack to crack:
 
 Difficulty is best thought of as **"how good is the naive mitigation, and
 how much help do you get,"** not **"how hard is this attack."**
+
+## A separate Difficulty selector in Quiz Mode
+
+[Quiz Mode](../quiz-mode.md) has its own Beginner/Intermediate/Expert
+selector, independent of this one — same labels, different job. There, it
+controls how much of each question's own guidance (title, premise, goal,
+hints) you're shown before solving it, not blacklist strictness or hint
+budget. See **[Quiz Mode](../quiz-mode.md)** for the details.
