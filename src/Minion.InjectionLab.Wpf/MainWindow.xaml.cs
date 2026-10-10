@@ -74,8 +74,8 @@ public partial class MainWindow : Window
     private void PlayWelcomeIntro()
     {
         AnimatePopIn(WelcomeIconGrid, TimeSpan.Zero);
-        AnimatePopIn(WelcomeLogoButton, TimeSpan.FromSeconds(0.15));
-        AnimateFadeIn(WelcomeTitleStack, TimeSpan.FromSeconds(0.35));
+        AnimatePopIn(WelcomeLogoButton, TimeSpan.FromSeconds(0.35));
+        AnimateFadeIn(WelcomeTitleStack, TimeSpan.FromSeconds(0.85));
     }
 
     private static void AnimatePopIn(FrameworkElement element, TimeSpan delay)
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 0;
 
-        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(0.5)) { BeginTime = delay };
+        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(1.0)) { BeginTime = delay };
         element.BeginAnimation(UIElement.OpacityProperty, opacity);
 
         if (element.RenderTransform is ScaleTransform scale)
@@ -93,7 +93,7 @@ public partial class MainWindow : Window
             scale.ScaleX = scale.ScaleY = 0.3;
 
             var easing = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 };
-            var grow = new DoubleAnimation(0.3, 1, TimeSpan.FromSeconds(0.7)) { BeginTime = delay, EasingFunction = easing };
+            var grow = new DoubleAnimation(0.3, 1, TimeSpan.FromSeconds(1.4)) { BeginTime = delay, EasingFunction = easing };
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
         }
@@ -104,7 +104,7 @@ public partial class MainWindow : Window
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 0;
 
-        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(0.6)) { BeginTime = delay };
+        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(1.2)) { BeginTime = delay };
         element.BeginAnimation(UIElement.OpacityProperty, opacity);
     }
 
