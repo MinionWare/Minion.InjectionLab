@@ -109,6 +109,39 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Quiz Mode
+
+A separate window (`QuizWindow`/`QuizViewModel`, opened via `View > Quiz
+mode` or a left-nav button) offering three capstone missions
+(`Core/Models/QuizMission.cs`, content in `Core/Quiz/QuizContent.cs`) — one
+per `QuizDifficulty`. Deliberately a third, distinct content model from
+both `AttackScenario` (the catalog) and `TutorialStep`/`TutorialDemo` (the
+wizard):
+
+- **Open-ended grading, not a canonical answer.** `QuizMission.Evaluate`
+  takes the submitted field values *and* a running `IReadOnlySet<string>`
+  of facts discovered so far, and returns a `QuizOutcome` (succeeded?,
+  narration, newly-discovered facts to add to that set). Per-attack
+  Challenge Mode grades against one `ChallengeAnswer` string; a quiz
+  mission accepts any payload shape that actually achieves the goal —
+  Beginner's "Lazy Login" mission explicitly accepts either a tautology or
+  comment-truncation bypass, not just one.
+- **Expert is a genuine multi-stage recon-then-exploit chain** ("Steal the
+  Payment Data") against one search box with no schema given up front:
+  column-count probe → `INFORMATION_SCHEMA.TABLES` enumeration →
+  `INFORMATION_SCHEMA.COLUMNS` enumeration of a specific table → final
+  UNION exfiltration referencing what was actually discovered. Each stage's
+  `NewlyDiscovered` facts accumulate in `QuizViewModel._discovered` (passed
+  back into `Evaluate` on the next submit) and mirror into an observable
+  `DiscoveredFacts` list the UI shows as "🔎 Discovered so far." Grading
+  uses the same plain regex/`Contains` classification style as every
+  scenario's `Classify()` — verified against each stage's sample payload
+  via direct PowerShell regex tests before shipping, same as the hex-decode
+  logic earlier in the project.
+- `QuizWindow` reuses `FieldValueViewModel` (from the main catalog view
+  models) for field inputs, and `TextBox.Selectable` for the generated
+  SQL/C#/PowerShell tabs — no new infrastructure needed for either.
+
 ## Git remote
 
 The repo is now published at https://github.com/MinionWare/Minion.InjectionLab

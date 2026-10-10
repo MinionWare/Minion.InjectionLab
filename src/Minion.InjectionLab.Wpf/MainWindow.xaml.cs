@@ -110,6 +110,9 @@ public partial class MainWindow : Window
 
     private void TutorialButton_Click(object sender, RoutedEventArgs e) => ShowTutorial();
 
+    private void QuizButton_Click(object sender, RoutedEventArgs e)
+        => new QuizWindow { Owner = this }.Show();
+
     private void ShowTutorial()
     {
         var tutorial = new TutorialWindow { Owner = this };

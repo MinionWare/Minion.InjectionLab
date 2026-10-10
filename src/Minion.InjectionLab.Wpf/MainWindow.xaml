@@ -32,6 +32,7 @@
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="Toggle theme" Command="{Binding ToggleThemeCommand}"/>
+                <MenuItem Header="Quiz mode" Click="QuizButton_Click"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="Feature list" Click="HelpButton_Click"/>
@@ -87,6 +88,9 @@
                     <Button Content="❓  Help" Margin="0,4,0,0" HorizontalAlignment="Stretch"
                             Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
                             Click="HelpButton_Click" ToolTip="Opens the feature list (help/index.md) — the full in-app help viewer is coming later"/>
+                    <Button Content="🏆  Quiz mode" Margin="0,4,0,0" HorizontalAlignment="Stretch"
+                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
+                            Click="QuizButton_Click" ToolTip="Capstone missions — devise your own attack, open-ended grading"/>
 
                     <StackPanel Orientation="Horizontal" Margin="2,16,0,6">
                         <TextBlock Text="DIFFICULTY" Style="{StaticResource Text.Muted}" FontWeight="Bold"/>

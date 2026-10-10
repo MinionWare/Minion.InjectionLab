@@ -50,6 +50,14 @@ hints (budget depends on difficulty), and an answer you can reveal if
 you're stuck — except on Expert, where you're on your own. See
 **[Challenge Mode](../challenge-mode.md)**.
 
+## 🏆 Quiz Mode — devise your own attack
+
+Three capstone missions, one per difficulty, with open-ended grading —
+no single canonical answer, any payload that genuinely achieves the goal
+counts. Expert is a full recon-then-exploit chain: no schema given, you
+have to discover the real tables and columns yourself before you can
+steal anything. See **[Quiz Mode](../quiz-mode.md)**.
+
 ## 📚 Nothing here is made up
 
 Every scenario's terminology and claims are backed by real, independently
