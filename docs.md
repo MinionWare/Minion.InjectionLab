@@ -109,7 +109,38 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
-## Scenarios built so far (9)
+## Every scenario has the same shape (SQL + C# + PowerShell, 2 fixes each)
+
+Earlier iterations left this inconsistent — only 2 of 10 scenarios had
+PowerShell, only 7 had more than one fix. That's not "the engine is generic,
+content varies," that's incomplete data, and it reads as broken/arbitrary to
+someone clicking through the app. All 10 scenarios now have:
+- `BuildVulnerableSql`/`BuildVulnerableCSharp`/`BuildVulnerablePowerShell`.
+- Exactly 2 `Fixes` entries, each with `BuildSql`+`BuildCSharp`+`BuildPowerShell`+`Simulate`.
+
+For the 3 scenarios that only had a single fix before (StackedQueries,
+BooleanBlind, TimeBasedBlind), finding an honest Partial fix required two
+real fixes along the way:
+- **StackedQueries' `Classify` was incomplete.** It only recognized the
+  semicolon+DML/DDL "stacked" pattern; a plain `1007 OR 1=1` against the same
+  numeric/unquoted query fell through to `"normal"` and the vulnerable
+  simulation claimed "Order 1007 found" — wrong, the real SQL would dump
+  every row. Now classifies into `"stacked"` and `"tautology"` as two
+  distinct techniques, so the Partial fix (block `;`) has an honest,
+  demonstrable gap: it stops stacking but not a bare tautology.
+- Where a scenario's own technique has no case-sensitivity dimension (a
+  semicolon isn't a keyword), the Partial fix still demonstrates its real
+  gap without pretending difficulty changes anything for it — not every
+  Partial fix needs `KeywordBlacklist` to be honest.
+
+For DynamicSqlStoredProc and SecondOrder specifically, the C#/PowerShell
+calling code is **identical** across the vulnerable/Partial/Best variants —
+the vulnerability (and each fix) lives entirely inside the stored procedure
+or inside Step 2's SQL text, not in how the app calls it. That's intentional
+and worth preserving if these scenarios change: showing the same calling
+code three times is the honest reflection of where the bug actually lives.
+
+## Scenarios built so far (10)
 
 Classic/in-band: Tautology/Login Bypass, UNION-Based Injection, Stacked Queries,
 Numeric Injection (no quotes needed), LIKE Wildcard Abuse.

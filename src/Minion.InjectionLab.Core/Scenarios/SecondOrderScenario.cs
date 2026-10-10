@@ -49,6 +49,25 @@ public static class SecondOrderScenario
             "-- the *stored* display name into a new query, trusting it as \"our own data\":\n" +
            $"SELECT * FROM dbo.AuditLog WHERE Description = 'User {f["displayName"]} logged in';",
 
+        BuildVulnerableCSharp = f =>
+            "// STEP 1 (now) — already parameterized, genuinely safe\n" +
+            "using var save = new SqlCommand(\"UPDATE dbo.Users SET DisplayName=@DisplayName WHERE UserId=@UserId\", connection);\n" +
+            "save.Parameters.AddWithValue(\"@DisplayName\", displayName);\n" +
+            "save.ExecuteNonQuery();\n\n" +
+            "// STEP 2 (later, a different feature) — concatenates the *stored* value\n" +
+            "var sql = $\"SELECT * FROM dbo.AuditLog WHERE Description = 'User {storedName} logged in'\";\n" +
+            "using var cmd = new SqlCommand(sql, connection);\n" +
+            "using var reader = cmd.ExecuteReader();",
+
+        BuildVulnerablePowerShell = f =>
+            "# STEP 1 (now) — already parameterized, genuinely safe\n" +
+            "$save = New-Object System.Data.SqlClient.SqlCommand \"UPDATE dbo.Users SET DisplayName=@DisplayName WHERE UserId=@UserId\", $connection\n" +
+            "[void]$save.Parameters.AddWithValue('@DisplayName', $displayName)\n" +
+            "[void]$save.ExecuteNonQuery()\n\n" +
+            "# STEP 2 (later, a different feature) — concatenates the *stored* value\n" +
+            "$sql = \"SELECT * FROM dbo.AuditLog WHERE Description = 'User $storedName logged in'\"\n" +
+            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
+
         // Two real fixes people actually ship, not equally complete: a keyword blacklist on Step 2
         // (looks like a fix, isn't one) vs. actually parameterizing Step 2.
         Fixes = new[]
@@ -66,6 +85,24 @@ public static class SecondOrderScenario
                     bool blocked = KeywordBlacklist.IsBlocked(f["displayName"], d, Keywords, ExpertKeywords);
                     var guard = "if (LooksLikeInjection(storedName))\n    skip();\n\n";
                     return blocked ? guard.TrimEnd() : guard + Step2Sql(f);
+                },
+                BuildCSharp = f =>
+                {
+                    bool blocked = f["displayName"].Contains("DROP") || f["displayName"].Contains("UNION");
+                    var guard = "// STEP 1 unchanged, already safe. STEP 2:\n" +
+                                "if (storedName.Contains(\"DROP\") || storedName.Contains(\"UNION\"))\n    return;\n\n";
+                    var vulnerable = "var sql = $\"SELECT * FROM dbo.AuditLog WHERE Description = 'User {storedName} logged in'\";\n" +
+                                     "using var cmd = new SqlCommand(sql, connection);";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
+                BuildPowerShell = f =>
+                {
+                    bool blocked = f["displayName"].Contains("DROP") || f["displayName"].Contains("UNION");
+                    var guard = "# STEP 1 unchanged, already safe. STEP 2:\n" +
+                                "if ($storedName.Contains(\"DROP\") -or $storedName.Contains(\"UNION\")) { return }\n\n";
+                    var vulnerable = "$sql = \"SELECT * FROM dbo.AuditLog WHERE Description = 'User $storedName logged in'\"\n" +
+                                      "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
                 },
                 Simulate = (f, d) =>
                 {
@@ -95,6 +132,16 @@ public static class SecondOrderScenario
                     "-- STEP 2 — now ALSO parameterized (this was the actual missing fix):\n" +
                     "SELECT * FROM dbo.AuditLog WHERE Description = @Description;\n" +
                    $"@Description = N'User {f["displayName"]} logged in'",
+                BuildCSharp = f =>
+                    "// STEP 1 unchanged, already safe. STEP 2 — now ALSO parameterized:\n" +
+                    "using var cmd = new SqlCommand(\"SELECT * FROM dbo.AuditLog WHERE Description = @Description\", connection);\n" +
+                    "cmd.Parameters.AddWithValue(\"@Description\", $\"User {storedName} logged in\");\n" +
+                    "using var reader = cmd.ExecuteReader();",
+                BuildPowerShell = f =>
+                    "# STEP 1 unchanged, already safe. STEP 2 — now ALSO parameterized:\n" +
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"SELECT * FROM dbo.AuditLog WHERE Description = @Description\", $connection\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@Description', \"User $storedName logged in\")\n" +
+                    "$reader = $cmd.ExecuteReader()",
                 Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult

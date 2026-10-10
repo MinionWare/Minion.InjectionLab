@@ -54,6 +54,15 @@ public static class UnionSelectScenario
 
         BuildVulnerableSql = VulnerableSql,
 
+        BuildVulnerableCSharp = f =>
+            "var sql = $\"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%{search}%'\";\n" +
+            "using var cmd = new SqlCommand(sql, connection);\n" +
+            "using var reader = cmd.ExecuteReader(); // columns render straight to the page, whatever they are",
+
+        BuildVulnerablePowerShell = f =>
+            "$sql = \"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%$search%'\"\n" +
+            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
+
         // Two real fixes people actually ship, not equally complete: a keyword blacklist (looks
         // like a fix, isn't one) vs. real parameterization.
         Fixes = new[]
@@ -71,6 +80,22 @@ public static class UnionSelectScenario
                     bool blocked = KeywordBlacklist.IsBlocked(f["search"], d, Keywords, ExpertKeywords);
                     var guard = "if (LooksLikeInjection(search))\n    reject();\n\n";
                     return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
+                },
+                BuildCSharp = f =>
+                {
+                    bool blocked = f["search"].Contains("UNION");
+                    var guard = "if (search.Contains(\"UNION\"))\n    throw new SecurityException();\n\n";
+                    var vulnerable = "var sql = $\"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%{search}%'\";\n" +
+                                     "using var cmd = new SqlCommand(sql, connection);";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
+                BuildPowerShell = f =>
+                {
+                    bool blocked = f["search"].Contains("UNION");
+                    var guard = "if ($search.Contains(\"UNION\")) { throw \"rejected\" }\n\n";
+                    var vulnerable = "$sql = \"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%$search%'\"\n" +
+                                      "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
                 },
                 Simulate = (f, d) =>
                 {
@@ -118,6 +143,14 @@ public static class UnionSelectScenario
                 BuildSql = (f, _) =>
                     "SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
                     $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
+                BuildCSharp = f =>
+                    "using var cmd = new SqlCommand(\"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern\", connection);\n" +
+                    "cmd.Parameters.AddWithValue(\"@Pattern\", $\"%{search}%\");\n" +
+                    "using var reader = cmd.ExecuteReader();",
+                BuildPowerShell = f =>
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern\", $connection\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@Pattern', \"%$search%\")\n" +
+                    "$reader = $cmd.ExecuteReader()",
                 Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" => new SimulationResult

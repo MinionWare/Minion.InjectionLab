@@ -44,6 +44,11 @@ public static class NumericInjectionScenario
             "var sql = $\"SELECT * FROM dbo.Products WHERE ProductId = {productId}\";\n" +
             "using var cmd = new SqlCommand(sql, connection);",
 
+        BuildVulnerablePowerShell = f =>
+            "# No quotes anywhere — looks \"obviously\" safe to a lot of developers\n" +
+            "$sql = \"SELECT * FROM dbo.Products WHERE ProductId = $productId\"\n" +
+            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
+
         // Two real fixes people actually ship, not equally complete: a keyword blacklist (looks
         // like a fix, isn't one) vs. a strongly-typed parameter.
         Fixes = new[]
@@ -68,6 +73,14 @@ public static class NumericInjectionScenario
                     var guard = "if (productId.Contains(\"OR\"))\n    throw new SecurityException();\n\n";
                     var vulnerable = "var sql = $\"SELECT * FROM dbo.Products WHERE ProductId = {productId}\";\n" +
                                      "using var cmd = new SqlCommand(sql, connection);";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
+                BuildPowerShell = f =>
+                {
+                    bool blocked = f["productId"].Contains("OR");
+                    var guard = "if ($productId.Contains(\"OR\")) { throw \"rejected\" }\n\n";
+                    var vulnerable = "$sql = \"SELECT * FROM dbo.Products WHERE ProductId = $productId\"\n" +
+                                      "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
                     return blocked ? guard.TrimEnd() : guard + vulnerable;
                 },
                 Simulate = (f, d) =>
@@ -99,6 +112,10 @@ public static class NumericInjectionScenario
                 BuildCSharp = f =>
                     "using var cmd = new SqlCommand(\"SELECT * FROM dbo.Products WHERE ProductId = @ProductId\", connection);\n" +
                     "cmd.Parameters.Add(\"@ProductId\", SqlDbType.Int).Value = productId; // throws if productId isn't an int",
+                BuildPowerShell = f =>
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"SELECT * FROM dbo.Products WHERE ProductId = @ProductId\", $connection\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@ProductId', [int]$productId)  # cast throws if not a real int\n" +
+                    "$reader = $cmd.ExecuteReader()",
                 Simulate = (f, _) => Classify(f) == "injection"
                     ? new SimulationResult
                     {

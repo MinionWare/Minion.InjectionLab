@@ -36,6 +36,15 @@ public static class OrderByIdentifierScenario
 
         BuildVulnerableSql = f => $"SELECT * FROM dbo.Products ORDER BY {f["sortColumn"]};",
 
+        BuildVulnerableCSharp = f =>
+            "var sql = $\"SELECT * FROM dbo.Products ORDER BY {sortColumn}\"; // no @parameter exists for an identifier\n" +
+            "using var cmd = new SqlCommand(sql, connection);\n" +
+            "using var reader = cmd.ExecuteReader();",
+
+        BuildVulnerablePowerShell = f =>
+            "$sql = \"SELECT * FROM dbo.Products ORDER BY $sortColumn\"  # no @parameter exists for an identifier\n" +
+            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
+
         // Two real fixes people actually ship, not equally complete: an allow-list check that uses
         // Contains instead of an exact match (a very common real logic bug) vs. an exact-match
         // allow-list combined with QUOTENAME.
@@ -54,6 +63,24 @@ public static class OrderByIdentifierScenario
                     bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
                     var guard = "if (!AllowList.Any(c => sortColumn.Contains(c)))\n    reject();\n\n";
                     return passesCheck ? guard + $"SELECT * FROM dbo.Products ORDER BY {s};" : guard.TrimEnd();
+                },
+                BuildCSharp = f =>
+                {
+                    var s = f["sortColumn"];
+                    bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
+                    var guard = "if (!AllowList.Any(c => sortColumn.Contains(c)))\n    throw new SecurityException();\n\n";
+                    var vulnerable = "var sql = $\"SELECT * FROM dbo.Products ORDER BY {sortColumn}\";\n" +
+                                     "using var cmd = new SqlCommand(sql, connection);";
+                    return passesCheck ? guard + vulnerable : guard.TrimEnd();
+                },
+                BuildPowerShell = f =>
+                {
+                    var s = f["sortColumn"];
+                    bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
+                    var guard = "if (-not ($AllowList | Where-Object { $sortColumn.Contains($_) })) { throw \"rejected\" }\n\n";
+                    var vulnerable = "$sql = \"SELECT * FROM dbo.Products ORDER BY $sortColumn\"\n" +
+                                      "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
+                    return passesCheck ? guard + vulnerable : guard.TrimEnd();
                 },
                 Simulate = (f, _) =>
                 {
@@ -90,6 +117,24 @@ public static class OrderByIdentifierScenario
                            "         WHEN 'CreatedDate' THEN N'CreatedDate' ELSE N'Name' END;\n\n" +
                           $"EXEC('SELECT * FROM dbo.Products ORDER BY ' + QUOTENAME(@SafeColumn));\n" +
                           $"-- your input ('{f["sortColumn"]}') resolves to: {safe}";
+                },
+                BuildCSharp = f =>
+                {
+                    var safe = Array.Exists(AllowList, c => string.Equals(c, f["sortColumn"], StringComparison.OrdinalIgnoreCase)) ? f["sortColumn"] : "Name";
+                    return "// @parameter doesn't work for identifiers — validate against a fixed allow-list, exact match\n" +
+                           "var allowList = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { \"Name\", \"Price\", \"CreatedDate\" };\n" +
+                          $"var safeColumn = allowList.Contains(sortColumn) ? sortColumn : \"Name\"; // resolves to: {safe}\n" +
+                           "var sql = $\"SELECT * FROM dbo.Products ORDER BY [{safeColumn}]\";\n" +
+                           "using var cmd = new SqlCommand(sql, connection);";
+                },
+                BuildPowerShell = f =>
+                {
+                    var safe = Array.Exists(AllowList, c => string.Equals(c, f["sortColumn"], StringComparison.OrdinalIgnoreCase)) ? f["sortColumn"] : "Name";
+                    return "# @parameter doesn't work for identifiers — validate against a fixed allow-list, exact match\n" +
+                           "$allowList = 'Name', 'Price', 'CreatedDate'\n" +
+                          $"$safeColumn = if ($allowList -contains $sortColumn) {{ $sortColumn }} else {{ 'Name' }}  # resolves to: {safe}\n" +
+                           "$sql = \"SELECT * FROM dbo.Products ORDER BY [$safeColumn]\"\n" +
+                           "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
                 },
                 Simulate = (f, _) => Classify(f) == "injection"
                     ? new SimulationResult

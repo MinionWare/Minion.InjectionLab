@@ -51,6 +51,20 @@ public static class DynamicSqlStoredProcScenario
            $"SET @sql = N'SELECT * FROM dbo.Customers WHERE CompanyName LIKE ''%{f["customerName"]}%''';\n" +
             "EXEC(@sql);  -- the proc boundary provides zero protection here",
 
+        // The app calls the proc the same way regardless of which fix is active — the
+        // vulnerability (and the fix) both live entirely inside the proc, shown in the SQL tab.
+        BuildVulnerableCSharp = f =>
+            "using var cmd = new SqlCommand(\"dbo.SearchCustomers\", connection) { CommandType = CommandType.StoredProcedure };\n" +
+            "cmd.Parameters.AddWithValue(\"@Name\", customerName);\n" +
+            "using var reader = cmd.ExecuteReader();\n" +
+            "// looks completely ordinary from here — the vulnerability is entirely inside the proc",
+
+        BuildVulnerablePowerShell = f =>
+            "$cmd = New-Object System.Data.SqlClient.SqlCommand \"dbo.SearchCustomers\", $connection\n" +
+            "$cmd.CommandType = [System.Data.CommandType]::StoredProcedure\n" +
+            "[void]$cmd.Parameters.AddWithValue('@Name', $customerName)\n" +
+            "$reader = $cmd.ExecuteReader()",
+
         // Two real fixes people actually ship, not equally complete: a keyword blacklist inside
         // the proc (looks like a fix, isn't one) vs. sp_executesql with a real parameter.
         Fixes = new[]
@@ -69,6 +83,16 @@ public static class DynamicSqlStoredProcScenario
                     var guard = "IF LooksLikeInjection(@Name) RETURN;\n\n";
                     return blocked ? guard.TrimEnd() : guard + RuntimeSql(f);
                 },
+                BuildCSharp = f =>
+                    "using var cmd = new SqlCommand(\"dbo.SearchCustomers\", connection) { CommandType = CommandType.StoredProcedure };\n" +
+                    "cmd.Parameters.AddWithValue(\"@Name\", customerName);\n" +
+                    "using var reader = cmd.ExecuteReader();\n" +
+                    "// identical either way — the filter lives inside the proc, see the SQL tab",
+                BuildPowerShell = f =>
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"dbo.SearchCustomers\", $connection\n" +
+                    "$cmd.CommandType = [System.Data.CommandType]::StoredProcedure\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@Name', $customerName)\n" +
+                    "$reader = $cmd.ExecuteReader()",
                 Simulate = (f, d) =>
                 {
                     bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["customerName"], d, Keywords, ExpertKeywords);
@@ -96,6 +120,16 @@ public static class DynamicSqlStoredProcScenario
                     "DECLARE @sql NVARCHAR(MAX) = N'SELECT * FROM dbo.Customers WHERE CompanyName LIKE @Pattern';\n" +
                    $"DECLARE @Pattern NVARCHAR(102) = N'%' + @Name + N'%';  -- @Name = '{f["customerName"]}'\n" +
                     "EXEC sp_executesql @sql, N'@Pattern NVARCHAR(102)', @Pattern;",
+                BuildCSharp = f =>
+                    "using var cmd = new SqlCommand(\"dbo.SearchCustomers\", connection) { CommandType = CommandType.StoredProcedure };\n" +
+                    "cmd.Parameters.AddWithValue(\"@Name\", customerName);\n" +
+                    "using var reader = cmd.ExecuteReader();\n" +
+                    "// identical either way — sp_executesql lives inside the proc, see the SQL tab",
+                BuildPowerShell = f =>
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"dbo.SearchCustomers\", $connection\n" +
+                    "$cmd.CommandType = [System.Data.CommandType]::StoredProcedure\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@Name', $customerName)\n" +
+                    "$reader = $cmd.ExecuteReader()",
                 Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult

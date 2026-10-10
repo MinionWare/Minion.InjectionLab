@@ -48,6 +48,15 @@ public static class LikeWildcardScenario
 
         BuildVulnerableSql = VulnerableSql,
 
+        BuildVulnerableCSharp = f =>
+            "var sql = $\"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE '%{search}%'\";\n" +
+            "using var cmd = new SqlCommand(sql, connection);\n" +
+            "using var reader = cmd.ExecuteReader();",
+
+        BuildVulnerablePowerShell = f =>
+            "$sql = \"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE '%$search%'\"\n" +
+            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
+
         // Two real fixes, not equally complete — this is the point of the scenario.
         Fixes = new[]
         {
@@ -60,6 +69,14 @@ public static class LikeWildcardScenario
                 BuildSql = (f, _) =>
                     "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
                    $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
+                BuildCSharp = f =>
+                    "using var cmd = new SqlCommand(\"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern\", connection);\n" +
+                    "cmd.Parameters.AddWithValue(\"@Pattern\", $\"%{search}%\"); // % and _ inside search still act as wildcards\n" +
+                    "using var reader = cmd.ExecuteReader();",
+                BuildPowerShell = f =>
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern\", $connection\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@Pattern', \"%$search%\")  # % and _ inside $search still act as wildcards\n" +
+                    "$reader = $cmd.ExecuteReader()",
                 Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult { Severity = Severity.Blocked, Headline = "No products match", Detail = "Parameterized — the quote-breakout attempt is just a literal search string now." },
@@ -85,6 +102,22 @@ public static class LikeWildcardScenario
                     var escaped = f["search"].Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
                     return "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern ESCAPE '\\';\n\n" +
                           $"@Pattern = N'%{escaped}%'  -- your literal %, _, and [ are now just characters to search for";
+                },
+                BuildCSharp = f =>
+                {
+                    var escaped = f["search"].Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+                    return "static string Escape(string s) => s.Replace(\"[\", \"[[]\").Replace(\"%\", \"[%]\").Replace(\"_\", \"[_]\");\n\n" +
+                           "using var cmd = new SqlCommand(\"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern ESCAPE '\\\\'\", connection);\n" +
+                          $"cmd.Parameters.AddWithValue(\"@Pattern\", $\"%{{Escape(search)}}%\"); // resolves to: %{escaped}%\n" +
+                           "using var reader = cmd.ExecuteReader();";
+                },
+                BuildPowerShell = f =>
+                {
+                    var escaped = f["search"].Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+                    return "function Escape-Like($s) { $s -replace '\\[', '[[]' -replace '%', '[%]' -replace '_', '[_]' }\n\n" +
+                           "$cmd = New-Object System.Data.SqlClient.SqlCommand \"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern ESCAPE '\\'\", $connection\n" +
+                          $"[void]$cmd.Parameters.AddWithValue('@Pattern', \"%$(Escape-Like $search)%\")  # resolves to: %{escaped}%\n" +
+                           "$reader = $cmd.ExecuteReader()";
                 },
                 Simulate = (f, _) => Classify(f) switch
                 {

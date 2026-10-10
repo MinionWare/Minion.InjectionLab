@@ -1,4 +1,5 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
@@ -7,11 +8,15 @@ public static class BooleanBlindScenario
 {
     private const string Baseline = "1007";
 
+    private static readonly string[] Keywords = { "AND" };
+    private static readonly string[] ExpertKeywords = { "OR" };
+
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
         var s = f["orderId"].ToLowerInvariant();
-        if (s.Contains("substring") || s.Contains("ascii") || s.Contains("and 1=2") || s.Contains("and 1=1"))
-            return "injection";
+        if (s.Contains("substring") || s.Contains("ascii")) return "exfiltrate";
+        if (s.Contains("and 1=2") || s.Contains("or 1=2")) return "flip";
+        if (s.Contains("and 1=1") || s.Contains("or 1=1")) return "confirm";
         return "normal";
     }
 
@@ -29,51 +34,131 @@ public static class BooleanBlindScenario
         DecisionPaths = new[]
         {
             new DecisionPathDef { Key = "normal", Label = "Normal check", Icon = "📦", Kind = PathKind.Safe },
-            new DecisionPathDef { Key = "injection", Label = "Blind boolean probe", Icon = "🕵", Kind = PathKind.Malicious }
+            new DecisionPathDef { Key = "confirm", Label = "Confirms injectable", Icon = "🔎", Kind = PathKind.Neutral },
+            new DecisionPathDef { Key = "flip", Label = "Flips a true answer false", Icon = "🕵", Kind = PathKind.Malicious },
+            new DecisionPathDef { Key = "exfiltrate", Label = "Exfiltrates one bit at a time", Icon = "🧬", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
 
         BuildVulnerableSql = f => $"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = {f["orderId"]};",
 
-        BuildFixedSql = f =>
-            "EXEC sp_executesql N'SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = @OrderId', N'@OrderId INT', @OrderId;\n\n" +
-            $"@OrderId = {f["orderId"]}",
+        BuildVulnerableCSharp = f =>
+            "var sql = $\"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = {orderId}\";\n" +
+            "using var cmd = new SqlCommand(sql, connection);\n" +
+            "bool found = (int)cmd.ExecuteScalar() > 0;",
 
-        SimulateVulnerable = f =>
+        BuildVulnerablePowerShell = f =>
+            "$sql = \"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = $orderId\"\n" +
+            "$found = (Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql) -gt 0",
+
+        // Two real fixes, not equally complete: a keyword blacklist (looks like a fix, isn't one)
+        // vs. real parameterization.
+        Fixes = new[]
         {
-            var s = f["orderId"].ToLowerInvariant();
-            if (s.Contains("substring") || s.Contains("ascii"))
-                return new SimulationResult
+            new FixOption
+            {
+                Label = "⚠ Block input containing \"AND\"",
+                Grade = FixGrade.Partial,
+                Gap = "At Beginner, checks for the literal uppercase word \"AND\" — lowercase \"and\" sails through. " +
+                      "Intermediate catches any casing. Expert also blocks \"OR\". But blind techniques don't need " +
+                      "either word specifically — a condition can be phrased with CASE WHEN, IIF, or a dozen other " +
+                      "constructs this filter was never told about. Blacklisting is particularly hopeless against " +
+                      "blind injection for exactly this reason.",
+                BuildSql = (f, d) =>
                 {
-                    Severity = Severity.Critical,
-                    Headline = "One character of a password hash just leaked — as a yes/no answer",
-                    Detail = "The app only ever says \"Found\"/\"Not found\", but that's still one bit of information. " +
-                              "By asking \"is the first character of this password hash 'A'?\" over and over — a " +
-                              "different guess each time — an attacker reconstructs the entire hash one character at " +
-                              "a time without a single row of data ever being displayed. Tools like sqlmap automate " +
-                              "exactly this.",
-                    AffectedAssets = new[] { "Full data exfiltration via a yes/no oracle — no visible rows needed" }
-                };
-            if (s.Contains("and 1=2"))
-                return new SimulationResult
+                    bool blocked = KeywordBlacklist.IsBlocked(f["orderId"], d, Keywords, ExpertKeywords);
+                    var guard = "if (LooksLikeInjection(orderId))\n    reject();\n\n";
+                    return blocked ? guard.TrimEnd() : guard + $"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = {f["orderId"]};";
+                },
+                BuildCSharp = f =>
                 {
-                    Severity = Severity.Warning,
-                    Headline = "\"Not found\" — even though order 1007 really exists",
-                    Detail = "Forcing the WHERE clause false proves the input is reaching the SQL engine as code, not " +
-                              "just data. That confirmation is the first step — next comes asking real questions about " +
-                              "the data instead of just true/false."
-                };
-            return new SimulationResult { Severity = Severity.Success, Headline = "Found", Detail = "Order 1007 exists." };
+                    bool blocked = f["orderId"].Contains("AND");
+                    var guard = "if (orderId.Contains(\"AND\"))\n    throw new SecurityException();\n\n";
+                    var vulnerable = "var sql = $\"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = {orderId}\";\n" +
+                                     "using var cmd = new SqlCommand(sql, connection);";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
+                BuildPowerShell = f =>
+                {
+                    bool blocked = f["orderId"].Contains("AND");
+                    var guard = "if ($orderId.Contains(\"AND\")) { throw \"rejected\" }\n\n";
+                    var vulnerable = "$sql = \"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = $orderId\"\n" +
+                                      "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
+                    return blocked ? guard.TrimEnd() : guard + vulnerable;
+                },
+                Simulate = (f, d) =>
+                {
+                    bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["orderId"], d, Keywords, ExpertKeywords);
+                    var classification = Classify(f);
+                    if (filterCaughtIt && classification != "normal")
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — matched the filter", Detail = "At this difficulty, the filter happened to catch this specific phrasing." };
+                    return classification switch
+                    {
+                        "exfiltrate" => new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "One character of a password hash just leaked — the filter never saw it",
+                            Detail = "This phrasing didn't need any word the filter checks for, so the one-bit oracle " +
+                                      "works exactly as if there were no filter at all.",
+                            AffectedAssets = new[] { "Full data exfiltration via a yes/no oracle — no visible rows needed" }
+                        },
+                        "flip" => new SimulationResult { Severity = Severity.Warning, Headline = "\"Not found\" — even though order 1007 really exists", Detail = "The filter never engaged; the oracle is confirmed." },
+                        "confirm" => new SimulationResult { Severity = Severity.Success, Headline = "Found", Detail = "The filter never engaged for this phrasing either." },
+                        _ => new SimulationResult { Severity = Severity.Success, Headline = "Found", Detail = "Ordinary check, the filter never engages." }
+                    };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Parameterized query",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = (f, _) =>
+                    "EXEC sp_executesql N'SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = @OrderId', N'@OrderId INT', @OrderId;\n\n" +
+                    $"@OrderId = {f["orderId"]}",
+                BuildCSharp = f =>
+                    "using var cmd = new SqlCommand(\"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = @OrderId\", connection);\n" +
+                    "cmd.Parameters.Add(\"@OrderId\", SqlDbType.Int).Value = orderId;\n" +
+                    "bool found = (int)cmd.ExecuteScalar() > 0;",
+                BuildPowerShell = f =>
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand \"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = @OrderId\", $connection\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@OrderId', [int]$orderId)\n" +
+                    "$found = ($cmd.ExecuteScalar()) -gt 0",
+                Simulate = (f, _) => Classify(f) == "normal"
+                    ? new SimulationResult { Severity = Severity.Success, Headline = "Found", Detail = "Order 1007 exists, unaffected by the fix." }
+                    : new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "Not found — the payload never parses as a condition",
+                        Detail = "The parameter value is compared as a whole, literal OrderId. There's no way to append a second " +
+                                  "condition, so there's no true/false oracle to exploit."
+                    }
+            }
         },
 
-        SimulateFixed = f => new SimulationResult
+        SimulateVulnerable = f => Classify(f) switch
         {
-            Severity = Classify(f) == "injection" ? Severity.Blocked : Severity.Success,
-            Headline = Classify(f) == "injection" ? "Not found — the payload never parses as a condition" : "Found",
-            Detail = Classify(f) == "injection"
-                ? "The parameter value is compared as a whole, literal OrderId. There's no way to append a second " +
-                  "condition, so there's no true/false oracle to exploit."
-                : "Order 1007 exists, unaffected by the fix."
+            "exfiltrate" => new SimulationResult
+            {
+                Severity = Severity.Critical,
+                Headline = "One character of a password hash just leaked — as a yes/no answer",
+                Detail = "The app only ever says \"Found\"/\"Not found\", but that's still one bit of information. " +
+                          "By asking \"is the first character of this password hash 'A'?\" over and over — a " +
+                          "different guess each time — an attacker reconstructs the entire hash one character at " +
+                          "a time without a single row of data ever being displayed. Tools like sqlmap automate " +
+                          "exactly this.",
+                AffectedAssets = new[] { "Full data exfiltration via a yes/no oracle — no visible rows needed" }
+            },
+            "flip" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "\"Not found\" — even though order 1007 really exists",
+                Detail = "Forcing the WHERE clause false proves the input is reaching the SQL engine as code, not " +
+                          "just data. That confirmation is the first step — next comes asking real questions about " +
+                          "the data instead of just true/false."
+            },
+            "confirm" => new SimulationResult { Severity = Severity.Success, Headline = "Found", Detail = "A condition that's always true changes nothing visible yet — but it proves the input reached the SQL engine as code." },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "Found", Detail = "Order 1007 exists." }
         },
 
         HowItWorks =
@@ -90,7 +175,8 @@ public static class BooleanBlindScenario
         {
             "1007 AND 1=1--",
             "1007 AND 1=2--",
-            "1007 AND SUBSTRING((SELECT TOP 1 PasswordHash FROM Users),1,1)='A'--"
+            "1007 AND SUBSTRING((SELECT TOP 1 PasswordHash FROM Users),1,1)='A'--",
+            "1007 or 1=2--"
         },
 
         ChallengeGoal = "Make the order check return \"Not found\" for order 1007, even though it exists.",
