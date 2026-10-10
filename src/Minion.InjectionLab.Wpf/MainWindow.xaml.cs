@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Navigation;
 using ICSharpCode.AvalonEdit;
 using Minion.InjectionLab.Wpf.Behaviors;
@@ -49,14 +51,61 @@ public partial class MainWindow : Window
         {
             if (e.PropertyName is nameof(MainViewModel.SelectedAttack) or null)
                 TrackAttack(viewModel.SelectedAttack);
+
+            // Replays every time the welcome screen comes back (not just the very first time the
+            // window loads) — e.g. after clicking the app icon/title in the nav to come "home".
+            if (e.PropertyName is nameof(MainViewModel.HasSelectedAttack) or null && !viewModel.HasSelectedAttack)
+                PlayWelcomeIntro();
         };
         TrackAttack(viewModel.SelectedAttack);
 
         Loaded += (_, _) =>
         {
+            if (!viewModel.HasSelectedAttack)
+                PlayWelcomeIntro();
+
             if (!TutorialService.HasSeenTutorial)
                 ShowTutorial();
         };
+    }
+
+    private void HomeButton_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).SelectedAttack = null;
+
+    private void PlayWelcomeIntro()
+    {
+        AnimatePopIn(WelcomeIconGrid, TimeSpan.Zero);
+        AnimatePopIn(WelcomeLogoButton, TimeSpan.FromSeconds(0.15));
+        AnimateFadeIn(WelcomeTitleStack, TimeSpan.FromSeconds(0.35));
+    }
+
+    private static void AnimatePopIn(FrameworkElement element, TimeSpan delay)
+    {
+        element.BeginAnimation(UIElement.OpacityProperty, null);
+        element.Opacity = 0;
+
+        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(0.5)) { BeginTime = delay };
+        element.BeginAnimation(UIElement.OpacityProperty, opacity);
+
+        if (element.RenderTransform is ScaleTransform scale)
+        {
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            scale.ScaleX = scale.ScaleY = 0.3;
+
+            var easing = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 };
+            var grow = new DoubleAnimation(0.3, 1, TimeSpan.FromSeconds(0.7)) { BeginTime = delay, EasingFunction = easing };
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+        }
+    }
+
+    private static void AnimateFadeIn(FrameworkElement element, TimeSpan delay)
+    {
+        element.BeginAnimation(UIElement.OpacityProperty, null);
+        element.Opacity = 0;
+
+        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(0.6)) { BeginTime = delay };
+        element.BeginAnimation(UIElement.OpacityProperty, opacity);
     }
 
     private void TutorialButton_Click(object sender, RoutedEventArgs e) => ShowTutorial();
