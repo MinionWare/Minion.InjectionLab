@@ -12,6 +12,7 @@
         Style="{StaticResource BaseWindowStyle}"
         Title="Minion.InjectionLab" Height="900" Width="1420" MinHeight="680" MinWidth="1150"
         WindowStartupLocation="CenterScreen"
+        WindowStyle="SingleBorderWindow" ResizeMode="CanResize"
         Icon="Resources/Branding/AppIcon.png">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -24,6 +25,9 @@
                 BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
+                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="20"
+                           HorizontalAlignment="Left" Margin="0,0,0,14"/>
+
                     <StackPanel Orientation="Horizontal">
                         <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
                             <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
@@ -37,6 +41,9 @@
                     <Button Content="🌓  Toggle theme" Margin="0,14,0,0" HorizontalAlignment="Stretch"
                             Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
                             Command="{Binding ToggleThemeCommand}"/>
+                    <Button Content="🎓  Tutorial" Margin="0,4,0,0" HorizontalAlignment="Stretch"
+                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
+                            Click="TutorialButton_Click"/>
 
                     <TextBlock Text="DIFFICULTY" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="2,16,0,6"/>
                     <Border Background="{DynamicResource Brush.Bg2}" CornerRadius="16" Padding="3">
@@ -53,10 +60,6 @@
                         </UniformGrid>
                     </Border>
                 </StackPanel>
-
-                <Border DockPanel.Dock="Bottom" Padding="18,10" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0">
-                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="18" HorizontalAlignment="Left" Opacity="0.85"/>
-                </Border>
 
                 <ListBox x:Name="AttacksList" DockPanel.Dock="Top"
                          Background="Transparent" BorderThickness="0"

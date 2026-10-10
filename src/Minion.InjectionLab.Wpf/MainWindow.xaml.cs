@@ -40,6 +40,21 @@ public partial class MainWindow : Window
                 TrackAttack(viewModel.SelectedAttack);
         };
         TrackAttack(viewModel.SelectedAttack);
+
+        Loaded += (_, _) =>
+        {
+            if (!TutorialService.HasSeenTutorial)
+                ShowTutorial();
+        };
+    }
+
+    private void TutorialButton_Click(object sender, RoutedEventArgs e) => ShowTutorial();
+
+    private void ShowTutorial()
+    {
+        var tutorial = new TutorialWindow { Owner = this };
+        tutorial.Closed += (_, _) => TutorialService.MarkSeen();
+        tutorial.ShowDialog();
     }
 
     private void TrackAttack(AttackViewModel? attack)

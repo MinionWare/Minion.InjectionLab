@@ -1,0 +1,113 @@
+<Window x:Class="Minion.InjectionLab.Wpf.TutorialWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Style="{StaticResource BaseWindowStyle}"
+        Title="Welcome to Minion.InjectionLab" Height="680" Width="800" MinHeight="600" MinWidth="700"
+        WindowStartupLocation="CenterOwner" WindowStyle="SingleBorderWindow" ResizeMode="CanResize"
+        ShowInTaskbar="False" Icon="Resources/Branding/AppIcon.png">
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ================= HEADER ================= -->
+        <StackPanel Grid.Row="0" Margin="32,26,32,6">
+            <StackPanel Orientation="Horizontal">
+                <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,12,0" ClipToBounds="True">
+                    <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="How SQL Injection Actually Works" Style="{StaticResource Text.H1}" FontSize="18"/>
+                    <TextBlock Style="{StaticResource Text.Muted}">
+                        <Run Text="Step "/><Run Text="{Binding StepNumber, Mode=OneWay}"/><Run Text=" of "/><Run Text="{Binding StepCount, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+
+            <ItemsControl ItemsSource="{Binding DotStates}" Margin="0,14,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Ellipse Width="7" Height="7" Margin="0,0,6,0" Fill="{Binding Converter={StaticResource BoolToAccentBrushConverter}}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- ================= CONTENT ================= -->
+        <ScrollViewer Grid.Row="1" Margin="32,14,32,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="{Binding CurrentStep.Title, Mode=OneWay}" Style="{StaticResource Text.H2}" FontSize="19" Margin="0,0,0,12"/>
+
+                <ItemsControl ItemsSource="{Binding CurrentStep.Paragraphs, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Mode=OneTime}" Style="{StaticResource Text.Body}" Margin="0,0,0,12"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Style="{StaticResource Card}" Margin="0,4,0,24"
+                        Visibility="{Binding HasDemo, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="🧪 Try it yourself" Style="{StaticResource Text.H2}"/>
+                        <TextBlock Text="{Binding DemoFieldLabel, Mode=OneWay}" Style="{StaticResource Text.Muted}" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding DemoInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource TextBox.Field}" FontFamily="{StaticResource Font.Code}"/>
+
+                        <TextBlock Text="What actually runs" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="0,14,0,4"/>
+                        <Border Style="{StaticResource CodeBlock}">
+                            <TextBlock Text="{Binding DemoSql, Mode=OneWay}" FontFamily="{StaticResource Font.Code}"
+                                       FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource Brush.CodeText}"/>
+                        </Border>
+
+                        <TextBlock Text="{Binding DemoExplain, Mode=OneWay}" Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap" LineHeight="18">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blocked}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DemoIsDangerous}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Critical}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Margin="0,10,0,0" Style="{StaticResource Text.Muted}"
+                                   Visibility="{Binding DemoHint, Converter={StaticResource NotEmptyToVisibilityConverter}}">
+                            <Run Text="💡 Hint: " FontWeight="Bold"/>
+                            <Run Text="{Binding DemoHint, Mode=OneWay}" FontFamily="{StaticResource Font.Code}"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================= FOOTER ================= -->
+        <Grid Grid.Row="2" Margin="32,14,32,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="Skip tutorial" Style="{StaticResource Button.Ghost}" Command="{Binding CloseCommand}"/>
+
+            <Button Grid.Column="2" Content="← Back" Style="{StaticResource Button.Ghost}" Margin="0,0,10,0"
+                    Command="{Binding BackCommand}" IsEnabled="{Binding CanGoBack}"/>
+            <Button Grid.Column="3" Content="{Binding NextButtonLabel, Mode=OneWay}" Style="{StaticResource Button.Primary}"
+                    Padding="18,8" Command="{Binding NextCommand}"/>
+        </Grid>
+    </Grid>
+</Window>

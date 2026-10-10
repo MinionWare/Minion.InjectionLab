@@ -109,6 +109,35 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Opening wizard (Tutorial)
+
+A from-scratch, assume-nothing walkthrough that opens automatically on first
+launch (and any time from the "🎓 Tutorial" nav button) via `TutorialWindow`,
+a modal owned by `MainWindow`. It's deliberately a separate, simpler model
+from the attack catalog:
+
+- `Core/Models/TutorialStep.cs` / `TutorialDemo.cs` — a step is a title + a
+  few narration paragraphs + an optional single-field live demo (one
+  `BuildSql`/`Explain`/`IsDangerous` set of funcs, not the full SQL+C#+
+  PowerShell+multi-fix shape every catalog scenario has to have). That's
+  intentional: the wizard teaches the *concept* once, generically; each
+  catalog entry then owns one technique's full depth. The "every scenario
+  must be identical" consistency rule applies to the attack catalog, not to
+  this onboarding content.
+- `Core/Tutorial/TutorialContent.cs` — 9 steps: what SQL injection is, the
+  core concatenation flaw (with a quote-mark-breaks-the-string demo), then
+  four technique demos (tautology login bypass, UNION data exfiltration,
+  boolean-blind flip, stacked-query piggyback), then "why this keeps
+  happening", the parameterization fix explained conceptually, and a
+  wrap-up pointing at the real catalog/difficulty selector/challenge mode.
+- `Wpf/ViewModels/TutorialViewModel.cs` — step index + Back/Next/Close
+  commands, plus the live demo state (`DemoInput` → recomputed `DemoSql`/
+  `DemoExplain`/`DemoIsDangerous` on every keystroke, same recompute-on-type
+  pattern as `AttackViewModel`).
+- `Services/TutorialService.cs` — a marker file at
+  `%AppData%\Minion.InjectionLab\tutorial-seen.flag` gates the *automatic*
+  first-launch popup only; the nav button always reopens it regardless.
+
 ## Bug: C#-pseudocode guard clauses leaked into the SQL tab
 
 When building the keyword-blacklist Partial fixes, the "guard clause" showing
