@@ -10,7 +10,11 @@ public static class UnionSelectScenario
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
         var s = f["search"].ToLowerInvariant();
-        if (s.Contains("union") && s.Contains("select")) return "injection";
+        if (s.Contains("union") && s.Contains("select"))
+            // A UNION that names a real table (FROM ...) is the actual breach. NULL-only columns
+            // with no FROM are just confirming the column count — reconnaissance, not a leak yet.
+            return s.Contains("from") ? "injection" : "probe";
+        if (s.Contains("order by")) return "probe";
         return "normal";
     }
 
@@ -28,7 +32,8 @@ public static class UnionSelectScenario
         DecisionPaths = new[]
         {
             new DecisionPathDef { Key = "normal", Label = "Normal search", Icon = "🔍", Kind = PathKind.Safe },
-            new DecisionPathDef { Key = "injection", Label = "UNION injection pattern", Icon = "💉", Kind = PathKind.Malicious }
+            new DecisionPathDef { Key = "probe", Label = "Column-count probe", Icon = "🔎", Kind = PathKind.Neutral },
+            new DecisionPathDef { Key = "injection", Label = "UNION targeting a real table", Icon = "💉", Kind = PathKind.Malicious }
         },
         ClassifyInput = Classify,
 
@@ -39,8 +44,9 @@ public static class UnionSelectScenario
             "SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
             $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
 
-        SimulateVulnerable = f => Classify(f) == "injection"
-            ? new SimulationResult
+        SimulateVulnerable = f => Classify(f) switch
+        {
+            "injection" => new SimulationResult
             {
                 Severity = Severity.Critical,
                 Headline = "Usernames and password hashes appear in the product list",
@@ -56,18 +62,38 @@ public static class UnionSelectScenario
                     new Dictionary<string, string> { ["ProductId"] = "—", ["Name"] = "admin", ["Price"] = "8846F...(hash)" },
                     new Dictionary<string, string> { ["ProductId"] = "—", ["Name"] = "svc_billing", ["Price"] = "2C91A...(hash)" }
                 }
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results.", RowCountLabel = "2 rows" },
+            },
+            "probe" => new SimulationResult
+            {
+                Severity = Severity.Warning,
+                Headline = "The query succeeds — this confirms the result set has exactly 3 columns",
+                Detail = "Nothing sensitive leaks from this alone: NULL placeholders (or checking which ORDER BY " +
+                          "position errors out) don't read any real data — they just confirm how many columns the " +
+                          "original SELECT returns, and in what order. That's reconnaissance. The next step is " +
+                          "substituting real column names from a table worth reading.",
+                RowCountLabel = "3 rows — 2 products + 1 row of NULLs"
+            },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results.", RowCountLabel = "2 rows" }
+        },
 
-        SimulateFixed = f => Classify(f) == "injection"
-            ? new SimulationResult
+        SimulateFixed = f => Classify(f) switch
+        {
+            "injection" => new SimulationResult
             {
                 Severity = Severity.Blocked,
                 Headline = "No products match — the payload is just a literal search term",
                 Detail = "The whole value, including the word UNION, is bound as one parameter. There's no SQL text " +
                           "left to re-parse, so a second SELECT can never be appended."
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results, unaffected by the fix.", RowCountLabel = "2 rows" },
+            },
+            "probe" => new SimulationResult
+            {
+                Severity = Severity.Blocked,
+                Headline = "No products match — nothing to probe",
+                Detail = "There's no SQL text left to count columns in: the whole value, NULLs and all, is just a " +
+                          "literal string being searched for in the Name column."
+            },
+            _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results, unaffected by the fix.", RowCountLabel = "2 rows" }
+        },
 
         HowItWorks =
             "UNION combines the results of two SELECT statements into one result set, as long as both sides have the " +
@@ -82,9 +108,9 @@ public static class UnionSelectScenario
 
         SamplePayloads = new[]
         {
+            "' ORDER BY 4--",
             "' UNION SELECT NULL,NULL,NULL --",
-            "' UNION SELECT UserId, UserName, PasswordHash FROM Users --",
-            "' ORDER BY 4--"
+            "' UNION SELECT UserId, UserName, PasswordHash FROM Users --"
         },
 
         ChallengeGoal = "Make the product search return usernames and password hashes instead of products.",
