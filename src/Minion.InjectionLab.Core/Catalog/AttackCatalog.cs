@@ -21,9 +21,11 @@ public static class AttackCatalog
         DynamicSqlStoredProcScenario.Create(),
         SecondOrderScenario.Create(),
         LikeWildcardScenario.Create(),
-        // Next up: comment truncation/error-based (classic/in-band), out-of-band (xp_dirtree/
-        // OPENROWSET), hex/char encoding + Unicode smuggling (delivery/obfuscation), the stored
-        // payload -> rendered-page scenario, post-injection impact (xp_cmdshell/linked-server/
-        // privilege escalation), SQL Agent job step -> admin, non-SQL injection (v1.1).
+        OutOfBandExfilScenario.Create(),
+        HexEncodedBypassScenario.Create(),
+        SqlAgentCmdExecScenario.Create(),
+        // Next up: comment truncation/error-based (classic/in-band), Unicode/homoglyph smuggling
+        // (delivery/obfuscation), the stored payload -> rendered-page scenario, post-injection
+        // impact (xp_cmdshell/linked-server/privilege escalation), non-SQL injection (v1.1).
     };
 }

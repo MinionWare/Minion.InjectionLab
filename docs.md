@@ -401,7 +401,7 @@ Always give `Run.Text` bindings an explicit `Mode=OneTime` or `Mode=OneWay`.
    decision-path diagram, submit/result panels, and challenge panel are all
    generic over `AttackScenario`.
 
-## Planned attack catalog (remaining — 9 of ~30+ built so far)
+## Planned attack catalog (remaining — 13 of ~30+ built so far)
 
 Classic/in-band (built: Tautology, UNION, stacked queries, numeric,
 LIKE wildcard): comment truncation, error-based, INSERT/UPDATE/DELETE
@@ -409,14 +409,23 @@ injection, TOP/OFFSET and HAVING/GROUP BY injection.
 
 Blind/inferential (built: boolean, time-based): error-based blind variants.
 
-Out-of-band: DNS/HTTP exfil via `xp_dirtree` / `OPENROWSET`.
+Out-of-band (built: `OutOfBandExfilScenario` — DNS egress via
+`xp_dirtree`/`xp_subdirs`, the response never changes at all so it's the
+"when even blind techniques give you nothing" scenario; `OPENROWSET`-based
+HTTP egress still open).
 
-Delivery/obfuscation (built: second-order): hex/char encoding, Unicode/
+Delivery/obfuscation (built: second-order, `HexEncodedBypassScenario` — a
+quote-character blacklist defeated by feeding the real command to `EXEC()`
+as a 0x-hex literal, which SQL Server decodes and runs untouched): Unicode/
 homoglyph smuggling, comment/whitespace obfuscation, truncation attacks, and
 the "stored payload renders as code on a web page" scenario (the hex-in-the-DB
 story — needs a small mock "rendered page" panel to land visually; the
 `LeakedRows` grid machinery already built for "View results" can likely
-double as the "what got written to the page" preview).
+double as the "what got written to the page" preview). Note: `HexEncodedBypassScenario`
+covers the WAF/filter-evasion half of the original "hex-stored-payload" idea;
+the rendered-page/stored-XSS half is still open and is arguably a different
+vulnerability class (XSS) riding in on a SQLi-shaped delivery mechanism,
+worth a design decision before building it.
 
 Where parameters don't help (built: ORDER BY identifier injection, dynamic
 SQL in a stored proc): `QUOTENAME`'s 128-char limit, ownership chaining/
@@ -427,12 +436,10 @@ escalation to sysadmin — shown as narration/mechanics only, not a working
 attack recipe. `SimulationResult.AffectedAssets` already exists for the
 "blast radius" lines this needs (e.g. "Login 'webapp' added to sysadmin").
 
-SQL Server Agent/jobs: injecting via job step parameters, including a CmdExec
-step path to Windows admin — this is the "fabu demo" scenario; build it as a
-scenario like any other (premise = a job step that builds a command from a
-parameter, builder = the resulting command text, simulator = narration of
-what runs and as whom, `AffectedAssets` = the privilege-escalation blast
-radius).
+SQL Server Agent/jobs (built: `SqlAgentCmdExecScenario` — a backup file name
+woven into a CmdExec job step's command string; this is plain OS command
+injection reached through SQL Server Agent rather than SQL injection itself,
+and the fix is "don't shell out at all", not a better filter).
 
 Non-SQL injection (v1.1): NoSQL (`$where`/`$ne`), LDAP, XPath, ORM bypass
 (`FromSqlRaw` + interpolation), header/cookie injection, log injection.
