@@ -1,4 +1,5 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
@@ -7,15 +8,19 @@ public static class DynamicSqlStoredProcScenario
 {
     private const string Baseline = "Acme Corp";
 
+    /// <summary>What @sql actually contains at runtime once the proc's N'...' literal is built —
+    /// this (not the doubled-quote proc source text) is what gets parsed to check validity.</summary>
+    private static string RuntimeSql(IReadOnlyDictionary<string, string> f) =>
+        $"SELECT * FROM dbo.Customers WHERE CompanyName LIKE '%{f["customerName"]}%'";
+
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var raw = f["customerName"];
-        var s = raw.ToLowerInvariant();
-        if (s.Contains('\'') && (s.Contains("union") || s.Contains("drop") || s.Contains(';')))
-            // The proc's own template closes with %''''' after the injection point — without a
-            // trailing comment, that leftover text breaks the batch instead of running cleanly.
-            return raw.TrimEnd().EndsWith("--") ? "injection" : "malformed";
-        return "normal";
+        var s = f["customerName"].ToLowerInvariant();
+        if (!s.Contains('\'')) return "normal";
+
+        // Real SQL Server parsing (ScriptDom) of what @sql actually ends up containing, rather
+        // than guessing from the proc source text whether it "looks terminated".
+        return SqlSyntaxChecker.HasSyntaxError(RuntimeSql(f)) ? "malformed" : "injection";
     }
 
     public static AttackScenario Create() => new()

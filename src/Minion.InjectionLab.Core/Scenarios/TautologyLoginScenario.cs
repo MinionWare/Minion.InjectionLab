@@ -1,4 +1,5 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
@@ -10,30 +11,32 @@ public static class TautologyLoginScenario
     private const string BaselineUser = "alice";
     private const string BaselinePassword = "correct-horse-battery-99";
 
+    private static string VulnerableSql(IReadOnlyDictionary<string, string> f) =>
+        $"SELECT UserId, UserName, Role FROM dbo.Users " +
+        $"WHERE UserName = '{f["username"]}' AND PasswordHash = '{f["password"]}';";
+
     // Our fictional baseline values never contain a quote character, so any quote at all signals
     // an attempted string-literal breakout — tautology-style ("' OR 1=1") or truncation-style
     // ("admin'"), it doesn't matter which.
     private static bool LooksLikeBreakoutAttempt(string s) => s.Contains('\'');
 
-    // T-SQL's only single-line comment marker is "--" (unlike MySQL's "#", which does nothing
-    // special here and would just be a stray character).
-    private static bool EndsWithComment(string s) => s.TrimEnd().EndsWith("--");
-
     /// <summary>The four paths any input takes: a real login, an ordinary failed login, a properly
     /// terminated attack, or a near-miss that never neutralizes the rest of the query. Shared by
     /// ClassifyInput (live, pre-submit) and both Simulate functions (post-submit), so the live
-    /// diagram and the final narration always agree.</summary>
+    /// diagram and the final narration always agree. Whether the query is even syntactically valid
+    /// is checked with the real SQL Server parser (ScriptDom) rather than a guessed-at pattern like
+    /// "does it end with --" — that was tried first and got it wrong (see docs.md). A quote
+    /// breakout that parses cleanly is treated as a full bypass; this doesn't model every subtlety
+    /// of operator precedence for payloads that are valid SQL but happen not to fully defeat both
+    /// checks — that would mean evaluating the WHERE clause's boolean logic in general, which is
+    /// out of scope here.</summary>
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
         var username = f["username"];
         var password = f["password"];
 
-        var payloadField = LooksLikeBreakoutAttempt(username) ? username
-            : LooksLikeBreakoutAttempt(password) ? password
-            : null;
-
-        if (payloadField != null)
-            return EndsWithComment(payloadField) ? "injection" : "malformed";
+        if (LooksLikeBreakoutAttempt(username) || LooksLikeBreakoutAttempt(password))
+            return SqlSyntaxChecker.HasSyntaxError(VulnerableSql(f)) ? "malformed" : "injection";
 
         if (username == BaselineUser && password == BaselinePassword) return "correct";
 
@@ -87,9 +90,7 @@ public static class TautologyLoginScenario
         },
         ClassifyInput = Classify,
 
-        BuildVulnerableSql = f =>
-            $"SELECT UserId, UserName, Role FROM dbo.Users " +
-            $"WHERE UserName = '{f["username"]}' AND PasswordHash = '{f["password"]}';",
+        BuildVulnerableSql = VulnerableSql,
 
         BuildFixedSql = f =>
             "-- Parameters bind as typed values, never as SQL text\n" +

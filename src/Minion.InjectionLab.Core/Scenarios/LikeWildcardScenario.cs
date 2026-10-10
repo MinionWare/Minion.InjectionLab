@@ -1,4 +1,5 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
@@ -10,15 +11,17 @@ public static class LikeWildcardScenario
 {
     private const string Baseline = "widget";
 
+    private static string VulnerableSql(IReadOnlyDictionary<string, string> f) =>
+        $"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE '%{f["search"]}%';";
+
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
         var raw = f["search"];
         var s = raw.ToLowerInvariant();
         bool looksLikeSqlBreakout = s.Contains('\'') && (s.Contains(" or ") || s.Contains("union"));
         if (looksLikeSqlBreakout)
-            // Without a trailing comment, the template's own closing "%';" after this value never
-            // gets neutralized — the batch would be a syntax error, not a clean bypass.
-            return s.TrimEnd().EndsWith("--") ? "injection" : "malformed";
+            // Real SQL Server parsing (ScriptDom), not a guessed-at "ends with --" pattern.
+            return SqlSyntaxChecker.HasSyntaxError(VulnerableSql(f)) ? "malformed" : "injection";
         if (raw.Contains('%') || raw.Contains('_')) return "wildcard";
         return "normal";
     }
@@ -43,7 +46,7 @@ public static class LikeWildcardScenario
         },
         ClassifyInput = Classify,
 
-        BuildVulnerableSql = f => $"SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE '%{f["search"]}%';",
+        BuildVulnerableSql = VulnerableSql,
 
         // Two real fixes, not equally complete — this is the point of the scenario.
         Fixes = new[]

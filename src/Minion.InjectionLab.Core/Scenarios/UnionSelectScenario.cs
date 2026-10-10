@@ -1,4 +1,5 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
@@ -7,17 +8,20 @@ public static class UnionSelectScenario
 {
     private const string Baseline = "widget";
 
+    private static string VulnerableSql(IReadOnlyDictionary<string, string> f) =>
+        $"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%{f["search"]}%';";
+
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var raw = f["search"];
-        var s = raw.ToLowerInvariant();
+        var s = f["search"].ToLowerInvariant();
         bool hasUnion = s.Contains("union") && s.Contains("select");
         bool hasOrderBy = s.Contains("order by");
         if (!hasUnion && !hasOrderBy) return "normal";
 
-        // The template's own closing "%';" always follows the injection point — without a
-        // trailing comment to swallow it, the batch never actually parses.
-        if (!raw.TrimEnd().EndsWith("--")) return "malformed";
+        // Real SQL Server parsing (ScriptDom), not a guessed-at "ends with --" pattern — the
+        // template's own closing "%';" always follows the injection point, so this is the
+        // authoritative check for whether the batch would actually run at all.
+        if (SqlSyntaxChecker.HasSyntaxError(VulnerableSql(f))) return "malformed";
 
         // A UNION that names a real table (FROM ...) is the actual breach. NULL-only columns
         // with no FROM are just confirming the column count — reconnaissance, not a leak yet.
@@ -45,8 +49,7 @@ public static class UnionSelectScenario
         },
         ClassifyInput = Classify,
 
-        BuildVulnerableSql = f =>
-            $"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%{f["search"]}%';",
+        BuildVulnerableSql = VulnerableSql,
 
         BuildFixedSql = f =>
             "SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +

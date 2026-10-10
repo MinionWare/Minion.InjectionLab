@@ -1,19 +1,23 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
 /// <summary>Second-order injection: the payload is stored safely, then fires later in a completely different query.</summary>
 public static class SecondOrderScenario
 {
+    /// <summary>Just Step 2 — the query that actually concatenates the stored value — for syntax checking.</summary>
+    private static string Step2Sql(IReadOnlyDictionary<string, string> f) =>
+        $"SELECT * FROM dbo.AuditLog WHERE Description = 'User {f["displayName"]} logged in';";
+
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
-        var raw = f["displayName"];
-        var s = raw.ToLowerInvariant();
-        if (s.Contains('\'') && (s.Contains("drop") || s.Contains("union") || s.Contains(';')))
-            // The admin report's template closes with " logged in'" right after this value —
-            // without a trailing comment, that text is still live SQL and breaks the batch.
-            return raw.TrimEnd().EndsWith("--") ? "injection" : "malformed";
-        return "normal";
+        var s = f["displayName"].ToLowerInvariant();
+        if (!s.Contains('\'')) return "normal";
+
+        // Real SQL Server parsing (ScriptDom) of Step 2, rather than guessing from "does it end
+        // with --" whether the stored value would neutralize the rest of that later query.
+        return SqlSyntaxChecker.HasSyntaxError(Step2Sql(f)) ? "malformed" : "injection";
     }
 
     public static AttackScenario Create() => new()

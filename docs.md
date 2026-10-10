@@ -131,22 +131,44 @@ turns the enum into a friendly header ("Where Parameters Don't Help", etc).
   baseline defaults, hints/answer/results all cleared.
 - Dark/light theme toggle.
 
-## Syntax realism: payloads must actually neutralize what follows them
+## Syntax realism: payloads must actually neutralize what follows them (Services/SqlSyntaxChecker.cs)
 
 Several templates put original query text *after* the injection point (e.g.
 Tautology's `' AND PasswordHash = '{p}';`, UNION/LIKE's trailing `%';`). A
 payload that doesn't comment that out (usually with `--`) wouldn't actually
 run cleanly in real SQL Server — it errors out, or just doesn't achieve a
-full bypass. Scenarios where this matters (Tautology, UnionSelect,
-DynamicSqlStoredProc, SecondOrder, LikeWildcard's SQLi branch) classify this
-as a distinct `"malformed"` path — a warning-severity "this would throw a
-syntax error" outcome — not the full breach. Scenarios whose templates don't
-need a trailing comment to work (StackedQueries, BooleanBlind, TimeBasedBlind,
-NumericInjection, OrderByIdentifier — all numeric/unquoted contexts where the
-only trailing text is a bare `;`) don't need this check. When writing a new
-scenario, check whether the template leaves anything live after the
-injection point, and if so, require the payload to close it out before
-classifying as a full "injection".
+full bypass. The first pass at this used a hand-rolled heuristic
+(`raw.TrimEnd().EndsWith("--")`), which is exactly the kind of guess the app
+is supposed to *replace* for its users, so it was swapped for real SQL Server
+parsing: **`Microsoft.SqlServer.TransactSql.ScriptDom`** (the engine behind
+SSDT/SqlPackage) via `Core/Services/SqlSyntaxChecker.HasSyntaxError(sql)` —
+`TSql160Parser` parses the actual runtime SQL text and reports genuine parse
+errors, so "would this really work" is authoritative, not pattern-matched.
+Verified directly against the parser: `' OR 1=1` (no comment, unquoted) is a
+real syntax error (the password value gets stranded outside any string
+literal); `' OR '1'='1` (no comment, but quoted) is syntactically *valid*
+SQL even though it doesn't fully bypass both checks due to operator
+precedence — a nuance the old heuristic couldn't have told apart either way.
+
+Scenarios where this matters (Tautology, UnionSelect, DynamicSqlStoredProc,
+SecondOrder, LikeWildcard's SQLi branch) classify a syntax error as a
+distinct `"malformed"` path — a warning-severity "this would throw a syntax
+error" outcome — not the full breach. Each exposes a private
+`VulnerableSql(f)` (or, where the vulnerable query is nested inside other
+text — the stored-proc and second-order scenarios — a narrower
+`RuntimeSql(f)`/`Step2Sql(f)`) that both `BuildVulnerableSql` and `Classify`
+call, so there's one source of truth for what actually gets parsed. Scenarios
+whose templates don't need a trailing comment to work (StackedQueries,
+BooleanBlind, TimeBasedBlind, NumericInjection, OrderByIdentifier — all
+numeric/unquoted contexts where the only trailing text is a bare `;`) don't
+use the checker at all. **Known limitation**: "is this syntactically valid"
+is now authoritative; "does a syntactically-valid attempt achieve a full
+bypass" (vs., say, defeating only half of an AND'd condition) is still a
+pattern match against known techniques, not a real boolean-logic evaluation
+of the WHERE clause — that would be a much bigger undertaking. When writing
+a new scenario, check whether the template leaves anything live after the
+injection point, and if so, feed the actual runtime SQL through
+`SqlSyntaxChecker` before classifying as a full "injection".
 
 ## Multiple fixes, graded (Models/FixGrade.cs, FixOption.cs)
 
