@@ -122,8 +122,8 @@ public static class TautologyLoginScenario
                 BuildSql = (f, d) =>
                 {
                     bool blocked = KeywordBlacklist.IsBlocked(f["username"], d, Keywords, ExpertKeywords) || KeywordBlacklist.IsBlocked(f["password"], d, Keywords, ExpertKeywords);
-                    var guard = "if (LooksLikeInjection(username) || LooksLikeInjection(password))\n    reject();\n\n";
-                    return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
+                    // The filter runs in application code, before any SQL is built — see the C#/PowerShell tabs.
+                    return blocked ? "-- Request rejected by the application; no SQL was ever built." : VulnerableSql(f);
                 },
                 BuildCSharp = f =>
                 {

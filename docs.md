@@ -109,6 +109,32 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Bug: C#-pseudocode guard clauses leaked into the SQL tab
+
+When building the keyword-blacklist Partial fixes, the "guard clause" showing
+the filter check (`if (username.Contains("OR")) reject();`) got written into
+`BuildSql` — i.e., it showed up in the **SQL tab**, as if it were T-SQL. It
+isn't; the filter runs in application code, before any SQL is ever built.
+Affected 8 of the 9 blacklist-style Partial fixes (every one except
+LikeWildcard, which never had a guard clause in its SQL tab to begin with).
+
+Fixed by removing the guard clause from every `BuildSql` entirely — the SQL
+tab now shows either the real, unmodified vulnerable SQL (filter didn't catch
+it) or a one-line SQL comment saying the request was rejected before any SQL
+was built. The guard logic itself still correctly lives in `BuildCSharp`/
+`BuildPowerShell`, which already used real C#/PowerShell syntax. **One
+exception**: `DynamicSqlStoredProcScenario`'s check genuinely runs as T-SQL
+inside the proc (against a real `@Name` parameter), so its SQL tab shows an
+actual, valid `IF @Name LIKE '%UNION%' RETURN;` rather than a comment — that
+one scenario is structurally different from the other eight, which are all
+ad hoc application-level string checks with nothing SQL-side to show.
+
+**Lesson for future scenarios**: never put "what the application decided to
+do" into a `BuildSql`/SQL-tab string unless it's also genuinely something
+SQL Server would execute. If in doubt, put it in `BuildCSharp`/
+`BuildPowerShell` instead, or as a plain SQL comment explaining what *didn't*
+run.
+
 ## Every scenario has the same shape (SQL + C# + PowerShell, 2 fixes each)
 
 Earlier iterations left this inconsistent — only 2 of 10 scenarios had

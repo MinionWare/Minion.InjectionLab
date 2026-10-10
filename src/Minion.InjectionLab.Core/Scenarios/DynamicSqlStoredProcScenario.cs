@@ -80,7 +80,11 @@ public static class DynamicSqlStoredProcScenario
                 BuildSql = (f, d) =>
                 {
                     bool blocked = KeywordBlacklist.IsBlocked(f["customerName"], d, Keywords, ExpertKeywords);
-                    var guard = "IF LooksLikeInjection(@Name) RETURN;\n\n";
+                    // Unlike the other scenarios, this check genuinely runs as real T-SQL inside the
+                    // proc, against the real @Name parameter — so it's shown as such here, not just
+                    // in C#/PowerShell. (The exact casing/keyword set still varies by difficulty; this
+                    // is a representative example using the Beginner-level check for readability.)
+                    var guard = "IF @Name LIKE '%UNION%' RETURN;\n\n";
                     return blocked ? guard.TrimEnd() : guard + RuntimeSql(f);
                 },
                 BuildCSharp = f =>

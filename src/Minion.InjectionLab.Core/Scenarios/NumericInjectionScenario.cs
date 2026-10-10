@@ -64,8 +64,8 @@ public static class NumericInjectionScenario
                 BuildSql = (f, d) =>
                 {
                     bool blocked = KeywordBlacklist.IsBlocked(f["productId"], d, Keywords, ExpertKeywords);
-                    var guard = "if (LooksLikeInjection(productId))\n    reject();\n\n";
-                    return blocked ? guard.TrimEnd() : guard + $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};";
+                    // The filter runs in application code, before any SQL is built — see the C#/PowerShell tabs.
+                    return blocked ? "-- Request rejected by the application; no SQL was ever built." : $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};";
                 },
                 BuildCSharp = f =>
                 {

@@ -62,8 +62,8 @@ public static class TimeBasedBlindScenario
                 BuildSql = (f, d) =>
                 {
                     bool blocked = KeywordBlacklist.IsBlocked(f["orderId"], d, Keywords, ExpertKeywords);
-                    var guard = "if (LooksLikeInjection(orderId))\n    reject();\n\n";
-                    return blocked ? guard.TrimEnd() : guard + $"SELECT 1 FROM dbo.Orders WHERE OrderId = {f["orderId"]};";
+                    // The filter runs in application code, before any SQL is built — see the C#/PowerShell tabs.
+                    return blocked ? "-- Request rejected by the application; no SQL was ever built." : $"SELECT 1 FROM dbo.Orders WHERE OrderId = {f["orderId"]};";
                 },
                 BuildCSharp = f =>
                 {

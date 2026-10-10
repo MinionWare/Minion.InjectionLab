@@ -65,8 +65,8 @@ public static class StackedQueriesScenario
                 BuildSql = (f, d) =>
                 {
                     bool blocked = f["orderId"].Contains(';');
-                    var guard = "if (orderId.Contains(\";\"))\n    reject();\n\n";
-                    return blocked ? guard.TrimEnd() : guard + $"SELECT * FROM dbo.Orders WHERE OrderId = {f["orderId"]};";
+                    // The filter runs in application code, before any SQL is built — see the C#/PowerShell tabs.
+                    return blocked ? "-- Request rejected by the application; no SQL was ever built." : $"SELECT * FROM dbo.Orders WHERE OrderId = {f["orderId"]};";
                 },
                 BuildCSharp = f =>
                 {

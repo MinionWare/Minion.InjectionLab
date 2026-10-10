@@ -83,8 +83,14 @@ public static class SecondOrderScenario
                 BuildSql = (f, d) =>
                 {
                     bool blocked = KeywordBlacklist.IsBlocked(f["displayName"], d, Keywords, ExpertKeywords);
-                    var guard = "if (LooksLikeInjection(storedName))\n    skip();\n\n";
-                    return blocked ? guard.TrimEnd() : guard + Step2Sql(f);
+                    // STEP 1 is unchanged (already safe). The STEP 2 filter runs in application code,
+                    // before any SQL is built there — see the C#/PowerShell tabs.
+                    var step1 = "-- STEP 1 (now) — unchanged, already safe:\n" +
+                                "UPDATE dbo.Users SET DisplayName = @DisplayName WHERE UserId = @UserId;\n\n";
+                    var step2 = blocked
+                        ? "-- STEP 2: request skipped by the application; no SQL was ever built."
+                        : "-- STEP 2 (later, a different feature) — the filter didn't catch this phrasing:\n" + Step2Sql(f);
+                    return step1 + step2;
                 },
                 BuildCSharp = f =>
                 {

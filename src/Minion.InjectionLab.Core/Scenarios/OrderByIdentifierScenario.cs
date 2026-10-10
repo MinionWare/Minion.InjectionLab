@@ -61,8 +61,8 @@ public static class OrderByIdentifierScenario
                 {
                     var s = f["sortColumn"];
                     bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
-                    var guard = "if (!AllowList.Any(c => sortColumn.Contains(c)))\n    reject();\n\n";
-                    return passesCheck ? guard + $"SELECT * FROM dbo.Products ORDER BY {s};" : guard.TrimEnd();
+                    // The allow-list check runs in application code, before any SQL is built — see the C#/PowerShell tabs.
+                    return passesCheck ? $"SELECT * FROM dbo.Products ORDER BY {s};" : "-- Request rejected by the application; no SQL was ever built.";
                 },
                 BuildCSharp = f =>
                 {
