@@ -109,6 +109,40 @@ file for the market scan that confirmed the gap.
     affects `HintBudget` (all hints / half / one) and `CanRevealAnswer`
     (Expert can't see the answer button at all).
 
+## Help content (`help/` folder) + interim help wiring
+
+`help/` is a standalone Markdown tree (21 files) with `mkdocs.yml` as the
+nav/menu spec — content-only for now, per explicit instruction ("we'll
+handle the rest later"). It's meant to eventually render through an
+existing Minionware help app (hosted in Blazor) that isn't wired to
+per-topic help IDs yet; `help/README.md` documents that plan (the `<!-- id:
+... -->` convention isn't applied yet — add it when the Blazor side is
+ready). Until then:
+
+- `Help > Feature list` menu item and the nav's "❓ Help" button both call
+  `MainWindow.xaml.cs`'s `HelpButton_Click`, which walks up from
+  `AppContext.BaseDirectory` looking for `help/index.md` and shells out to
+  it via `Process.Start` — whatever app Windows has associated with `.md`
+  opens it. This only works from a dev checkout (the folder isn't
+  published/copied anywhere yet); ship-readiness needs that addressed
+  before release.
+- Small **"ⓘ" help icons** with inline `ToolTip`s (not links yet) sit next
+  to Difficulty, "What actually runs", and "Where the name comes from" —
+  these are the "strategic help icons" the per-topic help IDs should
+  eventually attach to instead of a generic tooltip.
+- The Minionware wordmark in the nav header, and `Minionware > minionware.net`
+  in the menu, both open `https://minionware.net` via `Process.Start`.
+  `Minionware > Other products` is a disabled placeholder menu item.
+
+## Selectable payload/answer text
+
+Sample payloads and the revealed challenge answer were plain `TextBlock`s —
+impossible to select/copy, which matters a lot once a payload (like the
+hex-encoded one) is too fiddly to retype by hand. Both now use a new
+`TextBox.Selectable` style (`IsReadOnly`, transparent background, no
+border, no focus rectangle) — a real `TextBox` that reads like a label but
+supports normal text selection and Ctrl+C.
+
 ## Terminology & further reading (per scenario)
 
 Every `AttackScenario` now carries two more required fields, same consistency

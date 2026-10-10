@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Navigation;
@@ -68,6 +69,26 @@ public partial class MainWindow : Window
     }
 
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void MinionwareLogo_Click(object sender, RoutedEventArgs e)
+        => Process.Start(new ProcessStartInfo("https://minionware.net") { UseShellExecute = true });
+
+    // Interim stand-in for the real help viewer (a Blazor app, not yet wired to per-topic help
+    // IDs) — just shell out to the markdown file with whatever app Windows has associated.
+    // Walks up from the running exe to find the repo's help/ folder since it isn't published
+    // alongside the app yet.
+    private void HelpButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "help", "index.md")))
+            dir = dir.Parent;
+
+        if (dir != null)
+            Process.Start(new ProcessStartInfo(Path.Combine(dir.FullName, "help", "index.md")) { UseShellExecute = true });
+        else
+            MessageBox.Show("Help pages not found — they live in the help/ folder at the repo root.", "Help",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+    }
 
     private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         => new AboutWindow { Owner = this }.ShowDialog();

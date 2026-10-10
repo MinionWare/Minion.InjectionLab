@@ -1,0 +1,45 @@
+# Navigation/menu structure for Minion.InjectionLab's help content.
+#
+# This is written in mkdocs' own nav format on purpose — it's both a real,
+# runnable mkdocs site (`pip install mkdocs && mkdocs serve` from this
+# folder, after adding a docs_dir pointing at these files) AND the spec
+# the in-app Blazor help viewer should use once it's wired to per-topic
+# help IDs (see help/README.md). Each page's `id: ...` HTML comment at the
+# top of its .md file is the help ID the app's "?" icons will eventually
+# target — that wiring doesn't exist yet, this is just the map for it.
+
+site_name: Minion.InjectionLab Help
+site_description: Help, feature tour, and attack catalog reference for Minion.InjectionLab
+
+nav:
+  - Welcome: index.md
+  - Getting Started:
+      - First Launch: getting-started/welcome.md
+      - The Opening Tutorial: getting-started/tutorial-wizard.md
+      - Difficulty Levels: getting-started/difficulty-levels.md
+  - Features:
+      - Feature List: features/overview.md
+  - Attack Catalog:
+      - Overview: catalog/overview.md
+      - Classic / In-Band:
+          - Tautology / Login Bypass: catalog/tautology-login-bypass.md
+          - UNION-Based Injection: catalog/union-based-injection.md
+          - Stacked Queries: catalog/stacked-queries.md
+          - Numeric Injection: catalog/numeric-injection.md
+          - LIKE Wildcard Abuse: catalog/like-wildcard-abuse.md
+      - Blind / Inferential:
+          - Boolean-Blind Injection: catalog/boolean-blind-injection.md
+          - Time-Based Blind Injection: catalog/time-based-blind-injection.md
+      - Where Parameters Don't Help:
+          - Identifier Injection (ORDER BY): catalog/order-by-identifier-injection.md
+          - Dynamic SQL in a Stored Procedure: catalog/dynamic-sql-stored-procedure.md
+      - Delivery & Obfuscation:
+          - Second-Order Injection: catalog/second-order-injection.md
+          - Hex-Encoded Literal Bypass: catalog/hex-encoded-bypass.md
+      - Out-of-Band:
+          - Out-of-Band Exfiltration (DNS): catalog/out-of-band-exfiltration.md
+      - SQL Server Agent & Jobs:
+          - CmdExec Job Step Escalation: catalog/sql-agent-cmdexec-escalation.md
+  - Challenge Mode: challenge-mode.md
+  - About:
+      - Minionware: about/minionware.md

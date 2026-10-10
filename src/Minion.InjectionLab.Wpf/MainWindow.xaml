@@ -34,9 +34,14 @@
                 <MenuItem Header="Toggle theme" Command="{Binding ToggleThemeCommand}"/>
             </MenuItem>
             <MenuItem Header="_Help">
+                <MenuItem Header="Feature list" Click="HelpButton_Click"/>
                 <MenuItem Header="Show tutorial" Click="TutorialButton_Click"/>
                 <Separator/>
                 <MenuItem Header="About Minion.InjectionLab" Click="AboutMenuItem_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Minionware">
+                <MenuItem Header="minionware.net" Click="MinionwareLogo_Click"/>
+                <MenuItem Header="Other products (coming soon)" IsEnabled="False"/>
             </MenuItem>
         </Menu>
 
@@ -45,8 +50,15 @@
                 BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
-                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="20"
-                           HorizontalAlignment="Left" Margin="0,0,0,14"/>
+                    <Button HorizontalAlignment="Left" Margin="0,0,0,14" Padding="0" Background="Transparent" BorderThickness="0"
+                            Cursor="Hand" ToolTip="minionware.net" Click="MinionwareLogo_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="20"/>
+                    </Button>
 
                     <StackPanel Orientation="Horizontal">
                         <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
@@ -64,8 +76,15 @@
                     <Button Content="🎓  Tutorial" Margin="0,4,0,0" HorizontalAlignment="Stretch"
                             Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
                             Click="TutorialButton_Click"/>
+                    <Button Content="❓  Help" Margin="0,4,0,0" HorizontalAlignment="Stretch"
+                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
+                            Click="HelpButton_Click" ToolTip="Opens the feature list (help/index.md) — the full in-app help viewer is coming later"/>
 
-                    <TextBlock Text="DIFFICULTY" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="2,16,0,6"/>
+                    <StackPanel Orientation="Horizontal" Margin="2,16,0,6">
+                        <TextBlock Text="DIFFICULTY" Style="{StaticResource Text.Muted}" FontWeight="Bold"/>
+                        <TextBlock Text="ⓘ" Margin="5,0,0,0" Cursor="Help" Foreground="{DynamicResource Brush.TextMuted}"
+                                   ToolTip="Changes how forgiving the weak 'Partial' fixes are at catching an attack — Beginner lets obvious attempts through easily, Expert makes you work harder to find the gap. It never changes which techniques exist, only how easily the naive fix catches them."/>
+                    </StackPanel>
                     <Border Background="{DynamicResource Brush.Bg2}" CornerRadius="16" Padding="3">
                         <UniformGrid Columns="3">
                             <ToggleButton Content="Beginner" Style="{StaticResource Button.Segment}"
@@ -156,11 +175,12 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Style="{StaticResource Text.Body}" Margin="0,8,0,0"
-                                   Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <Run Text="Answer: " FontWeight="SemiBold"/>
-                            <Run Text="{Binding Scenario.ChallengeAnswer, Mode=OneTime}" FontFamily="{StaticResource Font.Code}"/>
-                        </TextBlock>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                    Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Answer: " FontWeight="SemiBold" Style="{StaticResource Text.Body}" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding Scenario.ChallengeAnswer, Mode=OneTime}" Style="{StaticResource TextBox.Selectable}"
+                                     FontFamily="{StaticResource Font.Code}" FontSize="13"/>
+                        </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                             <Button Content="💡 Give me a hint" Style="{StaticResource Button.Primary}" Margin="0,0,8,0"
@@ -340,7 +360,11 @@
                         <Border Style="{StaticResource Card}" Margin="0,14,0,0">
                             <StackPanel>
                                 <Grid>
-                                    <TextBlock Text="What actually runs" Style="{StaticResource Text.H2}" HorizontalAlignment="Left"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                        <TextBlock Text="What actually runs" Style="{StaticResource Text.H2}"/>
+                                        <TextBlock Text="ⓘ" Margin="6,0,0,0" Cursor="Help" Foreground="{DynamicResource Brush.TextMuted}"
+                                                   ToolTip="Switch between Vulnerable and each graded fix using the tabs below — red/amber/green shows how good that fix really is. SQL, C# and PowerShell tabs below that all show the same logic in each language."/>
+                                    </StackPanel>
                                     <Border CornerRadius="10" Padding="10,2" HorizontalAlignment="Right" VerticalAlignment="Top"
                                             Background="{DynamicResource Brush.AccentMuted}"
                                             Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
@@ -463,8 +487,9 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="{DynamicResource Brush.Bg2}" CornerRadius="5" Padding="8,5" Margin="0,3,0,3">
-                                                <TextBlock Text="{Binding}" FontFamily="{StaticResource Font.Code}" FontSize="11"
-                                                           Foreground="{DynamicResource Brush.Accent}" TextWrapping="Wrap"/>
+                                                <TextBox Text="{Binding Mode=OneTime}" Style="{StaticResource TextBox.Selectable}"
+                                                         FontFamily="{StaticResource Font.Code}" FontSize="11"
+                                                         Foreground="{DynamicResource Brush.Accent}"/>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -498,7 +523,11 @@
                 <!-- Terminology & further reading -->
                 <Border Style="{StaticResource Card}" Margin="0,14,0,0">
                     <StackPanel>
-                        <TextBlock Text="Where the name comes from" Style="{StaticResource Text.H2}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Where the name comes from" Style="{StaticResource Text.H2}"/>
+                            <TextBlock Text="ⓘ" Margin="6,0,0,6" Cursor="Help" Foreground="{DynamicResource Brush.TextMuted}"
+                                       ToolTip="Every attack here is checked against independent, external sources — OWASP, PortSwigger, Microsoft Learn, or the original academic literature — not just this app's own say-so. Click any link below to open it in your browser."/>
+                        </StackPanel>
                         <TextBlock Text="{Binding Scenario.TerminologyNote}" Style="{StaticResource Text.Body}" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Further reading" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="0,4,0,4"/>

@@ -66,6 +66,20 @@
         <Setter Property="FontSize" Value="13"/>
     </Style>
 
+    <!-- Looks like a plain label but is a real (read-only) TextBox, so the text can be selected
+         and copied — used anywhere we show a payload the reader is meant to paste elsewhere. -->
+    <Style x:Key="TextBox.Selectable" TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="IsReadOnly" Value="True"/>
+        <Setter Property="IsReadOnlyCaretVisible" Value="True"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Cursor" Value="IBeam"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+    </Style>
+
     <Style x:Key="PasswordBox.Field" TargetType="PasswordBox">
         <Setter Property="Background" Value="{DynamicResource Brush.Bg2}"/>
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
