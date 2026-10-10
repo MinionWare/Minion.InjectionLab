@@ -21,6 +21,7 @@
             <conv:FixTabIndexConverter x:Key="FixTabIndexConverter"/>
             <conv:PathKindToBrushConverter x:Key="PathKindToBrushConverter"/>
             <conv:PathActiveConverter x:Key="PathActiveConverter"/>
+            <conv:FixGradeToTabStyleConverter x:Key="FixGradeToTabStyleConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

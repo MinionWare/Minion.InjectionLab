@@ -11,7 +11,8 @@
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
         Title="Minion.InjectionLab" Height="900" Width="1420" MinHeight="680" MinWidth="1150"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="Resources/Branding/AppIcon.png">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="280"/>
@@ -24,8 +25,8 @@
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="30" Height="30" CornerRadius="7" Background="{DynamicResource Brush.Accent}" Margin="0,0,10,0">
-                            <TextBlock Text="⛉" FontSize="15" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
+                            <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="16"/>
@@ -52,6 +53,10 @@
                         </UniformGrid>
                     </Border>
                 </StackPanel>
+
+                <Border DockPanel.Dock="Bottom" Padding="18,10" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0">
+                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="18" HorizontalAlignment="Left" Opacity="0.85"/>
+                </Border>
 
                 <ListBox x:Name="AttacksList" DockPanel.Dock="Top"
                          Background="Transparent" BorderThickness="0"
@@ -337,9 +342,9 @@
                                 <TabControl Margin="0,10,0,0" Padding="0"
                                             Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}}"
                                             SelectedIndex="{Binding CurrentFixIndex, Converter={StaticResource FixTabIndexConverter}}">
-                                    <TabItem Header="⚠ Vulnerable" Style="{StaticResource TabItem.Code}"/>
-                                    <TabItem Header="{Binding Fixes[0].Label}" Style="{StaticResource TabItem.Code}"/>
-                                    <TabItem Header="{Binding Fixes[1].Label}" Style="{StaticResource TabItem.Code}"/>
+                                    <TabItem Header="⚠ Vulnerable" Style="{StaticResource TabItem.Code.Vulnerable}"/>
+                                    <TabItem Header="{Binding Fixes[0].Label}" Style="{Binding Fixes[0].Grade, Converter={StaticResource FixGradeToTabStyleConverter}}"/>
+                                    <TabItem Header="{Binding Fixes[1].Label}" Style="{Binding Fixes[1].Grade, Converter={StaticResource FixGradeToTabStyleConverter}}"/>
                                 </TabControl>
 
                                 <!-- What the currently-selected fix still misses, if anything -->

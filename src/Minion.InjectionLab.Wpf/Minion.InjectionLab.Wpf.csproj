@@ -15,12 +15,18 @@
     <EmbeddedResource Include="Resources\PowerShellHighlighting.xshd" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\Branding\AppIcon.png" />
+    <Resource Include="Resources\Branding\MinionwareWordmark.png" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\Branding\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>
