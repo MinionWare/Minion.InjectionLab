@@ -139,7 +139,27 @@
             </Grid.Background>
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="620">
-                <Grid HorizontalAlignment="Center" Width="220" Height="220">
+                <Grid HorizontalAlignment="Center" Width="220" Height="220"
+                      RenderTransformOrigin="0.5,0.5" Opacity="0">
+                    <Grid.RenderTransform>
+                        <ScaleTransform ScaleX="0.4" ScaleY="0.4"/>
+                    </Grid.RenderTransform>
+                    <Grid.Triggers>
+                        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.45"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.65">
+                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.5"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.65">
+                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.5"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Grid.Triggers>
+
                     <Ellipse Width="220" Height="220" Fill="{DynamicResource Brush.Accent}" Opacity="0.22">
                         <Ellipse.Effect>
                             <BlurEffect Radius="50"/>
@@ -153,25 +173,51 @@
                 </Grid>
 
                 <TextBlock Text="FROM" Style="{StaticResource Text.Muted}" FontSize="10" FontWeight="Bold"
-                           HorizontalAlignment="Center" Margin="0,26,0,8"/>
-                <Button HorizontalAlignment="Center" Padding="10,8" Background="{DynamicResource Brush.Bg2}"
-                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Cursor="Hand"
-                        ToolTip="minionware.net" Click="MinionwareLogo_Click">
+                           HorizontalAlignment="Center" Margin="0,30,0,10"/>
+                <Button HorizontalAlignment="Center" Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        ToolTip="minionware.net" Click="MinionwareLogo_Click"
+                        RenderTransformOrigin="0.5,0.5" Opacity="0">
+                    <Button.RenderTransform>
+                        <ScaleTransform ScaleX="0.3" ScaleY="0.3"/>
+                    </Button.RenderTransform>
+                    <Button.Triggers>
+                        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.5" BeginTime="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.7" BeginTime="0:0:0.15">
+                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.7" BeginTime="0:0:0.15">
+                                        <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.6"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Button.Triggers>
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                <ContentPresenter/>
-                            </Border>
+                            <ContentPresenter/>
                         </ControlTemplate>
                     </Button.Template>
-                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="46"/>
+                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="68"/>
                 </Button>
 
-                <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="36" FontWeight="Bold"
-                           HorizontalAlignment="Center" Margin="0,26,0,6"/>
-                <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
-                           Style="{StaticResource Text.Muted}" FontSize="15" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                <StackPanel Opacity="0">
+                    <StackPanel.Triggers>
+                        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.6" BeginTime="0:0:0.35"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </StackPanel.Triggers>
+                    <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="36" FontWeight="Bold"
+                               HorizontalAlignment="Center" Margin="0,26,0,6"/>
+                    <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
+                               Style="{StaticResource Text.Muted}" FontSize="15" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
 
                 <Border Style="{StaticResource Card}" Margin="0,28,0,0" BorderBrush="{DynamicResource Brush.Blocked}" BorderThickness="1.5">
                     <StackPanel>
