@@ -57,6 +57,11 @@ public partial class MainWindow : Window
         tutorial.ShowDialog();
     }
 
+    private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        => new AboutWindow { Owner = this }.ShowDialog();
+
     private void TrackAttack(AttackViewModel? attack)
     {
         if (_trackedAttack != null)

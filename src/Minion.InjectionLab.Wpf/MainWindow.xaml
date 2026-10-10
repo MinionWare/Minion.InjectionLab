@@ -15,13 +15,33 @@
         WindowStyle="SingleBorderWindow" ResizeMode="CanResize"
         Icon="Resources/Branding/AppIcon.png">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="280"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- ================= MENU BAR ================= -->
+        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.Bg1}"
+              Foreground="{DynamicResource Brush.TextPrimary}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1">
+            <MenuItem Header="_File">
+                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="Toggle theme" Command="{Binding ToggleThemeCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="Show tutorial" Click="TutorialButton_Click"/>
+                <Separator/>
+                <MenuItem Header="About Minion.InjectionLab" Click="AboutMenuItem_Click"/>
+            </MenuItem>
+        </Menu>
+
         <!-- ================= LEFT NAV ================= -->
-        <Border Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
+        <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
                 BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
@@ -87,7 +107,7 @@
         </Border>
 
         <!-- ================= RIGHT CONTENT ================= -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="28,24,28,32" DataContext="{Binding SelectedAttack}">
 
                 <!-- Header -->
