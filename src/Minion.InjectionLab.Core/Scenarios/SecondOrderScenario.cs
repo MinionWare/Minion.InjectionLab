@@ -46,12 +46,67 @@ public static class SecondOrderScenario
             "-- the *stored* display name into a new query, trusting it as \"our own data\":\n" +
            $"SELECT * FROM dbo.AuditLog WHERE Description = 'User {f["displayName"]} logged in';",
 
-        BuildFixedSql = f =>
-            "-- STEP 1 — unchanged, already safe:\n" +
-            "UPDATE dbo.Users SET DisplayName = @DisplayName WHERE UserId = @UserId;\n\n" +
-            "-- STEP 2 — now ALSO parameterized (this was the actual missing fix):\n" +
-            "SELECT * FROM dbo.AuditLog WHERE Description = @Description;\n" +
-           $"@Description = N'User {f["displayName"]} logged in'",
+        // Two real fixes people actually ship, not equally complete: a keyword blacklist on Step 2
+        // (looks like a fix, isn't one) vs. actually parameterizing Step 2.
+        Fixes = new[]
+        {
+            new FixOption
+            {
+                Label = "⚠ Block names containing \"DROP\"/\"UNION\"",
+                Grade = FixGrade.Partial,
+                Gap = "Checks for the literal uppercase words \"DROP\"/\"UNION\" when the report runs — lowercase " +
+                      "sails straight through, and this does nothing for any technique that doesn't need those " +
+                      "specific words (e.g. reading data some other way).",
+                BuildSql = f =>
+                {
+                    var s = f["displayName"];
+                    bool blocked = s.Contains("DROP") || s.Contains("UNION");
+                    return "-- Naive defense, checked when the admin report runs Step 2:\n" +
+                           "if (storedName.Contains(\"DROP\") || storedName.Contains(\"UNION\")) { skip(); }\n\n" +
+                           (blocked ? "-- skipped before Step 2 even builds its query" : Step2Sql(f));
+                },
+                Simulate = f =>
+                {
+                    var s = f["displayName"];
+                    bool filterCaughtIt = s.Contains("DROP") || s.Contains("UNION");
+                    if (Classify(f) == "injection" && !filterCaughtIt)
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "The payload still executes when the report runs — the filter never saw it",
+                            Detail = "The blacklist only checks for exact uppercase words. Different casing — or a " +
+                                      "payload phrased without needing those words at all — walks straight past it.",
+                            AffectedAssets = new[] { "dbo.AuditLog — statement executes whenever an admin views recent activity" }
+                        };
+                    if (filterCaughtIt)
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Report skips this entry — contains a blocked word", Detail = "This specific payload happened to use an exact uppercase word the filter checks for." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, the filter never engages later either." };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Parameterize Step 2 too",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                    "-- STEP 1 — unchanged, already safe:\n" +
+                    "UPDATE dbo.Users SET DisplayName = @DisplayName WHERE UserId = @UserId;\n\n" +
+                    "-- STEP 2 — now ALSO parameterized (this was the actual missing fix):\n" +
+                    "SELECT * FROM dbo.AuditLog WHERE Description = @Description;\n" +
+                   $"@Description = N'User {f["displayName"]} logged in'",
+                Simulate = f => Classify(f) switch
+                {
+                    "injection" or "malformed" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "The activity report treats the stored name as a literal value too",
+                        Detail = "Step 1 was never the problem. Fixing Step 2 — the query that actually concatenates — closes " +
+                                  "the hole regardless of what gets stored in Step 1."
+                    },
+                    _ => new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, unaffected by the fix." }
+                }
+            }
+        },
 
         SimulateVulnerable = f => Classify(f) switch
         {
@@ -75,17 +130,6 @@ public static class SecondOrderScenario
             _ => new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, nothing unusual happens later either." }
         },
 
-        SimulateFixed = f => Classify(f) switch
-        {
-            "injection" or "malformed" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "The activity report treats the stored name as a literal value too",
-                Detail = "Step 1 was never the problem. Fixing Step 2 — the query that actually concatenates — closes " +
-                          "the hole regardless of what gets stored in Step 1."
-            },
-            _ => new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, unaffected by the fix." }
-        },
 
         HowItWorks =
             "Second-order injection splits the attack across two steps: the data is stored safely (often through a " +
@@ -100,7 +144,8 @@ public static class SecondOrderScenario
         SamplePayloads = new[]
         {
             "Robert'); DROP TABLE AuditLog;--",
-            "x' UNION SELECT UserName, PasswordHash, NULL FROM Users--"
+            "x' UNION SELECT UserName, PasswordHash, NULL FROM Users--",
+            "Robert'); drop table AuditLog;--"
         },
 
         ChallengeGoal = "Get a value stored as your display name to execute as SQL later, in a feature that never directly touched your input.",

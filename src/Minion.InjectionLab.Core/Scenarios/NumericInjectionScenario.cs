@@ -40,13 +40,64 @@ public static class NumericInjectionScenario
             "var sql = $\"SELECT * FROM dbo.Products WHERE ProductId = {productId}\";\n" +
             "using var cmd = new SqlCommand(sql, connection);",
 
-        BuildFixedSql = f =>
-            "EXEC sp_executesql N'SELECT * FROM dbo.Products WHERE ProductId = @ProductId', N'@ProductId INT', @ProductId;\n\n" +
-            $"@ProductId = {f["productId"]}  -- must actually parse as INT before this even runs",
-
-        BuildFixedCSharp = f =>
-            "using var cmd = new SqlCommand(\"SELECT * FROM dbo.Products WHERE ProductId = @ProductId\", connection);\n" +
-            "cmd.Parameters.Add(\"@ProductId\", SqlDbType.Int).Value = productId; // throws if productId isn't an int",
+        // Two real fixes people actually ship, not equally complete: a keyword blacklist (looks
+        // like a fix, isn't one) vs. a strongly-typed parameter.
+        Fixes = new[]
+        {
+            new FixOption
+            {
+                Label = "⚠ Block input containing \"OR\"",
+                Grade = FixGrade.Partial,
+                Gap = "Checks for the literal uppercase word \"OR\" — lowercase \"or\" sails straight through. And " +
+                      "this only ever blocks one specific keyword; UNION, semicolons, and anything else non-numeric " +
+                      "are all still wide open.",
+                BuildSql = f =>
+                {
+                    bool blocked = f["productId"].Contains("OR");
+                    return "-- Naive defense: reject the request if the raw input contains \"OR\"\n" +
+                           "if (productId.Contains(\"OR\")) { reject(); }\n\n" +
+                           (blocked ? "-- blocked before reaching SQL at all" : $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};");
+                },
+                Simulate = f =>
+                {
+                    bool filterCaughtIt = f["productId"].Contains("OR");
+                    if (Classify(f) == "injection" && !filterCaughtIt)
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "Every single product in the catalog is returned — the filter never saw it",
+                            Detail = "The blacklist only checks for the exact uppercase word \"OR\". Lowercase, or any " +
+                                      "payload that doesn't need that specific word, walks straight past it.",
+                            RowCountLabel = "all rows",
+                            AffectedAssets = new[] { "dbo.Products — the entire catalog exposed" }
+                        };
+                    if (filterCaughtIt)
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — contains \"OR\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "Product #42 found", Detail = "Ordinary lookup, the filter never engages." };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Strongly-typed parameter",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                    "EXEC sp_executesql N'SELECT * FROM dbo.Products WHERE ProductId = @ProductId', N'@ProductId INT', @ProductId;\n\n" +
+                    $"@ProductId = {f["productId"]}  -- must actually parse as INT before this even runs",
+                BuildCSharp = f =>
+                    "using var cmd = new SqlCommand(\"SELECT * FROM dbo.Products WHERE ProductId = @ProductId\", connection);\n" +
+                    "cmd.Parameters.Add(\"@ProductId\", SqlDbType.Int).Value = productId; // throws if productId isn't an int",
+                Simulate = f => Classify(f) == "injection"
+                    ? new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "Rejected before it ever reaches the database",
+                        Detail = "The parameter is declared as SqlDbType.Int. A value that doesn't actually parse as an " +
+                                  "integer fails at the provider/type-conversion layer — the SQL engine never even sees it."
+                    }
+                    : new SimulationResult { Severity = Severity.Success, Headline = "Product #42 found", Detail = "Ordinary lookup, unaffected by the fix." }
+            }
+        },
 
         SimulateVulnerable = f => Classify(f) == "injection"
             ? new SimulationResult
@@ -62,15 +113,6 @@ public static class NumericInjectionScenario
             }
             : new SimulationResult { Severity = Severity.Success, Headline = "Product #42 found", Detail = "Ordinary lookup." },
 
-        SimulateFixed = f => Classify(f) == "injection"
-            ? new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "Rejected before it ever reaches the database",
-                Detail = "The parameter is declared as SqlDbType.Int. A value that doesn't actually parse as an " +
-                          "integer fails at the provider/type-conversion layer — the SQL engine never even sees it."
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = "Product #42 found", Detail = "Ordinary lookup, unaffected by the fix." },
 
         HowItWorks =
             "Quote characters only matter because they close a string literal early. When a value is concatenated in " +
@@ -86,7 +128,8 @@ public static class NumericInjectionScenario
         {
             "42 OR 1=1",
             "42; DROP TABLE Products--",
-            "42 UNION SELECT UserName, PasswordHash, NULL, NULL FROM Users--"
+            "42 UNION SELECT UserName, PasswordHash, NULL, NULL FROM Users--",
+            "42 or 1=1"
         },
 
         ChallengeGoal = "Get every product to show up on a single-product lookup page — without typing a single quote character.",

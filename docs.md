@@ -190,10 +190,46 @@ the plain toggle when `HasMultipleFixes` is false, or a segmented
 "Compare: ⚠ Vulnerable / Fix A / Fix B" row when true, plus a callout showing
 the selected fix's `Gap` if it has one. **Known limitation**: the XAML
 currently hard-codes exactly two fix-option buttons (`Fixes[0]`, `Fixes[1]`)
-rather than iterating an arbitrary-length list — fine for now since only
-LikeWildcard uses more than one fix, but revisit (an `ItemsControl` +
+rather than iterating an arbitrary-length list — fine since every multi-fix
+scenario currently has exactly two, but revisit (an `ItemsControl` +
 `AlternationIndex` binding, same pattern as the decision-path diagram) if a
 future scenario needs three or more.
+
+**7 of 10 scenarios now have two fixes** (Tautology, UnionSelect,
+NumericInjection, DynamicSqlStoredProc, SecondOrder, OrderByIdentifier,
+LikeWildcard), following one of two patterns:
+- **Keyword blacklist (Partial) vs. parameterization (Best)** — Tautology,
+  UnionSelect, NumericInjection, DynamicSqlStoredProc, SecondOrder. The
+  blacklist checks for one exact uppercase keyword (`"OR"`, `"UNION"`,
+  `"DROP"`); the Gap is always the same honest point — SQL keywords aren't
+  case-sensitive to the engine, so `union`/`or`/`drop` (lowercase) walk
+  straight past a naive filter, and each scenario's `SamplePayloads` includes
+  a lowercase variant that demonstrates exactly that. This is also why the
+  teaching tool's very first design note ("include a failing blacklist —
+  it's worth showing why filtering isn't a fix") finally has a concrete,
+  reusable implementation.
+- **Allow-list done wrong vs. done right** — OrderByIdentifier specifically:
+  Partial uses `Contains` instead of an exact match and then concatenates
+  the *raw* input anyway (not a hard-coded safe value) — a very common real
+  logic bug — so `"Name; WAITFOR DELAY..."` passes the check (it does
+  contain "Name" as a substring) and still runs. Best is an exact-match
+  allow-list that substitutes a hard-coded literal, with `QUOTENAME` as
+  defense in depth.
+- **Partial-vs-Best by missing a different concern entirely** —
+  LikeWildcard: parameterizing stops SQL injection but not LIKE's own
+  wildcard syntax; escaping `%`/`_`/`[` on top of that closes the remaining
+  gap. This is the one scenario where the "partial" fix isn't a fake/naive
+  pattern — it's a real, complete fix for a *different* problem than the one
+  still open.
+
+**Deliberately left single-fix, with the reasoning written into their
+`HowItWorks`/comments**: StackedQueries (blacklisting the one required
+character, `;`, doesn't have a clean realistic bypass in this simplified
+single-field demo — unlike a keyword, there's no case-variation trick for a
+punctuation character), BooleanBlind and TimeBasedBlind (blind techniques
+work precisely *because* they don't depend on any one keyword, so there's no
+honest "weaker-but-real" mitigation to contrast against parameterization —
+inventing one would be dishonest to the lesson).
 
 ## Gotcha: `Run.Text` bindings default to TwoWay
 

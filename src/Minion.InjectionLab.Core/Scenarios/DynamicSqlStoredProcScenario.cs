@@ -48,11 +48,64 @@ public static class DynamicSqlStoredProcScenario
            $"SET @sql = N'SELECT * FROM dbo.Customers WHERE CompanyName LIKE ''%{f["customerName"]}%''';\n" +
             "EXEC(@sql);  -- the proc boundary provides zero protection here",
 
-        BuildFixedSql = f =>
-            "-- Inside dbo.SearchCustomers:\n" +
-            "DECLARE @sql NVARCHAR(MAX) = N'SELECT * FROM dbo.Customers WHERE CompanyName LIKE @Pattern';\n" +
-           $"DECLARE @Pattern NVARCHAR(102) = N'%' + @Name + N'%';  -- @Name = '{f["customerName"]}'\n" +
-            "EXEC sp_executesql @sql, N'@Pattern NVARCHAR(102)', @Pattern;",
+        // Two real fixes people actually ship, not equally complete: a keyword blacklist inside
+        // the proc (looks like a fix, isn't one) vs. sp_executesql with a real parameter.
+        Fixes = new[]
+        {
+            new FixOption
+            {
+                Label = "⚠ Block names containing \"UNION\"",
+                Grade = FixGrade.Partial,
+                Gap = "Checks for the literal uppercase word \"UNION\" inside the proc — lowercase \"union\" sails " +
+                      "straight through, and this does nothing for any other technique (stacked queries, truncation).",
+                BuildSql = f =>
+                {
+                    bool blocked = f["customerName"].Contains("UNION");
+                    return "-- Naive defense, still inside the proc:\n" +
+                           "IF @Name LIKE '%UNION%' RETURN; -- reject and bail out\n\n" +
+                           (blocked ? "-- blocked before @sql is even built" : RuntimeSql(f));
+                },
+                Simulate = f =>
+                {
+                    bool filterCaughtIt = f["customerName"].Contains("UNION");
+                    if (Classify(f) == "injection" && !filterCaughtIt)
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "The dynamic SQL still gets rewritten — the filter never saw it",
+                            Detail = "The blacklist only checks for the exact uppercase word \"UNION\" inside the proc. " +
+                                      "Different casing walks straight past it into the same vulnerable EXEC(@sql).",
+                            AffectedAssets = new[] { "dbo.Users — exposed through a 'safe-looking' stored procedure" }
+                        };
+                    if (filterCaughtIt)
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Proc returns early — contains \"UNION\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search, the filter never engages." };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ sp_executesql with a parameter",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                    "-- Inside dbo.SearchCustomers:\n" +
+                    "DECLARE @sql NVARCHAR(MAX) = N'SELECT * FROM dbo.Customers WHERE CompanyName LIKE @Pattern';\n" +
+                   $"DECLARE @Pattern NVARCHAR(102) = N'%' + @Name + N'%';  -- @Name = '{f["customerName"]}'\n" +
+                    "EXEC sp_executesql @sql, N'@Pattern NVARCHAR(102)', @Pattern;",
+                Simulate = f => Classify(f) switch
+                {
+                    "injection" or "malformed" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "sp_executesql keeps @Pattern as a value — the proc is still dynamic, but safely",
+                        Detail = "The query shape can still vary at runtime (that's what makes it 'dynamic SQL'), but the " +
+                                  "customer's name is passed as a declared parameter, so it can never break out of the " +
+                                  "string it's bound into."
+                    },
+                    _ => new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search, unaffected by the fix." }
+                }
+            }
+        },
 
         SimulateVulnerable = f => Classify(f) switch
         {
@@ -75,19 +128,6 @@ public static class DynamicSqlStoredProcScenario
             _ => new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search." }
         },
 
-        SimulateFixed = f => Classify(f) switch
-        {
-            "injection" or "malformed" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "sp_executesql keeps @Pattern as a value — the proc is still dynamic, but safely",
-                Detail = "The query shape can still vary at runtime (that's what makes it 'dynamic SQL'), but the " +
-                          "customer's name is passed as a declared parameter, so it can never break out of the " +
-                          "string it's bound into."
-            },
-            _ => new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search, unaffected by the fix." }
-        },
-
         HowItWorks =
             "A stored procedure is just a named, pre-compiled batch of T-SQL — it has no special immunity to " +
             "injection. If the code inside that proc builds a SQL string via concatenation and runs it with EXEC(), " +
@@ -102,7 +142,8 @@ public static class DynamicSqlStoredProcScenario
         SamplePayloads = new[]
         {
             "Acme%' UNION SELECT UserName, PasswordHash, NULL, NULL FROM Users--",
-            "x'; DROP TABLE Customers--"
+            "x'; DROP TABLE Customers--",
+            "Acme%' union select UserName, PasswordHash, NULL, NULL FROM Users--"
         },
 
         ChallengeGoal = "Make the customer search stored procedure return the Users table instead of Customers.",

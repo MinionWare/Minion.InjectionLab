@@ -51,9 +51,84 @@ public static class UnionSelectScenario
 
         BuildVulnerableSql = VulnerableSql,
 
-        BuildFixedSql = f =>
-            "SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
-            $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
+        // Two real fixes people actually ship, not equally complete: a keyword blacklist (looks
+        // like a fix, isn't one) vs. real parameterization.
+        Fixes = new[]
+        {
+            new FixOption
+            {
+                Label = "⚠ Block input containing \"UNION\"",
+                Grade = FixGrade.Partial,
+                Gap = "Checks for the literal uppercase word \"UNION\" — lowercase \"union\" or mixed case \"UnIoN\" " +
+                      "sail straight through. SQL keywords are never case-sensitive to the engine itself.",
+                BuildSql = f =>
+                {
+                    bool blocked = f["search"].Contains("UNION");
+                    return "-- Naive defense: reject the request if the raw input contains \"UNION\"\n" +
+                           "if (search.Contains(\"UNION\")) { reject(); }\n\n" +
+                           (blocked ? "-- blocked before reaching SQL at all" : VulnerableSql(f));
+                },
+                Simulate = f =>
+                {
+                    bool filterCaughtIt = f["search"].Contains("UNION");
+                    var classification = Classify(f);
+                    if (classification == "injection" && !filterCaughtIt)
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "Usernames and password hashes appear in the product list — the filter never saw it",
+                            Detail = "The blacklist only checks for the exact uppercase word \"UNION\". Different " +
+                                      "casing walks straight past it into the exact same vulnerable query.",
+                            RowCountLabel = "6 rows — 3 products + 3 leaked user records",
+                            AffectedAssets = new[] { "dbo.Users — UserName/PasswordHash exposed via UNION" },
+                            LeakedRows = new IReadOnlyDictionary<string, string>[]
+                            {
+                                new Dictionary<string, string> { ["ProductId"] = "101", ["Name"] = "Widget Pro", ["Price"] = "19.99" },
+                                new Dictionary<string, string> { ["ProductId"] = "102", ["Name"] = "Widget Mini", ["Price"] = "9.99" },
+                                new Dictionary<string, string> { ["ProductId"] = "—", ["Name"] = "admin", ["Price"] = "8846F...(hash)" },
+                                new Dictionary<string, string> { ["ProductId"] = "—", ["Name"] = "svc_billing", ["Price"] = "2C91A...(hash)" }
+                            }
+                        };
+                    if (filterCaughtIt)
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — contains \"UNION\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search, the filter never engages.", RowCountLabel = "2 rows" };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Parameterized query",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                    "SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
+                    $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
+                Simulate = f => Classify(f) switch
+                {
+                    "injection" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "No products match — the payload is just a literal search term",
+                        Detail = "The whole value, including the word UNION, is bound as one parameter. There's no SQL text " +
+                                  "left to re-parse, so a second SELECT can never be appended."
+                    },
+                    "probe" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "No products match — nothing to probe",
+                        Detail = "There's no SQL text left to count columns in: the whole value, NULLs and all, is just a " +
+                                  "literal string being searched for in the Name column."
+                    },
+                    "malformed" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "No products match",
+                        Detail = "Parameterized or not, this particular attempt was never going to parse as SQL anyway — it " +
+                                  "fails the same clean way any non-matching search does."
+                    },
+                    _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results, unaffected by the fix.", RowCountLabel = "2 rows" }
+                }
+            }
+        },
 
         SimulateVulnerable = f => Classify(f) switch
         {
@@ -95,32 +170,6 @@ public static class UnionSelectScenario
             _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results.", RowCountLabel = "2 rows" }
         },
 
-        SimulateFixed = f => Classify(f) switch
-        {
-            "injection" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "No products match — the payload is just a literal search term",
-                Detail = "The whole value, including the word UNION, is bound as one parameter. There's no SQL text " +
-                          "left to re-parse, so a second SELECT can never be appended."
-            },
-            "probe" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "No products match — nothing to probe",
-                Detail = "There's no SQL text left to count columns in: the whole value, NULLs and all, is just a " +
-                          "literal string being searched for in the Name column."
-            },
-            "malformed" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "No products match",
-                Detail = "Parameterized or not, this particular attempt was never going to parse as SQL anyway — it " +
-                          "fails the same clean way any non-matching search does."
-            },
-            _ => new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search results, unaffected by the fix.", RowCountLabel = "2 rows" }
-        },
-
         HowItWorks =
             "UNION combines the results of two SELECT statements into one result set, as long as both sides have the " +
             "same number of columns with compatible types. An attacker closes the string, adds UNION SELECT, and picks " +
@@ -137,7 +186,8 @@ public static class UnionSelectScenario
             "' ORDER BY 4--",
             "' UNION SELECT NULL,NULL,NULL --",
             "' UNION SELECT UserId, UserName, PasswordHash FROM Users --",
-            "' UNION SELECT UserId, UserName, PasswordHash FROM Users"
+            "' UNION SELECT UserId, UserName, PasswordHash FROM Users",
+            "' union select UserId, UserName, PasswordHash FROM Users --"
         },
 
         ChallengeGoal = "Make the product search return usernames and password hashes instead of products.",

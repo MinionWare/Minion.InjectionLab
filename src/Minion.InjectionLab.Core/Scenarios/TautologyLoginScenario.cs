@@ -92,40 +92,115 @@ public static class TautologyLoginScenario
 
         BuildVulnerableSql = VulnerableSql,
 
-        BuildFixedSql = f =>
-            "-- Parameters bind as typed values, never as SQL text\n" +
-            "SELECT UserId, UserName, Role FROM dbo.Users\n" +
-            "WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\n\n" +
-            "-- Parameter values sent alongside the batch (not concatenated):\n" +
-            $"@UserName    = N'{f["username"]}'\n" +
-            $"@PasswordHash = N'{f["password"]}'",
-
         BuildVulnerableCSharp = f =>
             "var sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
            $"           \"WHERE UserName = '\" + username + \"' AND PasswordHash = '\" + password + \"';\";\n\n" +
             "using var cmd = new SqlCommand(sql, connection);\n" +
             "using var reader = cmd.ExecuteReader(); // whatever `username`/`password` contain becomes SQL",
 
-        BuildFixedCSharp = f =>
-            "const string sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
-            "                    \"WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\";\n\n" +
-            "using var cmd = new SqlCommand(sql, connection);\n" +
-            "cmd.Parameters.Add(\"@UserName\", SqlDbType.NVarChar, 100).Value = username;\n" +
-            "cmd.Parameters.Add(\"@PasswordHash\", SqlDbType.NVarChar, 128).Value = password;\n" +
-            "using var reader = cmd.ExecuteReader(); // values bind as data, never as SQL text",
-
-        BuildVulnerablePowerShell = f =>
-            "$sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
-           $"       \"WHERE UserName = '$username' AND PasswordHash = '$password';\"\n\n" +
-            "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql",
-
-        BuildFixedPowerShell = f =>
-            "$sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
-            "       \"WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\"\n\n" +
-            "$cmd = New-Object System.Data.SqlClient.SqlCommand $sql, $connection\n" +
-            "[void]$cmd.Parameters.AddWithValue('@UserName', $username)\n" +
-            "[void]$cmd.Parameters.AddWithValue('@PasswordHash', $password)\n" +
-            "$reader = $cmd.ExecuteReader()",
+        // Two real fixes people actually ship, not equally complete: a keyword blacklist (looks
+        // like a fix, isn't one) vs. real parameterization.
+        Fixes = new[]
+        {
+            new FixOption
+            {
+                Label = "⚠ Block input containing \"OR\"",
+                Grade = FixGrade.Partial,
+                Gap = "Checks for the literal uppercase word \"OR\" — lowercase \"or\", mixed case \"Or\", or a " +
+                      "payload that never uses the word OR at all (like \"admin'--\") all sail straight through. " +
+                      "SQL keywords are never case-sensitive to the engine itself, only to a sloppy filter.",
+                BuildSql = f =>
+                {
+                    bool blocked = f["username"].Contains("OR") || f["password"].Contains("OR");
+                    return "-- Naive defense: reject the request if the raw input contains \"OR\"\n" +
+                           $"if (username.Contains(\"OR\") || password.Contains(\"OR\")) {{ reject(); }}\n\n" +
+                           (blocked ? "-- blocked before reaching SQL at all" : VulnerableSql(f));
+                },
+                Simulate = f =>
+                {
+                    bool filterCaughtIt = f["username"].Contains("OR") || f["password"].Contains("OR");
+                    var classification = Classify(f);
+                    if (classification == "injection" && !filterCaughtIt)
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "Authentication bypassed — the filter never even saw it",
+                            Detail = "The blacklist only checks for the exact uppercase word \"OR\". This payload " +
+                                      "either used different casing or didn't need the word \"OR\" at all, so it " +
+                                      "walked straight past the filter into the exact same vulnerable concatenation.",
+                            RowCountLabel = "47 rows — the entire Users table",
+                            AffectedAssets = new[] { "dbo.Users — all 47 rows exposed to the app" },
+                            LeakedRows = FakeFullUsersDump
+                        };
+                    if (classification == "injection" && filterCaughtIt)
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — contains \"OR\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                    if (classification == "correct")
+                        return new SimulationResult { Severity = Severity.Success, Headline = $"Login succeeded — welcome, {f["username"]}", Detail = "Ordinary login, the filter never engages.", RowCountLabel = "1 row", LeakedRows = FakeOwnRow(f["username"]) };
+                    return new SimulationResult { Severity = Severity.Info, Headline = "Invalid username or password", Detail = "Ordinary failed login." };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Parameterized query",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                    "-- Parameters bind as typed values, never as SQL text\n" +
+                    "SELECT UserId, UserName, Role FROM dbo.Users\n" +
+                    "WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\n\n" +
+                    "-- Parameter values sent alongside the batch (not concatenated):\n" +
+                    $"@UserName    = N'{f["username"]}'\n" +
+                    $"@PasswordHash = N'{f["password"]}'",
+                BuildCSharp = f =>
+                    "const string sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
+                    "                    \"WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\";\n\n" +
+                    "using var cmd = new SqlCommand(sql, connection);\n" +
+                    "cmd.Parameters.Add(\"@UserName\", SqlDbType.NVarChar, 100).Value = username;\n" +
+                    "cmd.Parameters.Add(\"@PasswordHash\", SqlDbType.NVarChar, 128).Value = password;\n" +
+                    "using var reader = cmd.ExecuteReader(); // values bind as data, never as SQL text",
+                BuildPowerShell = f =>
+                    "$sql = \"SELECT UserId, UserName, Role FROM dbo.Users \" +\n" +
+                    "       \"WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\"\n\n" +
+                    "$cmd = New-Object System.Data.SqlClient.SqlCommand $sql, $connection\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@UserName', $username)\n" +
+                    "[void]$cmd.Parameters.AddWithValue('@PasswordHash', $password)\n" +
+                    "$reader = $cmd.ExecuteReader()",
+                Simulate = f => Classify(f) switch
+                {
+                    "injection" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "Treated as a literal string — no rows match",
+                        Detail = "Because the values are sent as parameters, the database never re-parses them as SQL. " +
+                                  "\"' OR 1=1 --\" is just a username nobody has, so the WHERE clause evaluates to false for every row. " +
+                                  "The login fails exactly the way it should."
+                    },
+                    "correct" => new SimulationResult
+                    {
+                        Severity = Severity.Success,
+                        Headline = $"Login succeeded — welcome, {f["username"]}",
+                        Detail = "Parameterizing the query doesn't change how legitimate logins behave — it only removes the " +
+                                  "ability for input to be reinterpreted as SQL. Correct credentials still work exactly as before.",
+                        RowCountLabel = "1 row",
+                        LeakedRows = FakeOwnRow(f["username"])
+                    },
+                    "malformed" => new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "Invalid username or password",
+                        Detail = "Parameterized or not, this particular attempt was never going to work anyway — but now " +
+                                  "it fails the same clean way any wrong input does, instead of risking a confusing error."
+                    },
+                    _ => new SimulationResult
+                    {
+                        Severity = Severity.Info,
+                        Headline = "Invalid username or password",
+                        Detail = "Same as the vulnerable version — the fix only changes what happens to attack-shaped input, " +
+                                  "not ordinary failed logins."
+                    }
+                }
+            }
+        },
 
         SimulateVulnerable = f => Classify(f) switch
         {
@@ -169,41 +244,6 @@ public static class TautologyLoginScenario
             }
         },
 
-        SimulateFixed = f => Classify(f) switch
-        {
-            "injection" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "Treated as a literal string — no rows match",
-                Detail = "Because the values are sent as parameters, the database never re-parses them as SQL. " +
-                          "\"' OR 1=1 --\" is just a username nobody has, so the WHERE clause evaluates to false for every row. " +
-                          "The login fails exactly the way it should."
-            },
-            "correct" => new SimulationResult
-            {
-                Severity = Severity.Success,
-                Headline = $"Login succeeded — welcome, {f["username"]}",
-                Detail = "Parameterizing the query doesn't change how legitimate logins behave — it only removes the " +
-                          "ability for input to be reinterpreted as SQL. Correct credentials still work exactly as before.",
-                RowCountLabel = "1 row",
-                LeakedRows = FakeOwnRow(f["username"])
-            },
-            "malformed" => new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "Invalid username or password",
-                Detail = "Parameterized or not, this particular attempt was never going to work anyway — but now " +
-                          "it fails the same clean way any wrong input does, instead of risking a confusing error."
-            },
-            _ => new SimulationResult
-            {
-                Severity = Severity.Info,
-                Headline = "Invalid username or password",
-                Detail = "Same as the vulnerable version — the fix only changes what happens to attack-shaped input, " +
-                          "not ordinary failed logins."
-            }
-        },
-
         HowItWorks =
             "The app builds the query by concatenating raw text into the SQL string instead of treating it as data. " +
             "A quote character (') closes the string literal early, so anything typed after it is parsed as SQL, not as a password. " +
@@ -223,7 +263,8 @@ public static class TautologyLoginScenario
             "' OR 1=1 --",
             "' OR '1'='1' --",
             "admin'--",
-            "' OR 1=1"
+            "' OR 1=1",
+            "' or 1=1 --"
         },
 
         ChallengeGoal = "Log in as any user without knowing a real password.",

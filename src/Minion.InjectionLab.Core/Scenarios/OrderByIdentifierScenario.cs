@@ -36,17 +36,72 @@ public static class OrderByIdentifierScenario
 
         BuildVulnerableSql = f => $"SELECT * FROM dbo.Products ORDER BY {f["sortColumn"]};",
 
-        BuildFixedSql = f =>
+        // Two real fixes people actually ship, not equally complete: an allow-list check that uses
+        // Contains instead of an exact match (a very common real logic bug) vs. an exact-match
+        // allow-list combined with QUOTENAME.
+        Fixes = new[]
         {
-            var safe = Array.Exists(AllowList, c => string.Equals(c, f["sortColumn"], StringComparison.OrdinalIgnoreCase))
-                ? f["sortColumn"]
-                : "Name";
-            return "-- @parameter placeholders don't work for identifiers — validate against a fixed allow-list instead:\n" +
-                   "DECLARE @SafeColumn sysname =\n" +
-                  $"    CASE @SortColumn WHEN 'Name' THEN N'Name' WHEN 'Price' THEN N'Price'\n" +
-                   "         WHEN 'CreatedDate' THEN N'CreatedDate' ELSE N'Name' END;\n\n" +
-                  $"EXEC('SELECT * FROM dbo.Products ORDER BY ' + QUOTENAME(@SafeColumn));\n" +
-                  $"-- your input ('{f["sortColumn"]}') resolves to: {safe}";
+            new FixOption
+            {
+                Label = "⚠ Allow-list check using Contains",
+                Grade = FixGrade.Partial,
+                Gap = "Checks whether the input *contains* an allow-listed name, not that it *is* one — and then " +
+                      "concatenates the raw input anyway instead of a hard-coded safe value. \"Name; WAITFOR DELAY " +
+                      "...\" contains \"Name\" as a substring, so it passes the check and still gets concatenated.",
+                BuildSql = f =>
+                {
+                    var s = f["sortColumn"];
+                    bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
+                    return "-- Allow-list check, but a Contains() instead of an exact match:\n" +
+                           "if (AllowList.Any(c => sortColumn.Contains(c))) { /* ok, proceed */ }\n\n" +
+                           (passesCheck ? $"SELECT * FROM dbo.Products ORDER BY {s};  -- passed the check, concatenated raw" : "-- rejected, doesn't contain any allow-listed name at all");
+                },
+                Simulate = f =>
+                {
+                    var s = f["sortColumn"];
+                    bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
+                    if (Classify(f) == "injection" && passesCheck)
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "Arbitrary SQL still executes — the check passed on a technicality",
+                            Detail = "The value contains an allow-listed column name as a substring, so the Contains() " +
+                                      "check approves it — and then the raw value, WAITFOR and all, gets concatenated " +
+                                      "anyway instead of the safe literal the check was supposed to guarantee.",
+                            AffectedAssets = new[] { "Arbitrary expression executed from the ORDER BY clause" }
+                        };
+                    if (Classify(f) == "injection")
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Rejected — doesn't contain any allow-listed name", Detail = "This specific payload doesn't happen to contain any of the allow-listed words as a substring." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = $"Sorted by {s}", Detail = "An allow-listed column, passed straight through." };
+                }
+            },
+            new FixOption
+            {
+                Label = "✓ Exact-match allow-list + QUOTENAME",
+                Grade = FixGrade.Best,
+                Gap = null,
+                BuildSql = f =>
+                {
+                    var safe = Array.Exists(AllowList, c => string.Equals(c, f["sortColumn"], StringComparison.OrdinalIgnoreCase))
+                        ? f["sortColumn"]
+                        : "Name";
+                    return "-- @parameter placeholders don't work for identifiers — validate against a fixed allow-list instead:\n" +
+                           "DECLARE @SafeColumn sysname =\n" +
+                          $"    CASE @SortColumn WHEN 'Name' THEN N'Name' WHEN 'Price' THEN N'Price'\n" +
+                           "         WHEN 'CreatedDate' THEN N'CreatedDate' ELSE N'Name' END;\n\n" +
+                          $"EXEC('SELECT * FROM dbo.Products ORDER BY ' + QUOTENAME(@SafeColumn));\n" +
+                          $"-- your input ('{f["sortColumn"]}') resolves to: {safe}";
+                },
+                Simulate = f => Classify(f) == "injection"
+                    ? new SimulationResult
+                    {
+                        Severity = Severity.Blocked,
+                        Headline = "Falls back to the default sort (Name)",
+                        Detail = "Anything not an exact allow-listed name never reaches the SQL text at all — it's " +
+                                  "substituted with a safe, hard-coded default before the query is even built."
+                    }
+                    : new SimulationResult { Severity = Severity.Success, Headline = $"Sorted by {f["sortColumn"]}", Detail = "An allow-listed column, passed straight through." }
+            }
         },
 
         SimulateVulnerable = f => Classify(f) == "injection"
@@ -61,15 +116,6 @@ public static class OrderByIdentifierScenario
             }
             : new SimulationResult { Severity = Severity.Success, Headline = "Sorted by Name", Detail = "Ordinary sort." },
 
-        SimulateFixed = f => Classify(f) == "injection"
-            ? new SimulationResult
-            {
-                Severity = Severity.Blocked,
-                Headline = "Falls back to the default sort (Name)",
-                Detail = "Anything not on the allow-list never reaches the SQL text at all — it's rejected (or " +
-                          "substituted with a safe default) before the query is even built."
-            }
-            : new SimulationResult { Severity = Severity.Success, Headline = $"Sorted by {f["sortColumn"]}", Detail = "An allow-listed column, passed straight through." },
 
         HowItWorks =
             "Identifiers (table and column names) are categorically different from values: @parameter placeholders " +
