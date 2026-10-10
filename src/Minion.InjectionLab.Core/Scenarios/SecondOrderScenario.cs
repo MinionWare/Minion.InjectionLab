@@ -6,6 +6,9 @@ namespace Minion.InjectionLab.Core.Scenarios;
 /// <summary>Second-order injection: the payload is stored safely, then fires later in a completely different query.</summary>
 public static class SecondOrderScenario
 {
+    private static readonly string[] Keywords = { "DROP", "UNION" };
+    private static readonly string[] ExpertKeywords = { "SELECT" };
+
     /// <summary>Just Step 2 — the query that actually concatenates the stored value — for syntax checking.</summary>
     private static string Step2Sql(IReadOnlyDictionary<string, string> f) =>
         $"SELECT * FROM dbo.AuditLog WHERE Description = 'User {f["displayName"]} logged in';";
@@ -54,31 +57,30 @@ public static class SecondOrderScenario
             {
                 Label = "⚠ Block names containing \"DROP\"/\"UNION\"",
                 Grade = FixGrade.Partial,
-                Gap = "Checks for the literal uppercase words \"DROP\"/\"UNION\" when the report runs — lowercase " +
-                      "sails straight through, and this does nothing for any technique that doesn't need those " +
-                      "specific words (e.g. reading data some other way).",
-                BuildSql = f =>
+                Gap = "At Beginner, checks for the literal uppercase words \"DROP\"/\"UNION\" when the report runs " +
+                      "— lowercase sails through. Intermediate catches any casing. Expert also blocks \"SELECT\". " +
+                      "But reading data a different way, or a payload that doesn't need any of those words, still " +
+                      "sails through at every level.",
+                BuildSql = (f, d) =>
                 {
-                    var s = f["displayName"];
-                    bool blocked = s.Contains("DROP") || s.Contains("UNION");
-                    var guard = "if (storedName.Contains(\"DROP\") || storedName.Contains(\"UNION\"))\n    skip();\n\n";
+                    bool blocked = KeywordBlacklist.IsBlocked(f["displayName"], d, Keywords, ExpertKeywords);
+                    var guard = "if (LooksLikeInjection(storedName))\n    skip();\n\n";
                     return blocked ? guard.TrimEnd() : guard + Step2Sql(f);
                 },
-                Simulate = f =>
+                Simulate = (f, d) =>
                 {
-                    var s = f["displayName"];
-                    bool filterCaughtIt = s.Contains("DROP") || s.Contains("UNION");
+                    bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["displayName"], d, Keywords, ExpertKeywords);
                     if (Classify(f) == "injection" && !filterCaughtIt)
                         return new SimulationResult
                         {
                             Severity = Severity.Critical,
                             Headline = "The payload still executes when the report runs — the filter never saw it",
-                            Detail = "The blacklist only checks for exact uppercase words. Different casing — or a " +
-                                      "payload phrased without needing those words at all — walks straight past it.",
+                            Detail = "This payload used a casing or a phrasing the filter at this difficulty doesn't " +
+                                      "check for, so it walked straight past it.",
                             AffectedAssets = new[] { "dbo.AuditLog — statement executes whenever an admin views recent activity" }
                         };
                     if (filterCaughtIt)
-                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Report skips this entry — contains a blocked word", Detail = "This specific payload happened to use an exact uppercase word the filter checks for." };
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Report skips this entry — matched the filter", Detail = "At this difficulty, the filter happened to catch this specific phrasing." };
                     return new SimulationResult { Severity = Severity.Success, Headline = "Display name saved", Detail = "Stored safely, the filter never engages later either." };
                 }
             },
@@ -87,13 +89,13 @@ public static class SecondOrderScenario
                 Label = "✓ Parameterize Step 2 too",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                     "-- STEP 1 — unchanged, already safe:\n" +
                     "UPDATE dbo.Users SET DisplayName = @DisplayName WHERE UserId = @UserId;\n\n" +
                     "-- STEP 2 — now ALSO parameterized (this was the actual missing fix):\n" +
                     "SELECT * FROM dbo.AuditLog WHERE Description = @Description;\n" +
                    $"@Description = N'User {f["displayName"]} logged in'",
-                Simulate = f => Classify(f) switch
+                Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult
                     {

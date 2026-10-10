@@ -48,14 +48,14 @@ public static class OrderByIdentifierScenario
                 Gap = "Checks whether the input *contains* an allow-listed name, not that it *is* one — and then " +
                       "concatenates the raw input anyway instead of a hard-coded safe value. \"Name; WAITFOR DELAY " +
                       "...\" contains \"Name\" as a substring, so it passes the check and still gets concatenated.",
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                 {
                     var s = f["sortColumn"];
                     bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
                     var guard = "if (!AllowList.Any(c => sortColumn.Contains(c)))\n    reject();\n\n";
                     return passesCheck ? guard + $"SELECT * FROM dbo.Products ORDER BY {s};" : guard.TrimEnd();
                 },
-                Simulate = f =>
+                Simulate = (f, _) =>
                 {
                     var s = f["sortColumn"];
                     bool passesCheck = Array.Exists(AllowList, c => s.Contains(c, StringComparison.OrdinalIgnoreCase));
@@ -79,7 +79,7 @@ public static class OrderByIdentifierScenario
                 Label = "✓ Exact-match allow-list + QUOTENAME",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                 {
                     var safe = Array.Exists(AllowList, c => string.Equals(c, f["sortColumn"], StringComparison.OrdinalIgnoreCase))
                         ? f["sortColumn"]
@@ -91,7 +91,7 @@ public static class OrderByIdentifierScenario
                           $"EXEC('SELECT * FROM dbo.Products ORDER BY ' + QUOTENAME(@SafeColumn));\n" +
                           $"-- your input ('{f["sortColumn"]}') resolves to: {safe}";
                 },
-                Simulate = f => Classify(f) == "injection"
+                Simulate = (f, _) => Classify(f) == "injection"
                     ? new SimulationResult
                     {
                         Severity = Severity.Blocked,

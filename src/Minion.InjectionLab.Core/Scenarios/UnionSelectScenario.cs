@@ -8,6 +8,9 @@ public static class UnionSelectScenario
 {
     private const string Baseline = "widget";
 
+    private static readonly string[] Keywords = { "UNION" };
+    private static readonly string[] ExpertKeywords = { "SELECT" };
+
     private static string VulnerableSql(IReadOnlyDictionary<string, string> f) =>
         $"SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE '%{f["search"]}%';";
 
@@ -59,25 +62,31 @@ public static class UnionSelectScenario
             {
                 Label = "⚠ Block input containing \"UNION\"",
                 Grade = FixGrade.Partial,
-                Gap = "Checks for the literal uppercase word \"UNION\" — lowercase \"union\" or mixed case \"UnIoN\" " +
-                      "sail straight through. SQL keywords are never case-sensitive to the engine itself.",
-                BuildSql = f =>
+                Gap = "At Beginner, checks for the literal uppercase word \"UNION\" — lowercase \"union\" sails " +
+                      "through. Intermediate catches any casing. Expert also blocks \"SELECT\". But ORDER BY-based " +
+                      "probing needs neither word, so it still sails through at every level — a blacklist can only " +
+                      "ever cover phrasings someone thought to list.",
+                BuildSql = (f, d) =>
                 {
-                    bool blocked = f["search"].Contains("UNION");
-                    var guard = "if (search.Contains(\"UNION\"))\n    reject();\n\n";
+                    bool blocked = KeywordBlacklist.IsBlocked(f["search"], d, Keywords, ExpertKeywords);
+                    var guard = "if (LooksLikeInjection(search))\n    reject();\n\n";
                     return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
                 },
-                Simulate = f =>
+                Simulate = (f, d) =>
                 {
-                    bool filterCaughtIt = f["search"].Contains("UNION");
+                    bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["search"], d, Keywords, ExpertKeywords);
                     var classification = Classify(f);
-                    if (classification == "injection" && !filterCaughtIt)
+
+                    if (filterCaughtIt && classification is "injection" or "probe" or "malformed")
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — matched the filter", Detail = "At this difficulty, the filter happened to catch this specific phrasing." };
+
+                    if (classification == "injection")
                         return new SimulationResult
                         {
                             Severity = Severity.Critical,
                             Headline = "Usernames and password hashes appear in the product list — the filter never saw it",
-                            Detail = "The blacklist only checks for the exact uppercase word \"UNION\". Different " +
-                                      "casing walks straight past it into the exact same vulnerable query.",
+                            Detail = "This payload used a casing or a phrasing the filter at this difficulty doesn't " +
+                                      "check for, so it walked straight past it into the exact same vulnerable query.",
                             RowCountLabel = "6 rows — 3 products + 3 leaked user records",
                             AffectedAssets = new[] { "dbo.Users — UserName/PasswordHash exposed via UNION" },
                             LeakedRows = new IReadOnlyDictionary<string, string>[]
@@ -88,8 +97,16 @@ public static class UnionSelectScenario
                                 new Dictionary<string, string> { ["ProductId"] = "—", ["Name"] = "svc_billing", ["Price"] = "2C91A...(hash)" }
                             }
                         };
-                    if (filterCaughtIt)
-                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — contains \"UNION\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                    if (classification == "probe")
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Warning,
+                            Headline = "The query still succeeds — confirms 3 columns, filter never engaged",
+                            Detail = "NULL/ORDER BY probing doesn't need a blocked keyword in some phrasings, so reconnaissance still works.",
+                            RowCountLabel = "3 rows — 2 products + 1 row of NULLs"
+                        };
+                    if (classification == "malformed")
+                        return new SimulationResult { Severity = Severity.Warning, Headline = "SQL Server throws a syntax error here", Detail = "The filter never engaged, but the payload still isn't valid SQL without a trailing comment." };
                     return new SimulationResult { Severity = Severity.Success, Headline = "2 products found", Detail = "Ordinary search, the filter never engages.", RowCountLabel = "2 rows" };
                 }
             },
@@ -98,10 +115,10 @@ public static class UnionSelectScenario
                 Label = "✓ Parameterized query",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                     "SELECT ProductId, Name, Price FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
                     $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
-                Simulate = f => Classify(f) switch
+                Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" => new SimulationResult
                     {

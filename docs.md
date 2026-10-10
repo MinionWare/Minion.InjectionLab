@@ -226,6 +226,23 @@ LikeWildcard), following one of two patterns:
   teaching tool's very first design note ("include a failing blacklist —
   it's worth showing why filtering isn't a fix") finally has a concrete,
   reusable implementation.
+**The 5 keyword-blacklist Partial fixes are now Difficulty-aware**
+(`Core/Services/KeywordBlacklist.cs`), not static. At Beginner, the filter
+checks its keyword(s) case-sensitively (a lowercase payload sails through).
+At Intermediate, the same keywords, case-insensitively. At Expert, those
+keywords plus one or two more related ones, still case-insensitively — but a
+payload that needs none of the blocked words (the classic `admin'--`
+truncation, which has no "OR" at all) still sails through at every level,
+which is the actual point: a blacklist can only ever cover phrasings someone
+thought to list. Matching is done on **word boundaries** (`\bOR\b`, not a raw
+substring `Contains`), which is both more realistic (real keyword filters do
+this) and necessary — a naive case-insensitive substring check would
+false-positive on the baseline password itself (`correct-horse-battery-99`
+contains "or" inside "c**or**rect"). `FixOption.BuildSql`/`Simulate` both take
+`DifficultyLevel` as a second parameter for exactly this; `BuildCSharp`/
+`BuildPowerShell` deliberately don't (secondary/illustrative tabs, always show
+the Beginner-level version — a known, documented simplification).
+
 - **Allow-list done wrong vs. done right** — OrderByIdentifier specifically:
   Partial uses `Contains` instead of an exact match and then concatenates
   the *raw* input anyway (not a hard-coded safe value) — a very common real

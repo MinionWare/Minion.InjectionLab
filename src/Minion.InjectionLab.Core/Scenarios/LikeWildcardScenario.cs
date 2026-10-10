@@ -57,10 +57,10 @@ public static class LikeWildcardScenario
                 Grade = FixGrade.Partial,
                 Gap = "Doesn't escape LIKE's own wildcard characters — a parameterized search for \"%\" still " +
                       "matches every single row, and \"_\" still matches any one character.",
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                     "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern;\n\n" +
                    $"@Pattern = N'%{f["search"]}%'  -- bound as one literal value, not re-parsed as SQL",
-                Simulate = f => Classify(f) switch
+                Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult { Severity = Severity.Blocked, Headline = "No products match", Detail = "Parameterized — the quote-breakout attempt is just a literal search string now." },
                     "wildcard" => new SimulationResult
@@ -80,13 +80,13 @@ public static class LikeWildcardScenario
                 Label = "✓ Parameterized + wildcards escaped",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                 {
                     var escaped = f["search"].Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
                     return "SELECT ProductId, Name FROM dbo.Products WHERE Name LIKE @Pattern ESCAPE '\\';\n\n" +
                           $"@Pattern = N'%{escaped}%'  -- your literal %, _, and [ are now just characters to search for";
                 },
-                Simulate = f => Classify(f) switch
+                Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult { Severity = Severity.Blocked, Headline = "No products match", Detail = "Parameterized — the quote-breakout attempt is just a literal search string now." },
                     "wildcard" => new SimulationResult

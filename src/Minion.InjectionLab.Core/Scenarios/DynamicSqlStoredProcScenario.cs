@@ -8,6 +8,9 @@ public static class DynamicSqlStoredProcScenario
 {
     private const string Baseline = "Acme Corp";
 
+    private static readonly string[] Keywords = { "UNION" };
+    private static readonly string[] ExpertKeywords = { "SELECT", "DROP" };
+
     /// <summary>What @sql actually contains at runtime once the proc's N'...' literal is built —
     /// this (not the doubled-quote proc source text) is what gets parsed to check validity.</summary>
     private static string RuntimeSql(IReadOnlyDictionary<string, string> f) =>
@@ -56,28 +59,30 @@ public static class DynamicSqlStoredProcScenario
             {
                 Label = "⚠ Block names containing \"UNION\"",
                 Grade = FixGrade.Partial,
-                Gap = "Checks for the literal uppercase word \"UNION\" inside the proc — lowercase \"union\" sails " +
-                      "straight through, and this does nothing for any other technique (stacked queries, truncation).",
-                BuildSql = f =>
+                Gap = "At Beginner, checks for the literal uppercase word \"UNION\" inside the proc — lowercase " +
+                      "\"union\" sails through. Intermediate catches any casing. Expert also blocks \"SELECT\"/" +
+                      "\"DROP\". But a semicolon-based stacked query or a truncation attempt needs none of those " +
+                      "words, so it still sails through at every level.",
+                BuildSql = (f, d) =>
                 {
-                    bool blocked = f["customerName"].Contains("UNION");
-                    var guard = "IF @Name LIKE '%UNION%' RETURN;\n\n";
+                    bool blocked = KeywordBlacklist.IsBlocked(f["customerName"], d, Keywords, ExpertKeywords);
+                    var guard = "IF LooksLikeInjection(@Name) RETURN;\n\n";
                     return blocked ? guard.TrimEnd() : guard + RuntimeSql(f);
                 },
-                Simulate = f =>
+                Simulate = (f, d) =>
                 {
-                    bool filterCaughtIt = f["customerName"].Contains("UNION");
+                    bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["customerName"], d, Keywords, ExpertKeywords);
                     if (Classify(f) == "injection" && !filterCaughtIt)
                         return new SimulationResult
                         {
                             Severity = Severity.Critical,
                             Headline = "The dynamic SQL still gets rewritten — the filter never saw it",
-                            Detail = "The blacklist only checks for the exact uppercase word \"UNION\" inside the proc. " +
-                                      "Different casing walks straight past it into the same vulnerable EXEC(@sql).",
+                            Detail = "This payload used a casing or a phrasing the filter at this difficulty doesn't " +
+                                      "check for, so it walked straight past it into the same vulnerable EXEC(@sql).",
                             AffectedAssets = new[] { "dbo.Users — exposed through a 'safe-looking' stored procedure" }
                         };
                     if (filterCaughtIt)
-                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Proc returns early — contains \"UNION\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Proc returns early — matched the filter", Detail = "At this difficulty, the filter happened to catch this specific phrasing." };
                     return new SimulationResult { Severity = Severity.Success, Headline = "1 customer found", Detail = "Ordinary search, the filter never engages." };
                 }
             },
@@ -86,12 +91,12 @@ public static class DynamicSqlStoredProcScenario
                 Label = "✓ sp_executesql with a parameter",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                     "-- Inside dbo.SearchCustomers:\n" +
                     "DECLARE @sql NVARCHAR(MAX) = N'SELECT * FROM dbo.Customers WHERE CompanyName LIKE @Pattern';\n" +
                    $"DECLARE @Pattern NVARCHAR(102) = N'%' + @Name + N'%';  -- @Name = '{f["customerName"]}'\n" +
                     "EXEC sp_executesql @sql, N'@Pattern NVARCHAR(102)', @Pattern;",
-                Simulate = f => Classify(f) switch
+                Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" or "malformed" => new SimulationResult
                     {

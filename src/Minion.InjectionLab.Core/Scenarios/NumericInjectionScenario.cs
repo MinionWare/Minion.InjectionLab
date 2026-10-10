@@ -1,4 +1,5 @@
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 
 namespace Minion.InjectionLab.Core.Scenarios;
 
@@ -6,6 +7,9 @@ namespace Minion.InjectionLab.Core.Scenarios;
 public static class NumericInjectionScenario
 {
     private const string Baseline = "42";
+
+    private static readonly string[] Keywords = { "OR" };
+    private static readonly string[] ExpertKeywords = { "UNION", "DROP" };
 
     private static string Classify(IReadOnlyDictionary<string, string> f)
     {
@@ -48,13 +52,14 @@ public static class NumericInjectionScenario
             {
                 Label = "⚠ Block input containing \"OR\"",
                 Grade = FixGrade.Partial,
-                Gap = "Checks for the literal uppercase word \"OR\" — lowercase \"or\" sails straight through. And " +
-                      "this only ever blocks one specific keyword; UNION, semicolons, and anything else non-numeric " +
-                      "are all still wide open.",
-                BuildSql = f =>
+                Gap = "At Beginner, checks for the literal uppercase word \"OR\" — lowercase \"or\" sails straight " +
+                      "through. Intermediate catches any casing. Expert also blocks \"UNION\"/\"DROP\". But a " +
+                      "semicolon-based payload needs none of those words, so stacked-query attempts still sail " +
+                      "through at every level — a blacklist can only ever cover phrasings someone thought to list.",
+                BuildSql = (f, d) =>
                 {
-                    bool blocked = f["productId"].Contains("OR");
-                    var guard = "if (productId.Contains(\"OR\"))\n    reject();\n\n";
+                    bool blocked = KeywordBlacklist.IsBlocked(f["productId"], d, Keywords, ExpertKeywords);
+                    var guard = "if (LooksLikeInjection(productId))\n    reject();\n\n";
                     return blocked ? guard.TrimEnd() : guard + $"SELECT * FROM dbo.Products WHERE ProductId = {f["productId"]};";
                 },
                 BuildCSharp = f =>
@@ -65,21 +70,21 @@ public static class NumericInjectionScenario
                                      "using var cmd = new SqlCommand(sql, connection);";
                     return blocked ? guard.TrimEnd() : guard + vulnerable;
                 },
-                Simulate = f =>
+                Simulate = (f, d) =>
                 {
-                    bool filterCaughtIt = f["productId"].Contains("OR");
+                    bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["productId"], d, Keywords, ExpertKeywords);
                     if (Classify(f) == "injection" && !filterCaughtIt)
                         return new SimulationResult
                         {
                             Severity = Severity.Critical,
                             Headline = "Every single product in the catalog is returned — the filter never saw it",
-                            Detail = "The blacklist only checks for the exact uppercase word \"OR\". Lowercase, or any " +
-                                      "payload that doesn't need that specific word, walks straight past it.",
+                            Detail = "This payload used a casing or a phrasing the filter at this difficulty doesn't " +
+                                      "check for, so it walked straight past it.",
                             RowCountLabel = "all rows",
                             AffectedAssets = new[] { "dbo.Products — the entire catalog exposed" }
                         };
                     if (filterCaughtIt)
-                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — contains \"OR\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — matched the filter", Detail = "At this difficulty, the filter happened to catch this specific phrasing." };
                     return new SimulationResult { Severity = Severity.Success, Headline = "Product #42 found", Detail = "Ordinary lookup, the filter never engages." };
                 }
             },
@@ -88,13 +93,13 @@ public static class NumericInjectionScenario
                 Label = "✓ Strongly-typed parameter",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                     "EXEC sp_executesql N'SELECT * FROM dbo.Products WHERE ProductId = @ProductId', N'@ProductId INT', @ProductId;\n\n" +
                     $"@ProductId = {f["productId"]}  -- must actually parse as INT before this even runs",
                 BuildCSharp = f =>
                     "using var cmd = new SqlCommand(\"SELECT * FROM dbo.Products WHERE ProductId = @ProductId\", connection);\n" +
                     "cmd.Parameters.Add(\"@ProductId\", SqlDbType.Int).Value = productId; // throws if productId isn't an int",
-                Simulate = f => Classify(f) == "injection"
+                Simulate = (f, _) => Classify(f) == "injection"
                     ? new SimulationResult
                     {
                         Severity = Severity.Blocked,

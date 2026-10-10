@@ -144,8 +144,8 @@ public partial class AttackViewModel : ObservableObject
                     Label = "Parameterized query",
                     Grade = FixGrade.Best,
                     Gap = null,
-                    BuildSql = scenario.BuildFixedSql ?? (_ => string.Empty),
-                    Simulate = scenario.SimulateFixed ?? (_ => new SimulationResult { Severity = Severity.Blocked, Headline = "Fixed", Detail = "" }),
+                    BuildSql = (f, _) => scenario.BuildFixedSql?.Invoke(f) ?? string.Empty,
+                    Simulate = (f, _) => scenario.SimulateFixed?.Invoke(f) ?? new SimulationResult { Severity = Severity.Blocked, Headline = "Fixed", Detail = "" },
                     BuildCSharp = scenario.BuildFixedCSharp,
                     BuildPowerShell = scenario.BuildFixedPowerShell
                 }
@@ -192,6 +192,7 @@ public partial class AttackViewModel : ObservableObject
         OnPropertyChanged(nameof(HasMoreHints));
         OnPropertyChanged(nameof(CanRevealAnswer));
         ResetChallenge();
+        RecomputeCode(); // a blacklist-style fix can get stricter at higher difficulty
     }
 
     partial void OnRevealedHintCountChanged(int value)
@@ -259,11 +260,11 @@ public partial class AttackViewModel : ObservableObject
 
         var active = CurrentFixIndex >= 0 && CurrentFixIndex < _fixes.Count ? _fixes[CurrentFixIndex] : null;
 
-        Result = active != null ? active.Simulate(values) : Scenario.SimulateVulnerable(values);
+        Result = active != null ? active.Simulate(values, Difficulty) : Scenario.SimulateVulnerable(values);
 
         if (Scenario.BaselineValues is { Count: > 0 } baseline)
         {
-            NormalResult = active != null ? active.Simulate(baseline) : Scenario.SimulateVulnerable(baseline);
+            NormalResult = active != null ? active.Simulate(baseline, Difficulty) : Scenario.SimulateVulnerable(baseline);
         }
 
         HasSubmitted = true;
@@ -277,7 +278,7 @@ public partial class AttackViewModel : ObservableObject
 
         var active = CurrentFixIndex >= 0 && CurrentFixIndex < _fixes.Count ? _fixes[CurrentFixIndex] : null;
 
-        GeneratedSql = active != null ? active.BuildSql(values) : Scenario.BuildVulnerableSql(values);
+        GeneratedSql = active != null ? active.BuildSql(values, Difficulty) : Scenario.BuildVulnerableSql(values);
         SqlSegments = new ObservableCollection<SqlSegment>(BuildSegments(GeneratedSql, rawValues));
 
         var csharpBuilder = active != null ? active.BuildCSharp : Scenario.BuildVulnerableCSharp;

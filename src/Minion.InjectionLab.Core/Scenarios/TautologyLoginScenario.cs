@@ -11,6 +11,9 @@ public static class TautologyLoginScenario
     private const string BaselineUser = "alice";
     private const string BaselinePassword = "correct-horse-battery-99";
 
+    private static readonly string[] Keywords = { "OR" };
+    private static readonly string[] ExpertKeywords = { "UNION" };
+
     private static string VulnerableSql(IReadOnlyDictionary<string, string> f) =>
         $"SELECT UserId, UserName, Role FROM dbo.Users " +
         $"WHERE UserName = '{f["username"]}' AND PasswordHash = '{f["password"]}';";
@@ -112,13 +115,14 @@ public static class TautologyLoginScenario
             {
                 Label = "⚠ Block input containing \"OR\"",
                 Grade = FixGrade.Partial,
-                Gap = "Checks for the literal uppercase word \"OR\" — lowercase \"or\", mixed case \"Or\", or a " +
-                      "payload that never uses the word OR at all (like \"admin'--\") all sail straight through. " +
-                      "SQL keywords are never case-sensitive to the engine itself, only to a sloppy filter.",
-                BuildSql = f =>
+                Gap = "At Beginner, checks for the literal uppercase word \"OR\" — lowercase \"or\" sails straight " +
+                      "through. Intermediate catches any casing. Expert also blocks \"UNION\". But a payload that " +
+                      "never needs any blocked word at all (like \"admin'--\") still sails through at every level — " +
+                      "a blacklist can only ever cover phrasings someone thought to list.",
+                BuildSql = (f, d) =>
                 {
-                    bool blocked = f["username"].Contains("OR") || f["password"].Contains("OR");
-                    var guard = "if (username.Contains(\"OR\") || password.Contains(\"OR\"))\n    reject();\n\n";
+                    bool blocked = KeywordBlacklist.IsBlocked(f["username"], d, Keywords, ExpertKeywords) || KeywordBlacklist.IsBlocked(f["password"], d, Keywords, ExpertKeywords);
+                    var guard = "if (LooksLikeInjection(username) || LooksLikeInjection(password))\n    reject();\n\n";
                     return blocked ? guard.TrimEnd() : guard + VulnerableSql(f);
                 },
                 BuildCSharp = f =>
@@ -140,24 +144,23 @@ public static class TautologyLoginScenario
                                       "Invoke-Sqlcmd -ServerInstance $server -Database $db -Query $sql";
                     return blocked ? guard.TrimEnd() : guard + vulnerable;
                 },
-                Simulate = f =>
+                Simulate = (f, d) =>
                 {
-                    bool filterCaughtIt = f["username"].Contains("OR") || f["password"].Contains("OR");
+                    bool filterCaughtIt = KeywordBlacklist.IsBlocked(f["username"], d, Keywords, ExpertKeywords) || KeywordBlacklist.IsBlocked(f["password"], d, Keywords, ExpertKeywords);
                     var classification = Classify(f);
                     if (classification == "injection" && !filterCaughtIt)
                         return new SimulationResult
                         {
                             Severity = Severity.Critical,
                             Headline = "Authentication bypassed — the filter never even saw it",
-                            Detail = "The blacklist only checks for the exact uppercase word \"OR\". This payload " +
-                                      "either used different casing or didn't need the word \"OR\" at all, so it " +
-                                      "walked straight past the filter into the exact same vulnerable concatenation.",
+                            Detail = "This payload used a casing or a phrasing the filter at this difficulty doesn't " +
+                                      "check for, so it walked straight past into the exact same vulnerable concatenation.",
                             RowCountLabel = "47 rows — the entire Users table",
                             AffectedAssets = new[] { "dbo.Users — all 47 rows exposed to the app" },
                             LeakedRows = FakeFullUsersDump
                         };
                     if (classification == "injection" && filterCaughtIt)
-                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — contains \"OR\"", Detail = "This specific payload happened to use the exact uppercase word the filter checks for." };
+                        return new SimulationResult { Severity = Severity.Blocked, Headline = "Request rejected — matched the filter", Detail = "At this difficulty, the filter happened to catch this specific phrasing." };
                     if (classification == "correct")
                         return new SimulationResult { Severity = Severity.Success, Headline = $"Login succeeded — welcome, {f["username"]}", Detail = "Ordinary login, the filter never engages.", RowCountLabel = "1 row", LeakedRows = FakeOwnRow(f["username"]) };
                     return new SimulationResult { Severity = Severity.Info, Headline = "Invalid username or password", Detail = "Ordinary failed login." };
@@ -168,7 +171,7 @@ public static class TautologyLoginScenario
                 Label = "✓ Parameterized query",
                 Grade = FixGrade.Best,
                 Gap = null,
-                BuildSql = f =>
+                BuildSql = (f, _) =>
                     "-- Parameters bind as typed values, never as SQL text\n" +
                     "SELECT UserId, UserName, Role FROM dbo.Users\n" +
                     "WHERE UserName = @UserName AND PasswordHash = @PasswordHash;\n\n" +
@@ -189,7 +192,7 @@ public static class TautologyLoginScenario
                     "[void]$cmd.Parameters.AddWithValue('@UserName', $username)\n" +
                     "[void]$cmd.Parameters.AddWithValue('@PasswordHash', $password)\n" +
                     "$reader = $cmd.ExecuteReader()",
-                Simulate = f => Classify(f) switch
+                Simulate = (f, _) => Classify(f) switch
                 {
                     "injection" => new SimulationResult
                     {

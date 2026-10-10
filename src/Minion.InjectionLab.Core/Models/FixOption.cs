@@ -14,8 +14,14 @@ public sealed class FixOption
     /// <summary>What this fix still doesn't cover — null/empty for a Best-grade fix with no known gap.</summary>
     public string? Gap { get; init; }
 
-    public required Func<IReadOnlyDictionary<string, string>, string> BuildSql { get; init; }
-    public required Func<IReadOnlyDictionary<string, string>, SimulationResult> Simulate { get; init; }
+    /// <summary>
+    /// Takes the global Difficulty too — a blacklist-style Partial fix gets measurably stricter at
+    /// higher difficulty (more keywords, case-insensitive matching), so "find the bypass" stays a
+    /// real exercise instead of the same trivial lowercase trick at every level. Fixes that don't
+    /// vary by difficulty (parameterization, allow-lists) just ignore the parameter.
+    /// </summary>
+    public required Func<IReadOnlyDictionary<string, string>, DifficultyLevel, string> BuildSql { get; init; }
+    public required Func<IReadOnlyDictionary<string, string>, DifficultyLevel, SimulationResult> Simulate { get; init; }
 
     public Func<IReadOnlyDictionary<string, string>, string>? BuildCSharp { get; init; }
     public Func<IReadOnlyDictionary<string, string>, string>? BuildPowerShell { get; init; }
