@@ -126,35 +126,62 @@
         </Border>
 
         <!-- ================= WELCOME SCREEN ================= -->
-        <!-- Shown instead of jumping straight into a scenario — DataContext here is still the
-             MainViewModel (nothing below overrides it), unlike the scenario ScrollViewer next to it. -->
-        <Grid Grid.Row="1" Grid.Column="1"
+        <!-- Spans BOTH columns and sits above the left-nav Border in z-order, so it genuinely
+             blocks picking a scenario from the list underneath — not just the content area.
+             DataContext here is still the MainViewModel (nothing below overrides it). -->
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
               Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
-                <Image Source="Resources/Branding/AppIcon.png" Width="140" Height="140" HorizontalAlignment="Center"/>
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="{DynamicResource Color.Bg0}" Offset="0"/>
+                    <GradientStop Color="{DynamicResource Color.Bg1}" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
 
-                <Button HorizontalAlignment="Center" Margin="0,22,0,0" Padding="0" Background="Transparent" BorderThickness="0"
-                        Cursor="Hand" ToolTip="minionware.net" Click="MinionwareLogo_Click">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="620">
+                <Grid HorizontalAlignment="Center" Width="220" Height="220">
+                    <Ellipse Width="220" Height="220" Fill="{DynamicResource Brush.Accent}" Opacity="0.22">
+                        <Ellipse.Effect>
+                            <BlurEffect Radius="50"/>
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <Image Source="Resources/Branding/AppIcon.png" Width="160" Height="160" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Image.Effect>
+                            <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="6" Opacity="0.45"/>
+                        </Image.Effect>
+                    </Image>
+                </Grid>
+
+                <TextBlock Text="FROM" Style="{StaticResource Text.Muted}" FontSize="10" FontWeight="Bold"
+                           HorizontalAlignment="Center" Margin="0,26,0,8"/>
+                <Button HorizontalAlignment="Center" Padding="10,8" Background="{DynamicResource Brush.Bg2}"
+                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Cursor="Hand"
+                        ToolTip="minionware.net" Click="MinionwareLogo_Click">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <ContentPresenter/>
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter/>
+                            </Border>
                         </ControlTemplate>
                     </Button.Template>
-                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="26"/>
+                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="46"/>
                 </Button>
 
-                <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="30"
-                           HorizontalAlignment="Center" Margin="0,18,0,4"/>
+                <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="36" FontWeight="Bold"
+                           HorizontalAlignment="Center" Margin="0,26,0,6"/>
                 <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
-                           Style="{StaticResource Text.Muted}" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                           Style="{StaticResource Text.Muted}" FontSize="15" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
 
-                <Border Style="{StaticResource Card}" Margin="0,26,0,0">
+                <Border Style="{StaticResource Card}" Margin="0,28,0,0" BorderBrush="{DynamicResource Brush.Blocked}" BorderThickness="1.5">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🛡" FontSize="16" Margin="0,0,8,0"/>
-                            <TextBlock Text="This app never touches a real database" Style="{StaticResource Text.H2}" FontSize="14"/>
+                            <Border Width="26" Height="26" CornerRadius="13" Background="{DynamicResource Brush.Blocked}" Margin="0,0,10,0">
+                                <TextBlock Text="🛡" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="This app never touches a real database" Style="{StaticResource Text.H2}" FontSize="14" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <TextBlock Style="{StaticResource Text.Body}" Margin="0,6,0,0" TextWrapping="Wrap">
+                        <TextBlock Style="{StaticResource Text.Body}" Margin="0,8,0,0" TextWrapping="Wrap">
                             It never opens a database connection and never executes anything. Every query, every
                             result, every "leaked row" is a string this app built and a rule-based narration of
                             what a real SQL Server engine would do with it — safe to run anywhere, with nothing
@@ -163,14 +190,14 @@
                     </StackPanel>
                 </Border>
 
-                <TextBlock HorizontalAlignment="Center" Margin="0,18,0,0" Style="{StaticResource Text.Muted}" FontSize="12">
+                <TextBlock HorizontalAlignment="Center" Margin="0,20,0,0" Style="{StaticResource Text.Muted}" FontSize="12">
                     <Run Text="{Binding AttackCount, Mode=OneWay}"/><Run Text=" attacks · 6 categories · SQL, C#, and PowerShell, every time"/>
                 </TextBlock>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
-                    <Button Content="🎓  Start the tutorial" Style="{StaticResource Button.Primary}" Padding="18,10" Margin="0,0,10,0"
-                            Click="TutorialButton_Click"/>
-                    <Button Content="📂  Browse the attack catalog" Padding="18,10"
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,24,0,0">
+                    <Button Content="🎓  Start the tutorial" Style="{StaticResource Button.Primary}" Padding="20,11" Margin="0,0,10,0"
+                            FontSize="13" Click="TutorialButton_Click"/>
+                    <Button Content="📂  Browse the attack catalog" Padding="20,11" FontSize="13"
                             Command="{Binding BrowseCatalogCommand}"/>
                 </StackPanel>
             </StackPanel>
