@@ -33,9 +33,14 @@ public static class AttackCatalog
         QuotenameLimitScenario.Create(),
         ExecuteAsEscalationScenario.Create(),
         XpCmdshellRceScenario.Create(),
-        // Next up: Unicode/homoglyph smuggling, TOP/OFFSET/HAVING injection, the stored-payload
+        LinkedServerPivotScenario.Create(),
+        XQueryInjectionScenario.Create(),
+        FullTextContainsInjectionScenario.Create(),
+        JsonPathInjectionScenario.Create(),
+        // Next up: Unicode/homoglyph smuggling, TOP/OFFSET/HAVING injection (same root cause as
+        // Numeric/Stacked, different clause — low marginal teaching value), the stored-payload
         // -> rendered-page scenario (arguably XSS riding on a SQLi delivery mechanism — needs a
-        // design call first), linked-server pivoting, non-SQL injection (v1.1), historical
-        // SQL Server OS-level CVEs (v2, history + citations only).
+        // design call first), non-SQL injection (v1.1), historical SQL Server OS-level CVEs
+        // (v2, history + citations only).
     };
 }

@@ -7,7 +7,7 @@ app — what SQL injection is, why it matters, and four core techniques
 taught through five live, interactive demos. See
 **[The Opening Tutorial](../getting-started/tutorial-wizard.md)**.
 
-## 🗂️ Twenty-two real attacks, seven categories, all fully built out
+## 🗂️ Twenty-six real attacks, seven categories, all fully built out
 
 Every single entry in the catalog — no exceptions — gets:
 

@@ -30,6 +30,8 @@ nav:
           - Comment Truncation: catalog/comment-truncation.md
           - Error-Based Injection: catalog/error-based-injection.md
           - INSERT/UPDATE Injection: catalog/insert-update-injection.md
+          - Full-Text Search Injection: catalog/fulltext-contains-injection.md
+          - JSON Path Injection: catalog/json-path-injection.md
       - Blind / Inferential:
           - Boolean-Blind Injection: catalog/boolean-blind-injection.md
           - Time-Based Blind Injection: catalog/time-based-blind-injection.md
@@ -39,6 +41,7 @@ nav:
           - Dynamic SQL in a Stored Procedure: catalog/dynamic-sql-stored-procedure.md
           - QUOTENAME's 128-Character Limit: catalog/quotename-limit.md
           - EXECUTE AS Escalation: catalog/execute-as-escalation.md
+          - XQuery Injection: catalog/xquery-injection.md
       - Delivery & Obfuscation:
           - Second-Order Injection: catalog/second-order-injection.md
           - Hex-Encoded Literal Bypass: catalog/hex-encoded-bypass.md
@@ -48,6 +51,7 @@ nav:
           - Out-of-Band Exfiltration (DNS): catalog/out-of-band-exfiltration.md
       - Post-Injection Impact:
           - xp_cmdshell Remote Code Execution: catalog/xp-cmdshell-rce.md
+          - Linked-Server Pivoting: catalog/linked-server-pivot.md
       - SQL Server Agent & Jobs:
           - CmdExec Job Step Escalation: catalog/sql-agent-cmdexec-escalation.md
   - Challenge Mode: challenge-mode.md

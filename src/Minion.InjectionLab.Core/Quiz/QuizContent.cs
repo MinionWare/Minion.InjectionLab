@@ -16,7 +16,8 @@ public static class QuizContent
     {
         BeginnerMission(),
         IntermediateMission(),
-        ExpertMission()
+        StealThePaymentDataMission(),
+        GuardedAdminFormMission()
     };
 
     // ---------------------------------------------------------------- Beginner
@@ -116,7 +117,7 @@ public static class QuizContent
     private static readonly HashSet<string> KnownTables = new() { "payments", "customers", "auditlog" };
     private static readonly HashSet<string> PaymentsColumns = new() { "paymentid", "cardholdername", "creditcardnumber", "amount" };
 
-    private static QuizMission ExpertMission() => new()
+    private static QuizMission StealThePaymentDataMission() => new()
     {
         Id = "steal-the-payment-data",
         Difficulty = QuizDifficulty.Expert,
@@ -198,6 +199,112 @@ public static class QuizContent
                 return new QuizOutcome { Succeeded = false, Headline = "Query failed or returned nothing useful", Detail = "A UNION needs the right number of columns, and you're reading from a table or view that may not exist. Start smaller." };
 
             return new QuizOutcome { Succeeded = false, Headline = "Ordinary lookup", Detail = "This hasn't tried to break out of the query yet. You already know several ways to do that from the catalog." };
+        },
+
+        Hints = null
+    };
+
+    // ---------------------------------------------------------------- Expert (tiered form)
+
+    private static QuizMission GuardedAdminFormMission() => new()
+    {
+        Id = "guarded-admin-form",
+        Difficulty = QuizDifficulty.Expert,
+        Title = "The Guarded Admin Form",
+        Briefing = "An internal order-lookup form has four fields. One is properly parameterized. The other " +
+                   "three aren't — but they're not equally exposed either. Nobody will tell you which is which. " +
+                   "There's no single goal here: whatever you manage to pull out of this form IS the goal, and " +
+                   "it defines which level you solved it at.",
+        Goal = "Find out which fields are actually exploitable, and get as far as you can: 🥉 Bronze (prove a " +
+               "field is injectable), 🥈 Silver (leak something low-value), 🥇 Gold (full exfiltration of real " +
+               "payment data). Your best tier carries over between attempts.",
+        Fields = new[]
+        {
+            new FormField { Key = "accountId", Label = "Account ID", DefaultValue = "4471" },
+            new FormField { Key = "reference", Label = "Order reference", DefaultValue = "REF-001" },
+            new FormField { Key = "notes", Label = "Notes contain", DefaultValue = "" },
+            new FormField { Key = "sortBy", Label = "Sort by", DefaultValue = "OrderDate" }
+        },
+        BaselineValues = new Dictionary<string, string>
+        {
+            ["accountId"] = "4471", ["reference"] = "REF-001", ["notes"] = "", ["sortBy"] = "OrderDate"
+        },
+
+        BuildSql = f =>
+            "-- @AccountId is a real, bound parameter — this field alone is genuinely safe.\n" +
+            "EXEC sp_executesql N'SELECT OrderId, Status FROM dbo.Orders\n" +
+            "    WHERE AccountId = @AccountId\n" +
+           $"    AND Reference = ''{f["reference"]}''\n" +
+           $"    AND Notes LIKE ''%{f["notes"]}%''\n" +
+           $"    ORDER BY {f["sortBy"]}', N'@AccountId INT', @AccountId;\n\n" +
+           $"@AccountId = {f["accountId"]}",
+
+        BuildCSharp = f =>
+            "var sql = \"SELECT OrderId, Status FROM dbo.Orders WHERE AccountId = @AccountId \" +\n" +
+           $"    \"AND Reference = '{f["reference"]}' AND Notes LIKE '%{f["notes"]}%' ORDER BY {f["sortBy"]}\";\n" +
+            "using var cmd = new SqlCommand(sql, connection);\n" +
+            "cmd.Parameters.Add(\"@AccountId\", SqlDbType.Int).Value = accountId; // the ONLY field bound as a real parameter",
+
+        BuildPowerShell = f =>
+            "$sql = \"SELECT OrderId, Status FROM dbo.Orders WHERE AccountId = @AccountId \" + `\n" +
+           $"    \"AND Reference = '{f["reference"]}' AND Notes LIKE '%{f["notes"]}%' ORDER BY {f["sortBy"]}\"",
+
+        Evaluate = (f, discovered) =>
+        {
+            var sortBy = f["sortBy"];
+            var notes = f["notes"];
+            var reference = f["reference"];
+
+            bool bronzeNow = sortBy.Contains(';') || Rx(sortBy, @"waitfor\s+delay");
+            bool silverNow = Rx(notes, @"union\s+select");
+            bool goldNow = Rx(reference, @"union\s+select") && reference.Contains("creditcardnumber", StringComparison.OrdinalIgnoreCase);
+
+            var newFacts = new List<string>();
+            if (bronzeNow) newFacts.Add("BRONZE: Sort by — ORDER BY accepts a full expression, unparameterized");
+            if (silverNow) newFacts.Add("SILVER: Notes — leaks dbo.Users via UNION, but only low-value columns");
+            if (goldNow) newFacts.Add("GOLD: Order reference — fully unprotected, full UNION exfiltration reaches dbo.Payments");
+
+            bool hasGoldEver = goldNow || discovered.Any(x => x.StartsWith("GOLD"));
+            bool hasSilverEver = silverNow || discovered.Any(x => x.StartsWith("SILVER"));
+            bool hasBronzeEver = bronzeNow || discovered.Any(x => x.StartsWith("BRONZE"));
+
+            if (goldNow)
+                return new QuizOutcome
+                {
+                    Succeeded = true,
+                    Headline = "🥇 GOLD — real payment data exfiltrated",
+                    Detail = "The Order reference field was never protected at all — a plain UNION SELECT against " +
+                              "dbo.Payments reaches CreditCardNumber directly. This is the complete solve.",
+                    NewlyDiscovered = newFacts
+                };
+            if (silverNow)
+                return new QuizOutcome
+                {
+                    Succeeded = false,
+                    Headline = "🥈 SILVER — found a real hole, but not the valuable one yet",
+                    Detail = "The Notes field is injectable via UNION too, but it only reaches low-value columns in " +
+                              "this attempt. The Order reference field is unprotected in a different, more direct way.",
+                    NewlyDiscovered = newFacts
+                };
+            if (bronzeNow)
+                return new QuizOutcome
+                {
+                    Succeeded = false,
+                    Headline = "🥉 BRONZE — confirmed the Sort by field is injectable",
+                    Detail = "Good — Sort by reaches raw SQL. But stacking a delay doesn't get you any actual data " +
+                              "on its own. Two of the other three fields are exploitable too, and more directly.",
+                    NewlyDiscovered = newFacts
+                };
+
+            var best = hasGoldEver ? "🥇 Gold" : hasSilverEver ? "🥈 Silver" : hasBronzeEver ? "🥉 Bronze" : null;
+            return new QuizOutcome
+            {
+                Succeeded = false,
+                Headline = best != null ? $"No new progress — your best so far is {best}" : "Nothing exploitable in this attempt yet",
+                Detail = "Account ID is genuinely safe — it's a real bound parameter, not a decoy worth retrying. " +
+                          "The other three fields aren't equally protected. Try each one on its own before combining them.",
+                NewlyDiscovered = newFacts
+            };
         },
 
         Hints = null

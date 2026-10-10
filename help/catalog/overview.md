@@ -1,6 +1,6 @@
 # Attack Catalog
 
-Twenty-two techniques, seven categories. Every one gets real SQL/C#/PowerShell,
+Twenty-six techniques, seven categories. Every one gets real SQL/C#/PowerShell,
 graded fixes where there's more than one honest mitigation to compare, full
 terminology and external references, and a hands-on challenge.
 
@@ -25,6 +25,10 @@ direct form of injection.
   failure leaks its value straight into a visible error message.
 - **[INSERT/UPDATE Injection](insert-update-injection.md)** — the same bug
   in a write statement, escalating a profile update to an admin account.
+- **[Full-Text Search Injection](fulltext-contains-injection.md)** — a
+  predicate with its own query syntax is still ordinary SQL underneath.
+- **[JSON Path Injection](json-path-injection.md)** — a path argument SQL
+  Server has let you parameterize since 2017, left unparameterized anyway.
 
 ## Blind / Inferential
 
@@ -51,6 +55,8 @@ Parameters only ever bind as *data* — some things in SQL aren't data at all.
 - **[EXECUTE AS Escalation](execute-as-escalation.md)** — a procedure
   secured to run as a privileged account hands that same privilege to
   whatever gets injected into it.
+- **[XQuery Injection](xquery-injection.md)** — the xml data type's own
+  methods require a string literal, forcing the exact same dynamic-SQL trap.
 
 ## Delivery & Obfuscation
 
@@ -78,6 +84,8 @@ The ceiling, not the floor: what injection can escalate all the way to.
 
 - **[xp_cmdshell Remote Code Execution](xp-cmdshell-rce.md)** — a sysadmin
   connection plus one stacked statement is a full OS command shell.
+- **[Linked-Server Pivoting](linked-server-pivot.md)** — the sensitive data
+  was never on this server at all; a trust relationship reaches it anyway.
 
 ## SQL Server Agent & Jobs
 

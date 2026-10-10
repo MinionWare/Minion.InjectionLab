@@ -112,11 +112,15 @@ file for the market scan that confirmed the gap.
 ## Quiz Mode
 
 A separate window (`QuizWindow`/`QuizViewModel`, opened via `View > Quiz
-mode` or a left-nav button) offering three capstone missions
-(`Core/Models/QuizMission.cs`, content in `Core/Quiz/QuizContent.cs`) — one
-per `QuizDifficulty`. Deliberately a third, distinct content model from
-both `AttackScenario` (the catalog) and `TutorialStep`/`TutorialDemo` (the
-wizard):
+mode` or a left-nav button) offering capstone missions
+(`Core/Models/QuizMission.cs`, content in `Core/Quiz/QuizContent.cs`),
+grouped by `QuizDifficulty`. Deliberately a third, distinct content model
+from both `AttackScenario` (the catalog) and `TutorialStep`/`TutorialDemo`
+(the wizard). A tier can hold more than one mission —
+`QuizViewModel.MissionsInTier` + a `SelectMissionCommand` drive a small
+mission-picker row in the UI (`HasMultipleMissions`, hidden entirely when a
+tier only has one) — Expert currently has two, built for very different
+reasons (see below).
 
 - **Open-ended grading, not a canonical answer.** `QuizMission.Evaluate`
   takes the submitted field values *and* a running `IReadOnlySet<string>`
@@ -126,18 +130,31 @@ wizard):
   mission accepts any payload shape that actually achieves the goal —
   Beginner's "Lazy Login" mission explicitly accepts either a tautology or
   comment-truncation bypass, not just one.
-- **Expert is a genuine multi-stage recon-then-exploit chain** ("Steal the
-  Payment Data") against one search box with no schema given up front:
-  column-count probe → `INFORMATION_SCHEMA.TABLES` enumeration →
+- **Expert, mission 1 — a genuine multi-stage recon-then-exploit chain**
+  ("Steal the Payment Data") against one search box with no schema given
+  up front: column-count probe → `INFORMATION_SCHEMA.TABLES` enumeration →
   `INFORMATION_SCHEMA.COLUMNS` enumeration of a specific table → final
-  UNION exfiltration referencing what was actually discovered. Each stage's
-  `NewlyDiscovered` facts accumulate in `QuizViewModel._discovered` (passed
-  back into `Evaluate` on the next submit) and mirror into an observable
-  `DiscoveredFacts` list the UI shows as "🔎 Discovered so far." Grading
-  uses the same plain regex/`Contains` classification style as every
-  scenario's `Classify()` — verified against each stage's sample payload
-  via direct PowerShell regex tests before shipping, same as the hex-decode
-  logic earlier in the project.
+  UNION exfiltration referencing what was actually discovered.
+- **Expert, mission 2 — a tiered, multi-field form** ("The Guarded Admin
+  Form"), added after feedback that a single goal wasn't enough at this
+  difficulty: four fields in one combined query, only one of which
+  (`@AccountId`) is a real bound parameter — the other three are
+  differently exploitable (`SortBy`/ORDER BY → 🥉 Bronze, `Notes`/UNION
+  reaching low-value columns → 🥈 Silver, `Reference`/UNION reaching
+  `CreditCardNumber` → 🥇 Gold). **What you're able to get back *is* the
+  goal** — there's no single pass/fail, your best tier is tracked and
+  reported, and it persists across attempts via the same discovered-facts
+  mechanism mission 1 uses (`"BRONZE: ..."`/`"SILVER: ..."`/`"GOLD: ..."`
+  prefixed facts, checked with `.StartsWith(...)` to find the best tier
+  reached so far, old or new).
+- In both Expert missions, each stage/tier's `NewlyDiscovered` facts
+  accumulate in `QuizViewModel._discovered` (passed back into `Evaluate` on
+  the next submit) and mirror into an observable `DiscoveredFacts` list the
+  UI shows as "🔎 Discovered so far." Grading uses the same plain regex/
+  `Contains` classification style as every scenario's `Classify()` —
+  verified against each mission's sample payloads via direct PowerShell
+  regex tests before shipping, same as the hex-decode logic earlier in the
+  project.
 - `QuizWindow` reuses `FieldValueViewModel` (from the main catalog view
   models) for field inputs, and `TextBox.Selectable` for the generated
   SQL/C#/PowerShell tabs — no new infrastructure needed for either.
@@ -523,7 +540,7 @@ Always give `Run.Text` bindings an explicit `Mode=OneTime` or `Mode=OneWay`.
    decision-path diagram, submit/result panels, and challenge panel are all
    generic over `AttackScenario`.
 
-## Planned attack catalog (remaining — 22 of ~30+ built so far)
+## Planned attack catalog (remaining — 26 of ~30+ built so far)
 
 Classic/in-band (built: Tautology, UNION, stacked queries, numeric, LIKE
 wildcard, `CommentTruncationScenario` — a known username plus a comment
@@ -577,12 +594,30 @@ woven into a CmdExec job step's command string; this is plain OS command
 injection reached through SQL Server Agent rather than SQL injection itself,
 and the fix is "don't shell out at all", not a better filter).
 
+Post-injection impact, round 2 (built: `LinkedServerPivotScenario` — a
+stacked `OPENQUERY`/`EXECUTE ... AT` call reaches a completely different,
+often more sensitive SQL Server instance across a configured linked-server
+trust relationship, using whatever credential the *link* was set up with,
+not the caller's own).
+
+Where parameters resist in newer ways (built: `XQueryInjectionScenario` —
+the xml data type's `.query()`/`.value()` methods require a string
+literal, not a parameter, so devs reach for dynamic SQL exactly like the
+identifier scenarios; `FullTextContainsInjectionScenario` and
+`JsonPathInjectionScenario` — CONTAINS and JSON_VALUE both take a string/
+path argument that's ordinary SQL text until parameterized, same root
+cause as everything else, just reached through a newer T-SQL feature.
+JSON_VALUE's path has been bindable since SQL Server 2017 — no excuse,
+unlike XQuery's literal-only requirement, which genuinely needs
+`sql:variable()` as a workaround).
+
 Still explicitly deferred: TOP/OFFSET/HAVING injection (a narrower variant
-of numeric/identifier injection already covered), Unicode/homoglyph
-smuggling (no T-SQL-specific technique verified solid enough to teach yet),
-non-SQL injection (NoSQL/LDAP/XPath/ORM/header/log injection — a different
-vulnerability family, flagged v1.1), and historical SQL Server OS-level
-CVEs (v2, explicitly "history + citations, not exploit code").
+of numeric/identifier injection already covered — low marginal teaching
+value), Unicode/homoglyph smuggling (no T-SQL-specific technique verified
+solid enough to teach yet), non-SQL injection (NoSQL/LDAP/XPath/ORM/
+header/log injection — a different vulnerability family, flagged v1.1),
+and historical SQL Server OS-level CVEs (v2, explicitly "history +
+citations, not exploit code").
 
 Non-SQL injection (v1.1): NoSQL (`$where`/`$ne`), LDAP, XPath, ORM bypass
 (`FromSqlRaw` + interpolation), header/cookie injection, log injection.

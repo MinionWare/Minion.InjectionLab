@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:vm="clr-namespace:Minion.InjectionLab.Wpf.ViewModels"
+        xmlns:core="clr-namespace:Minion.InjectionLab.Core.Models;assembly=Minion.InjectionLab.Core"
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
         Title="Quiz Mode" Height="820" Width="900" MinHeight="640" MinWidth="760"
@@ -42,6 +43,22 @@
         <!-- ================= MISSION ================= -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
+                <ItemsControl ItemsSource="{Binding MissionsInTier}" Margin="0,0,0,10"
+                              Visibility="{Binding HasMultipleMissions, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type core:QuizMission}">
+                            <Button Content="{Binding Title}" Margin="0,0,8,0" Padding="12,6" FontSize="12"
+                                    Command="{Binding DataContext.SelectMissionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
                 <TextBlock Text="{Binding CurrentMission.Title, Mode=OneWay}" Style="{StaticResource Text.H2}" FontSize="18"/>
                 <TextBlock Text="{Binding CurrentMission.Briefing, Mode=OneWay}" Style="{StaticResource Text.Body}" Margin="0,4,0,0"/>
 

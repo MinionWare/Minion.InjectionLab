@@ -18,7 +18,12 @@ public partial class QuizViewModel : ObservableObject
     [ObservableProperty]
     private QuizDifficulty difficulty = QuizDifficulty.Beginner;
 
-    public QuizMission CurrentMission => QuizContent.All.First(m => m.Difficulty == Difficulty);
+    public ObservableCollection<QuizMission> MissionsInTier { get; private set; } = new();
+
+    [ObservableProperty]
+    private QuizMission currentMission = null!;
+
+    public bool HasMultipleMissions => MissionsInTier.Count > 1;
 
     public ObservableCollection<FieldValueViewModel> Fields { get; private set; } = new();
     public ObservableCollection<string> DiscoveredFacts { get; } = new();
@@ -47,14 +52,23 @@ public partial class QuizViewModel : ObservableObject
 
     public QuizViewModel()
     {
-        LoadMission();
+        OnDifficultyChanged(Difficulty);
     }
 
-    partial void OnDifficultyChanged(QuizDifficulty value) => LoadMission();
-
-    private void LoadMission()
+    partial void OnDifficultyChanged(QuizDifficulty value)
     {
-        var mission = CurrentMission;
+        MissionsInTier = new ObservableCollection<QuizMission>(QuizContent.All.Where(m => m.Difficulty == value));
+        OnPropertyChanged(nameof(MissionsInTier));
+        OnPropertyChanged(nameof(HasMultipleMissions));
+        LoadMission(MissionsInTier.First());
+    }
+
+    [RelayCommand]
+    private void SelectMission(QuizMission mission) => LoadMission(mission);
+
+    private void LoadMission(QuizMission mission)
+    {
+        CurrentMission = mission;
 
         foreach (var old in Fields)
             old.PropertyChanged -= OnFieldChanged;
@@ -70,7 +84,6 @@ public partial class QuizViewModel : ObservableObject
         AttemptCount = 0;
         RevealedHintCount = 0;
 
-        OnPropertyChanged(nameof(CurrentMission));
         OnPropertyChanged(nameof(Fields));
         OnPropertyChanged(nameof(HasHints));
         OnPropertyChanged(nameof(RevealedHints));
@@ -121,5 +134,5 @@ public partial class QuizViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Reset() => LoadMission();
+    private void Reset() => LoadMission(CurrentMission);
 }
