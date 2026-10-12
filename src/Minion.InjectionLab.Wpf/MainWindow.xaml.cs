@@ -63,9 +63,6 @@ public partial class MainWindow : Window
         {
             if (!viewModel.HasSelectedAttack)
                 PlayWelcomeIntro();
-
-            if (!TutorialService.HasSeenTutorial)
-                ShowTutorial();
         };
     }
 
