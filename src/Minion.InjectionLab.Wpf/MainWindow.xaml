@@ -17,6 +17,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -46,8 +47,30 @@
             </MenuItem>
         </Menu>
 
+        <!-- ================= UPDATE BANNER ================= -->
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.Bg1}"
+                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="14,6"
+                Visibility="{Binding UpdateBannerVisible}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="✕" Background="Transparent" BorderThickness="0"
+                        Foreground="{DynamicResource Brush.Blocked}" FontSize="12" Cursor="Hand" Padding="8,0"
+                        Command="{Binding DismissUpdateCommand}"/>
+                <Button DockPanel.Dock="Right" Content="Download" Style="{StaticResource Button.Primary}"
+                        FontSize="11" Padding="10,3" Margin="0,0,8,0" Command="{Binding OpenDownloadCommand}"/>
+                <Button DockPanel.Dock="Right" Background="Transparent" BorderThickness="0"
+                        Foreground="{DynamicResource Brush.Blocked}" FontSize="11" Cursor="Hand" Padding="10,3"
+                        Margin="0,0,4,0" Command="{Binding ShowWhatsNewCommand}">
+                    <TextBlock Text="What's New" TextDecorations="Underline"/>
+                </Button>
+                <TextBlock VerticalAlignment="Center" FontSize="12">
+                    <Run Foreground="{DynamicResource Brush.Blocked}" FontWeight="SemiBold" Text="Update available — "/>
+                    <Run Foreground="{DynamicResource Brush.TextSecondary}" Text="{Binding UpdateVersionText}"/>
+                </TextBlock>
+            </DockPanel>
+        </Border>
+
         <!-- ================= LEFT NAV ================= -->
-        <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
+        <Border Grid.Row="2" Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
                 BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
@@ -141,7 +164,7 @@
         <!-- Spans BOTH columns and sits above the left-nav Border in z-order, so it genuinely
              blocks picking a scenario from the list underneath — not just the content area.
              DataContext here is still the MainViewModel (nothing below overrides it). -->
-        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
               Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
             <Grid.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -225,7 +248,7 @@
         </Grid>
 
         <!-- ================= RIGHT CONTENT (a scenario is selected) ================= -->
-        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto"
+        <ScrollViewer Grid.Row="2" Grid.Column="1" VerticalScrollBarVisibility="Auto"
                       Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Margin="28,24,28,32" DataContext="{Binding SelectedAttack}">
 

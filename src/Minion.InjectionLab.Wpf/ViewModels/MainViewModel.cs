@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Minion.InjectionLab.Core.Catalog;
@@ -11,6 +13,13 @@ namespace Minion.InjectionLab.Wpf.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     public ObservableCollection<AttackViewModel> Attacks { get; }
+
+    // ── Update banner ─────────────────────────────────────────────────────────
+    [ObservableProperty] private Visibility updateBannerVisible = Visibility.Collapsed;
+    [ObservableProperty] private string updateVersionText = string.Empty;
+    private string _updateDownloadUrl = string.Empty;
+    private string _updateVersion = string.Empty;
+    private string[] _updateFeatures = [];
 
     [ObservableProperty]
     private AttackViewModel? selectedAttack;
@@ -54,4 +63,33 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void BrowseCatalog() => SelectedAttack = Attacks.FirstOrDefault();
+
+    [RelayCommand]
+    private void DismissUpdate() => UpdateBannerVisible = Visibility.Collapsed;
+
+    [RelayCommand]
+    private void OpenDownload()
+    {
+        if (!string.IsNullOrEmpty(_updateDownloadUrl))
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_updateDownloadUrl) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void ShowWhatsNew()
+    {
+        var win = new Views.WhatsNewWindow(_updateVersion, _updateFeatures, _updateDownloadUrl)
+            { Owner = Application.Current.MainWindow };
+        win.ShowDialog();
+    }
+
+    public async Task CheckForUpdatesAsync()
+    {
+        var info = await UpdateService.CheckAsync();
+        if (info == null) return;
+        _updateDownloadUrl = info.DownloadUrl;
+        _updateVersion = info.Version;
+        _updateFeatures = info.Features;
+        UpdateVersionText = $"v{info.Version} is available";
+        UpdateBannerVisible = Visibility.Visible;
+    }
 }

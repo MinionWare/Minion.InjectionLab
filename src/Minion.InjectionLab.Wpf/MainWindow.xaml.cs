@@ -63,6 +63,8 @@ public partial class MainWindow : Window
         {
             if (!viewModel.HasSelectedAttack)
                 PlayWelcomeIntro();
+
+            _ = viewModel.CheckForUpdatesAsync();
         };
     }
 
