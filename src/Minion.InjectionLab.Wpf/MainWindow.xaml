@@ -47,26 +47,28 @@
             </MenuItem>
         </Menu>
 
-        <!-- ================= UPDATE BANNER ================= -->
-        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.Bg1}"
-                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="14,6"
-                Visibility="{Binding UpdateBannerVisible}">
-            <DockPanel>
-                <Button DockPanel.Dock="Right" Content="✕" Background="Transparent" BorderThickness="0"
-                        Foreground="{DynamicResource Brush.Blocked}" FontSize="12" Cursor="Hand" Padding="8,0"
-                        Command="{Binding DismissUpdateCommand}"/>
-                <Button DockPanel.Dock="Right" Content="Download" Style="{StaticResource Button.Primary}"
-                        FontSize="11" Padding="10,3" Margin="0,0,8,0" Command="{Binding OpenDownloadCommand}"/>
-                <Button DockPanel.Dock="Right" Background="Transparent" BorderThickness="0"
-                        Foreground="{DynamicResource Brush.Blocked}" FontSize="11" Cursor="Hand" Padding="10,3"
-                        Margin="0,0,4,0" Command="{Binding ShowWhatsNewCommand}">
-                    <TextBlock Text="What's New" TextDecorations="Underline"/>
-                </Button>
-                <TextBlock VerticalAlignment="Center" FontSize="12">
-                    <Run Foreground="{DynamicResource Brush.Blocked}" FontWeight="SemiBold" Text="Update available — "/>
-                    <Run Foreground="{DynamicResource Brush.TextSecondary}" Text="{Binding UpdateVersionText}"/>
-                </TextBlock>
-            </DockPanel>
+        <!-- ================= UPDATE BANNER =================
+             Collapsed until MainWindow.xaml.cs's startup update check finds a newer,
+             non-skipped version. See CheckForUpdatesAsync. -->
+        <Border x:Name="UpdateBanner" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                Background="{DynamicResource Brush.AccentMuted}" BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="0,0,0,1"
+                Visibility="Collapsed" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="UpdateBannerText" Grid.Column="0" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Brush.TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                <Button x:Name="UpdateBannerWhatsNewButton" Grid.Column="1" Content="What's New" Style="{StaticResource Button.Ghost}"
+                        Click="UpdateBannerWhatsNew_Click" Margin="8,0,0,0"/>
+                <Button x:Name="UpdateBannerDownloadButton" Grid.Column="2" Content="Download" Style="{StaticResource Button.Primary}"
+                        Click="UpdateBannerDownload_Click" Margin="8,0,0,0"/>
+                <Button x:Name="UpdateBannerDismissButton" Grid.Column="3" Content="✕" Style="{StaticResource Button.Ghost}"
+                        Click="UpdateBannerDismiss_Click" Margin="8,0,0,0" ToolTip="Dismiss — won't ask again for this version"/>
+            </Grid>
         </Border>
 
         <!-- ================= LEFT NAV ================= -->
