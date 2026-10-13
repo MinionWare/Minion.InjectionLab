@@ -23,15 +23,6 @@
     <Resource Include="Resources\Branding\MinionwareWordmark.png" />
   </ItemGroup>
 
-  <!-- Same convention as Minion.Agent.Wpf: a real, independently-editable file next
-       to the exe, not baked into the assembly, so UpdateManifestUrl can change
-       without a recompile. -->
-  <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>

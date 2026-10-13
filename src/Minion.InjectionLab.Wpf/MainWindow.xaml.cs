@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -202,20 +201,14 @@ public partial class MainWindow : Window
     // Same deploy-time-config pattern as Minion.Agent's ReadApiBaseUrl -- empty/missing
     // means "don't check," not an error, since running fully offline is a normal,
     // supported setup, not a broken one.
-    private static string ReadUpdateManifestUrl()
-    {
-        var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+    // Not deploy-time config: this is the same single URL for every install of this app,
+    // forever -- unlike Minion.Agent's ApiBaseUrl (which genuinely varies per customer
+    // deployment and belongs in a config file), changing this means shipping a new exe
+    // anyway, so there's no real benefit to indirecting through a file that can go missing
+    // or drift out of sync with the binary.
+    private const string UpdateManifestUrl = "https://www.minionware.net/Products/Agent/InjectionLab_NewVersion.json";
 
-        try
-        {
-            using var doc = JsonDocument.Parse(File.ReadAllText(path));
-            return doc.RootElement.TryGetProperty("UpdateManifestUrl", out var value) ? value.GetString() ?? "" : "";
-        }
-        catch (Exception ex) when (ex is IOException or JsonException)
-        {
-            return "";
-        }
-    }
+    private static string ReadUpdateManifestUrl() => UpdateManifestUrl;
 
     // Enhancement-only: wrapped whole in try/catch, never surfaces an error, never
     // delays/blocks startup. Only ever shows the banner (UpdateBanner in
