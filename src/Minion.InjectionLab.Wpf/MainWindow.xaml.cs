@@ -14,13 +14,14 @@ using Minion.InjectionLab.Wpf.Behaviors;
 using Minion.InjectionLab.Wpf.Converters;
 using Minion.InjectionLab.Wpf.Services;
 using Minion.InjectionLab.Wpf.ViewModels;
+using Minion.Licensing.Updates;
 
 namespace Minion.InjectionLab.Wpf;
 
 public partial class MainWindow : Window
 {
     private AttackViewModel? _trackedAttack;
-    private readonly UpdateCheckService _updateCheckService = new();
+    private readonly UpdateCheckService _updateCheckService = new("Minion.InjectionLab");
     private UpdateManifest? _pendingUpdateManifest;
 
     public MainWindow()
