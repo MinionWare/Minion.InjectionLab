@@ -10,6 +10,25 @@ using Minion.InjectionLab.Core.Models;
 
 namespace Minion.InjectionLab.Wpf.ViewModels;
 
+/// <summary>One row in the "THIS RUN" sidebar (2f) and the debrief list (2g).</summary>
+public partial class QuizQuestionResult : ObservableObject
+{
+    public required int Number { get; init; }
+    public required AttackScenario Scenario { get; init; }
+
+    [ObservableProperty]
+    private bool isCurrent;
+
+    [ObservableProperty]
+    private bool answered;
+
+    [ObservableProperty]
+    private bool solved;
+
+    [ObservableProperty]
+    private string lastPayload = string.Empty;
+}
+
 /// <summary>
 /// Drives Quiz Mode: a real, multi-question quiz drawn live from the full attack catalog — not a
 /// handful of hand-authored missions. Every one of the 26+ scenarios already carries everything a
@@ -28,6 +47,10 @@ public partial class QuizViewModel : ObservableObject
     private QuizDifficulty difficulty = QuizDifficulty.Beginner;
 
     public ObservableCollection<AttackScenario> Questions { get; private set; } = new();
+
+    public ObservableCollection<QuizQuestionResult> Results { get; private set; } = new();
+
+    public int MissedCount => Results.Count(r => !r.Solved);
 
     [ObservableProperty]
     private int questionIndex;
@@ -74,10 +97,15 @@ public partial class QuizViewModel : ObservableObject
     [ObservableProperty]
     private string? outcomeDetail;
 
+    public event EventHandler? QuitRequested;
+
     public QuizViewModel()
     {
         StartSession();
     }
+
+    [RelayCommand]
+    private void Quit() => QuitRequested?.Invoke(this, EventArgs.Empty);
 
     partial void OnDifficultyChanged(QuizDifficulty value) => StartSession();
 
@@ -93,11 +121,14 @@ public partial class QuizViewModel : ObservableObject
     {
         Questions = new ObservableCollection<AttackScenario>(
             AttackCatalog.All.OrderBy(_ => Random.Next()).Take(QuestionsPerSession));
+        Results = new ObservableCollection<QuizQuestionResult>(
+            Questions.Select((q, i) => new QuizQuestionResult { Number = i + 1, Scenario = q, IsCurrent = i == 0 }));
         QuestionIndex = 0;
         Score = 0;
         IsSessionComplete = false;
 
         OnPropertyChanged(nameof(Questions));
+        OnPropertyChanged(nameof(Results));
         OnPropertyChanged(nameof(QuestionCount));
         OnPropertyChanged(nameof(IsSessionComplete));
         LoadQuestion();
@@ -129,6 +160,10 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowPremise));
         OnPropertyChanged(nameof(ShowGoalAndHints));
         OnPropertyChanged(nameof(Fields));
+
+        foreach (var r in Results)
+            r.IsCurrent = r.Number - 1 == QuestionIndex;
+
         Recompute();
     }
 
@@ -146,6 +181,12 @@ public partial class QuizViewModel : ObservableObject
         GeneratedSql = scenario.BuildVulnerableSql(values);
         GeneratedCSharp = scenario.BuildVulnerableCSharp?.Invoke(values);
         GeneratedPowerShell = scenario.BuildVulnerablePowerShell?.Invoke(values);
+
+        // Editing after a submit invalidates that submit's outcome — the recorded Results row
+        // (last payload / solved) stays untouched until the next real Submit.
+        HasSubmittedCurrent = false;
+        OutcomeHeadline = null;
+        OutcomeDetail = null;
     }
 
     [RelayCommand]
@@ -168,6 +209,12 @@ public partial class QuizViewModel : ObservableObject
         var sim = scenario.SimulateVulnerable(values);
         OutcomeHeadline = sim.Headline;
         OutcomeDetail = sim.Detail;
+
+        var result = Results[QuestionIndex];
+        result.Answered = true;
+        result.Solved = solved;
+        result.LastPayload = Fields.Count > 0 ? Fields[0].Value : string.Empty;
+        OnPropertyChanged(nameof(MissedCount));
     }
 
     [RelayCommand]

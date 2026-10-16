@@ -18,6 +18,8 @@ public partial class MainViewModel : ObservableObject
 
     public TutorialViewModel Tutorial { get; } = new();
 
+    public QuizViewModel Quiz { get; } = new();
+
     [ObservableProperty]
     private AttackViewModel? selectedAttack;
 
@@ -50,6 +52,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsTraining => CurrentView == AppView.Training;
     public bool IsQuiz => CurrentView == AppView.Quiz;
     public bool IsMissionsAreaActive => IsMissionSelect || IsMission;
+    public bool IsTrainingOrQuiz => IsTraining || IsQuiz;
 
     public MainViewModel()
     {
@@ -75,6 +78,8 @@ public partial class MainViewModel : ObservableObject
             CurrentView = AppView.MissionSelect;
         };
 
+        Quiz.QuitRequested += (_, _) => CurrentView = AppView.MissionSelect;
+
         // Open on the welcome screen rather than jumping straight into the first scenario —
         // SelectedAttack starts null on purpose.
     }
@@ -89,6 +94,7 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsTraining));
         OnPropertyChanged(nameof(IsQuiz));
         OnPropertyChanged(nameof(IsMissionsAreaActive));
+        OnPropertyChanged(nameof(IsTrainingOrQuiz));
     }
 
     partial void OnDifficultyChanged(DifficultyLevel value)

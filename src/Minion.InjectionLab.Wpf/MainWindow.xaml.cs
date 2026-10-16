@@ -69,6 +69,8 @@ public partial class MainWindow : Window
         };
     }
 
+    private void OpenMissedMissions_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).BrowseCatalogCommand.Execute(null);
+
     private void DifficultyChip_Click(object sender, RoutedEventArgs e)
     {
         var button = (Button)sender;
@@ -180,8 +182,7 @@ public partial class MainWindow : Window
 
     private void TutorialButton_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).OpenTrainingCommand.Execute(null);
 
-    private void QuizButton_Click(object sender, RoutedEventArgs e)
-        => new QuizWindow { Owner = this }.Show();
+    private void QuizButton_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).OpenQuizCommand.Execute(null);
 
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => Close();
 
