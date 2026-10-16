@@ -23,6 +23,16 @@
     <Resource Include="Resources\Branding\MinionwareWordmark.png" />
   </ItemGroup>
 
+  <!-- Neon HUD redesign fonts (Google Fonts, SIL OFL) -->
+  <ItemGroup>
+    <Resource Include="Resources\Fonts\ChakraPetch-Medium.ttf" />
+    <Resource Include="Resources\Fonts\ChakraPetch-SemiBold.ttf" />
+    <Resource Include="Resources\Fonts\ChakraPetch-Bold.ttf" />
+    <Resource Include="Resources\Fonts\Sora-Regular.ttf" />
+    <Resource Include="Resources\Fonts\JetBrainsMono-Regular.ttf" />
+    <Resource Include="Resources\Fonts\JetBrainsMono-Italic.ttf" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>

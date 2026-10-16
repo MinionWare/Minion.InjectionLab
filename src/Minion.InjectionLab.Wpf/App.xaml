@@ -7,8 +7,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Swap Colors.Dark.xaml for Colors.Light.xaml (or toggle at runtime) -->
-                <ResourceDictionary Source="Themes/Colors.Dark.xaml"/>
+                <!-- Swap Colors.Neon.xaml for Colors.Light.xaml (or toggle at runtime) -->
+                <ResourceDictionary Source="Themes/Colors.Neon.xaml"/>
                 <ResourceDictionary Source="Themes/Brushes.xaml"/>
                 <ResourceDictionary Source="Themes/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
@@ -23,6 +23,7 @@
             <conv:PathActiveConverter x:Key="PathActiveConverter"/>
             <conv:FixGradeToTabStyleConverter x:Key="FixGradeToTabStyleConverter"/>
             <conv:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter"/>
+            <conv:CategoryDisplayConverter x:Key="CategoryDisplayConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

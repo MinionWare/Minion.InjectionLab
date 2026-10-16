@@ -1,0 +1,72 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- "Neon HUD" redesign theme (2026-10) — see the design handoff doc for the full token
+         table this was built from. Every key the old Colors.Dark.xaml defined is kept so
+         existing DynamicResource bindings keep working; new keys are added alongside them. -->
+
+    <!-- Surfaces -->
+    <Color x:Key="Color.Bg0">#07080C</Color>
+    <Color x:Key="Color.Bg1">#D90D0F16</Color>
+    <!-- Bg1 @ 85% alpha, for cards/panels on top of the ambient glows -->
+    <Color x:Key="Color.Bg2">#1A1D29</Color>
+    <Color x:Key="Color.Border">#23283A</Color>
+    <Color x:Key="Color.BorderSubtle">#1C2030</Color>
+    <Color x:Key="Color.BorderInput">#2B3044</Color>
+    <Color x:Key="Color.BorderStrong">#3A3F55</Color>
+
+    <!-- Text -->
+    <Color x:Key="Color.TextPrimary">#E8EAED</Color>
+    <!-- Secondary also appears as #AEB5C3 in a few places (mission-select descriptions,
+         welcome tagline), used as a literal there rather than a second token. -->
+    <Color x:Key="Color.TextSecondary">#9AA3B2</Color>
+    <Color x:Key="Color.TextBody">#C9CEDA</Color>
+    <Color x:Key="Color.TextMuted">#6B7384</Color>
+    <Color x:Key="Color.TextDim">#4A5066</Color>
+
+    <!-- Brand / accent -->
+    <Color x:Key="Color.Accent">#5AA7FF</Color>
+    <Color x:Key="Color.AccentMuted">#2E4E78</Color>
+
+    <!-- Severity -->
+    <Color x:Key="Color.Critical">#FF5C6C</Color>
+    <Color x:Key="Color.Warning">#FFB454</Color>
+    <Color x:Key="Color.Blocked">#3DD68C</Color>
+    <Color x:Key="Color.Info">#9AA3B2</Color>
+
+    <!-- Code highlighting (generated SQL/C#/PowerShell view) -->
+    <Color x:Key="Color.CodeBg">#E0080A10</Color>
+    <!-- CodeBg @ 88% alpha; inline demo blocks (Training) use #05060A flat instead -->
+    <Color x:Key="Color.CodeText">#D4D8E0</Color>
+    <Color x:Key="Color.CodeKeyword">#6FB2FF</Color>
+    <Color x:Key="Color.CodeString">#E8C27A</Color>
+    <Color x:Key="Color.CodeComment">#6B7384</Color>
+    <Color x:Key="Color.CodeParam">#3DD68C</Color>
+    <Color x:Key="Color.CodeDead">#4F5566</Color>
+
+    <!-- User-input marker (form values rendered inline in generated code) -->
+    <Color x:Key="Color.UserInputText">#FF7AE6</Color>
+    <Color x:Key="Color.UserInputOutline">#E05CC9</Color>
+
+    <!-- Neon brand ramps -->
+    <Color x:Key="Color.NeonRed">#FF2D55</Color>
+    <Color x:Key="Color.NeonRedLabel">#FF5C7A</Color>
+    <Color x:Key="Color.NeonRedLight">#FFE1E8</Color>
+    <Color x:Key="Color.NeonViolet">#8B5CF6</Color>
+    <Color x:Key="Color.NeonVioletAlt">#7C4DFF</Color>
+    <Color x:Key="Color.NeonVioletLabel">#C29BFF</Color>
+    <Color x:Key="Color.NeonVioletLabel2">#C25CFF</Color>
+    <Color x:Key="Color.NeonBlue">#2F6BFF</Color>
+    <Color x:Key="Color.NeonBlueAlt">#3E7BFF</Color>
+    <Color x:Key="Color.NeonBlueLight">#4D8BFF</Color>
+
+    <!-- Sector colors (Mission select, catalog order) -->
+    <Color x:Key="Color.SectorClassic">#FF3B5C</Color>
+    <Color x:Key="Color.SectorBlind">#FF7A45</Color>
+    <Color x:Key="Color.SectorParamsDontHelp">#FFB454</Color>
+    <Color x:Key="Color.SectorDeliveryObfuscation">#C25CFF</Color>
+    <Color x:Key="Color.SectorOutOfBand">#8B5CF6</Color>
+    <Color x:Key="Color.SectorPostInjection">#4D8BFF</Color>
+    <Color x:Key="Color.SectorSqlAgent">#3DD6C8</Color>
+
+</ResourceDictionary>

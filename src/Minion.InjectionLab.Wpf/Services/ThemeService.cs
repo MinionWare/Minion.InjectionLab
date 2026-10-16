@@ -18,7 +18,7 @@ public static class ThemeService
     {
         var dictionaries = Application.Current.Resources.MergedDictionaries;
         var colorDictUri = theme == AppTheme.Dark
-            ? "Themes/Colors.Dark.xaml"
+            ? "Themes/Colors.Neon.xaml"
             : "Themes/Colors.Light.xaml";
 
         var existing = dictionaries.FirstOrDefault(d =>

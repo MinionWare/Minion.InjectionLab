@@ -8,10 +8,15 @@
     <SolidColorBrush x:Key="Brush.Bg1" Color="{DynamicResource Color.Bg1}"/>
     <SolidColorBrush x:Key="Brush.Bg2" Color="{DynamicResource Color.Bg2}"/>
     <SolidColorBrush x:Key="Brush.Border" Color="{DynamicResource Color.Border}"/>
+    <SolidColorBrush x:Key="Brush.BorderSubtle" Color="{DynamicResource Color.BorderSubtle}"/>
+    <SolidColorBrush x:Key="Brush.BorderInput" Color="{DynamicResource Color.BorderInput}"/>
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="{DynamicResource Color.BorderStrong}"/>
 
     <SolidColorBrush x:Key="Brush.TextPrimary" Color="{DynamicResource Color.TextPrimary}"/>
     <SolidColorBrush x:Key="Brush.TextSecondary" Color="{DynamicResource Color.TextSecondary}"/>
+    <SolidColorBrush x:Key="Brush.TextBody" Color="{DynamicResource Color.TextBody}"/>
     <SolidColorBrush x:Key="Brush.TextMuted" Color="{DynamicResource Color.TextMuted}"/>
+    <SolidColorBrush x:Key="Brush.TextDim" Color="{DynamicResource Color.TextDim}"/>
 
     <SolidColorBrush x:Key="Brush.Accent" Color="{DynamicResource Color.Accent}"/>
     <SolidColorBrush x:Key="Brush.AccentMuted" Color="{DynamicResource Color.AccentMuted}"/>
@@ -24,5 +29,51 @@
     <SolidColorBrush x:Key="Brush.CodeBg" Color="{DynamicResource Color.CodeBg}"/>
     <SolidColorBrush x:Key="Brush.CodeText" Color="{DynamicResource Color.CodeText}"/>
     <SolidColorBrush x:Key="Brush.CodeKeyword" Color="{DynamicResource Color.CodeKeyword}"/>
+    <SolidColorBrush x:Key="Brush.CodeString" Color="{DynamicResource Color.CodeString}"/>
+    <SolidColorBrush x:Key="Brush.CodeComment" Color="{DynamicResource Color.CodeComment}"/>
+    <SolidColorBrush x:Key="Brush.CodeParam" Color="{DynamicResource Color.CodeParam}"/>
+    <SolidColorBrush x:Key="Brush.CodeDead" Color="{DynamicResource Color.CodeDead}"/>
+
+    <SolidColorBrush x:Key="Brush.UserInputText" Color="{DynamicResource Color.UserInputText}"/>
+    <SolidColorBrush x:Key="Brush.UserInputOutline" Color="{DynamicResource Color.UserInputOutline}"/>
+
+    <SolidColorBrush x:Key="Brush.NeonRed" Color="{DynamicResource Color.NeonRed}"/>
+    <SolidColorBrush x:Key="Brush.NeonRedLabel" Color="{DynamicResource Color.NeonRedLabel}"/>
+    <SolidColorBrush x:Key="Brush.NeonRedLight" Color="{DynamicResource Color.NeonRedLight}"/>
+    <SolidColorBrush x:Key="Brush.NeonViolet" Color="{DynamicResource Color.NeonViolet}"/>
+    <SolidColorBrush x:Key="Brush.NeonVioletAlt" Color="{DynamicResource Color.NeonVioletAlt}"/>
+    <SolidColorBrush x:Key="Brush.NeonVioletLabel" Color="{DynamicResource Color.NeonVioletLabel}"/>
+    <SolidColorBrush x:Key="Brush.NeonVioletLabel2" Color="{DynamicResource Color.NeonVioletLabel2}"/>
+    <SolidColorBrush x:Key="Brush.NeonBlue" Color="{DynamicResource Color.NeonBlue}"/>
+    <SolidColorBrush x:Key="Brush.NeonBlueAlt" Color="{DynamicResource Color.NeonBlueAlt}"/>
+    <SolidColorBrush x:Key="Brush.NeonBlueLight" Color="{DynamicResource Color.NeonBlueLight}"/>
+
+    <SolidColorBrush x:Key="Brush.SectorClassic" Color="{DynamicResource Color.SectorClassic}"/>
+    <SolidColorBrush x:Key="Brush.SectorBlind" Color="{DynamicResource Color.SectorBlind}"/>
+    <SolidColorBrush x:Key="Brush.SectorParamsDontHelp" Color="{DynamicResource Color.SectorParamsDontHelp}"/>
+    <SolidColorBrush x:Key="Brush.SectorDeliveryObfuscation" Color="{DynamicResource Color.SectorDeliveryObfuscation}"/>
+    <SolidColorBrush x:Key="Brush.SectorOutOfBand" Color="{DynamicResource Color.SectorOutOfBand}"/>
+    <SolidColorBrush x:Key="Brush.SectorPostInjection" Color="{DynamicResource Color.SectorPostInjection}"/>
+    <SolidColorBrush x:Key="Brush.SectorSqlAgent" Color="{DynamicResource Color.SectorSqlAgent}"/>
+
+    <!-- Primary CTA gradient: linear 90°, red -> violet, glow handled separately via DropShadowEffect -->
+    <LinearGradientBrush x:Key="Brush.GradientCta" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="{DynamicResource Color.NeonRed}" Offset="0"/>
+        <GradientStop Color="{DynamicResource Color.NeonVioletAlt}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Progress / brand bar gradient: red -> violet -> blue -->
+    <LinearGradientBrush x:Key="Brush.GradientProgress" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="{DynamicResource Color.NeonRed}" Offset="0"/>
+        <GradientStop Color="{DynamicResource Color.NeonViolet}" Offset="0.5"/>
+        <GradientStop Color="{DynamicResource Color.NeonBlue}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Wordmark text gradient: red -> violet-pink -> blue -->
+    <LinearGradientBrush x:Key="Brush.GradientWordmark" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#FF3B5C" Offset="0"/>
+        <GradientStop Color="#C25CFF" Offset="0.5"/>
+        <GradientStop Color="#4D8BFF" Offset="1"/>
+    </LinearGradientBrush>
 
 </ResourceDictionary>

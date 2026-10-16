@@ -6,11 +6,16 @@
     <Color x:Key="Color.Bg1">#FFFFFF</Color>
     <Color x:Key="Color.Bg2">#ECEFF3</Color>
     <Color x:Key="Color.Border">#D7DCE3</Color>
+    <Color x:Key="Color.BorderSubtle">#E3E7ED</Color>
+    <Color x:Key="Color.BorderInput">#CBD2DC</Color>
+    <Color x:Key="Color.BorderStrong">#AEB7C4</Color>
 
     <!-- Text -->
     <Color x:Key="Color.TextPrimary">#1B1F27</Color>
     <Color x:Key="Color.TextSecondary">#525A68</Color>
+    <Color x:Key="Color.TextBody">#3A4150</Color>
     <Color x:Key="Color.TextMuted">#848C99</Color>
+    <Color x:Key="Color.TextDim">#AAB1BD</Color>
 
     <!-- Brand / accent -->
     <Color x:Key="Color.Accent">#1C6FE0</Color>
@@ -20,12 +25,42 @@
     <Color x:Key="Color.Critical">#D6364A</Color>
     <Color x:Key="Color.Warning">#C97A14</Color>
     <Color x:Key="Color.Blocked">#1F9D5C</Color>
-    <Color x:Key="Color.Info">#1C6FE0</Color>
+    <Color x:Key="Color.Info">#525A68</Color>
 
-    <!-- Code highlighting (generated SQL view) -->
+    <!-- Code highlighting (generated SQL/C#/PowerShell view) -->
     <Color x:Key="Color.CodeBg">#FFFFFF</Color>
     <Color x:Key="Color.CodeText">#1B1F27</Color>
     <Color x:Key="Color.CodeKeyword">#1C6FE0</Color>
+    <Color x:Key="Color.CodeString">#8A6418</Color>
+    <Color x:Key="Color.CodeComment">#848C99</Color>
+    <Color x:Key="Color.CodeParam">#1F9D5C</Color>
+    <Color x:Key="Color.CodeDead">#AAB1BD</Color>
+
+    <!-- User-input marker -->
+    <Color x:Key="Color.UserInputText">#B3179E</Color>
+    <Color x:Key="Color.UserInputOutline">#C25CB2</Color>
+
+    <!-- Neon brand ramps, unchanged from the dark palette; these are accent/category colors,
+         not surface colors, so they don't need a light-mode variant for this pass. -->
+    <Color x:Key="Color.NeonRed">#FF2D55</Color>
+    <Color x:Key="Color.NeonRedLabel">#D6364A</Color>
+    <Color x:Key="Color.NeonRedLight">#FFE1E8</Color>
+    <Color x:Key="Color.NeonViolet">#8B5CF6</Color>
+    <Color x:Key="Color.NeonVioletAlt">#7C4DFF</Color>
+    <Color x:Key="Color.NeonVioletLabel">#7C4DFF</Color>
+    <Color x:Key="Color.NeonVioletLabel2">#C25CFF</Color>
+    <Color x:Key="Color.NeonBlue">#2F6BFF</Color>
+    <Color x:Key="Color.NeonBlueAlt">#3E7BFF</Color>
+    <Color x:Key="Color.NeonBlueLight">#4D8BFF</Color>
+
+    <!-- Sector colors (Mission select, catalog order) -->
+    <Color x:Key="Color.SectorClassic">#D6364A</Color>
+    <Color x:Key="Color.SectorBlind">#C9602E</Color>
+    <Color x:Key="Color.SectorParamsDontHelp">#C97A14</Color>
+    <Color x:Key="Color.SectorDeliveryObfuscation">#9A3FCC</Color>
+    <Color x:Key="Color.SectorOutOfBand">#6B3FD1</Color>
+    <Color x:Key="Color.SectorPostInjection">#2F5FD1</Color>
+    <Color x:Key="Color.SectorSqlAgent">#1C9E92</Color>
 
     <!-- The "this text came from the form fields" marker is a fixed dashed outline (see
          UserInputBackgroundRenderer), not a themed brush, so there's nothing to define here. -->
