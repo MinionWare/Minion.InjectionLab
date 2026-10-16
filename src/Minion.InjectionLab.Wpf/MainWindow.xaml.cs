@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -74,41 +75,113 @@ public partial class MainWindow : Window
 
     private void HomeButton_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).SelectedAttack = null;
 
-    private void PlayWelcomeIntro()
+    private void DifficultyChip_Click(object sender, RoutedEventArgs e)
     {
-        AnimatePopIn(WelcomeIconGrid, TimeSpan.Zero);
-        AnimatePopIn(WelcomeLogoButton, TimeSpan.FromSeconds(0.35));
-        AnimateFadeIn(WelcomeTitleStack, TimeSpan.FromSeconds(0.85));
+        var button = (Button)sender;
+        button.ContextMenu!.PlacementTarget = button;
+        button.ContextMenu.IsOpen = true;
     }
 
-    private static void AnimatePopIn(FrameworkElement element, TimeSpan delay)
+    private void PlayWelcomeIntro()
     {
-        element.BeginAnimation(UIElement.OpacityProperty, null);
-        element.Opacity = 0;
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            ShowWelcomeIntroFinalState();
+            return;
+        }
 
-        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(1.0)) { BeginTime = delay };
-        element.BeginAnimation(UIElement.OpacityProperty, opacity);
+        AnimatePopIn(WelcomeGlow, WelcomeGlowScale, TimeSpan.Zero, TimeSpan.FromSeconds(1.6), targetOpacity: 0.22, targetScale: 1.0);
+        AnimatePopIn(WelcomeMascot, WelcomeMascotScale, TimeSpan.Zero, TimeSpan.FromSeconds(1.4), targetOpacity: 1.0, targetScale: 1.0);
+        AnimatePopIn(WelcomeFromRow, WelcomeFromRowScale, TimeSpan.FromSeconds(0.35), TimeSpan.FromSeconds(1.4), targetOpacity: 1.0, targetScale: 1.0);
+        AnimateFadeUp(WelcomeTitleStack, WelcomeTitleStackTranslate, TimeSpan.FromSeconds(0.85), TimeSpan.FromSeconds(1.2));
+        AnimateFadeUp(WelcomeCtaRow, WelcomeCtaRowTranslate, TimeSpan.FromSeconds(1.25), TimeSpan.FromSeconds(1.0));
+        AnimateFadeUp(WelcomeSafetyPill, WelcomeSafetyPillTranslate, TimeSpan.FromSeconds(1.55), TimeSpan.FromSeconds(1.0));
 
-        if (element.RenderTransform is ScaleTransform scale)
+        StartWelcomeIdleLoops(TimeSpan.FromSeconds(1.8));
+    }
+
+    private void ShowWelcomeIntroFinalState()
+    {
+        foreach (var element in new UIElement[] { WelcomeGlow, WelcomeMascot, WelcomeFromRow, WelcomeTitleStack, WelcomeCtaRow, WelcomeSafetyPill })
+            element.BeginAnimation(UIElement.OpacityProperty, null);
+
+        WelcomeGlow.Opacity = 0.22;
+        WelcomeMascot.Opacity = 1;
+        WelcomeFromRow.Opacity = 1;
+        WelcomeTitleStack.Opacity = 1;
+        WelcomeCtaRow.Opacity = 1;
+        WelcomeSafetyPill.Opacity = 1;
+
+        foreach (var scale in new[] { WelcomeGlowScale, WelcomeMascotScale, WelcomeFromRowScale })
         {
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-            scale.ScaleX = scale.ScaleY = 0.3;
+            scale.ScaleX = scale.ScaleY = 1;
+        }
 
-            var easing = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 };
-            var grow = new DoubleAnimation(0.3, 1, TimeSpan.FromSeconds(1.4)) { BeginTime = delay, EasingFunction = easing };
-            scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
-            scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+        foreach (var translate in new[] { WelcomeTitleStackTranslate, WelcomeCtaRowTranslate, WelcomeSafetyPillTranslate })
+        {
+            translate.BeginAnimation(TranslateTransform.YProperty, null);
+            translate.Y = 0;
         }
     }
 
-    private static void AnimateFadeIn(FrameworkElement element, TimeSpan delay)
+    private static void AnimatePopIn(UIElement element, ScaleTransform scale, TimeSpan delay, TimeSpan duration, double targetOpacity, double targetScale)
     {
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 0;
-
-        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(1.2)) { BeginTime = delay };
+        var opacity = new DoubleAnimation(0, targetOpacity, duration) { BeginTime = delay };
         element.BeginAnimation(UIElement.OpacityProperty, opacity);
+
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        scale.ScaleX = scale.ScaleY = 0.3;
+
+        var easing = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 };
+        var grow = new DoubleAnimation(0.3, targetScale, duration) { BeginTime = delay, EasingFunction = easing };
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+    }
+
+    private static void AnimateFadeUp(UIElement element, TranslateTransform translate, TimeSpan delay, TimeSpan duration)
+    {
+        element.BeginAnimation(UIElement.OpacityProperty, null);
+        element.Opacity = 0;
+        var opacity = new DoubleAnimation(0, 1, duration) { BeginTime = delay };
+        element.BeginAnimation(UIElement.OpacityProperty, opacity);
+
+        translate.BeginAnimation(TranslateTransform.YProperty, null);
+        translate.Y = 14;
+        var move = new DoubleAnimation(14, 0, duration) { BeginTime = delay, EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        translate.BeginAnimation(TranslateTransform.YProperty, move);
+    }
+
+    private void StartWelcomeIdleLoops(TimeSpan startAfter)
+    {
+        var floatAnim = new DoubleAnimation(0, -10, TimeSpan.FromSeconds(3))
+        {
+            BeginTime = startAfter,
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        WelcomeMascotFloat.BeginAnimation(TranslateTransform.YProperty, floatAnim);
+
+        var glowPulse = new DoubleAnimation(0.22, 0.32, TimeSpan.FromSeconds(2.5))
+        {
+            BeginTime = startAfter,
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        WelcomeGlow.BeginAnimation(UIElement.OpacityProperty, glowPulse);
+
+        var shimmer = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(8))
+        {
+            BeginTime = startAfter,
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        WelcomeWordmarkShimmer.BeginAnimation(TranslateTransform.XProperty, shimmer);
     }
 
     private void TutorialButton_Click(object sender, RoutedEventArgs e) => ShowTutorial();

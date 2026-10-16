@@ -18,6 +18,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -26,8 +27,8 @@
         </Grid.ColumnDefinitions>
 
         <!-- ================= MENU BAR ================= -->
-        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.Bg1}"
-              Foreground="{DynamicResource Brush.TextPrimary}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1">
+        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.Bg0}"
+              Foreground="{DynamicResource Brush.TextSecondary}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1">
             <MenuItem Header="_File">
                 <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
             </MenuItem>
@@ -71,8 +72,62 @@
             </Grid>
         </Border>
 
+        <!-- ================= TOP BAR (shown once a mission is selected; hidden on Welcome) ================= -->
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Height="58"
+                Background="{DynamicResource Brush.Bg1}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1"
+                Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DockPanel Margin="26,0" LastChildFill="False">
+                <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
+                    <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
+                </Border>
+                <TextBlock DockPanel.Dock="Left" Text="INJECTIONLAB" VerticalAlignment="Center" Margin="0,0,22,0"
+                           FontFamily="{StaticResource Font.Hud}" FontSize="15" FontWeight="Bold"/>
+
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Margin="0,0,22,0" VerticalAlignment="Center">
+                    <ToggleButton Content="MISSIONS" Style="{StaticResource Button.NavItem}" IsChecked="True"/>
+                    <ToggleButton Content="TRAINING" Style="{StaticResource Button.NavItem}" Click="TutorialButton_Click"/>
+                    <ToggleButton Content="QUIZ" Style="{StaticResource Button.NavItem}" Click="QuizButton_Click"/>
+                </StackPanel>
+
+                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" FontFamily="{StaticResource Font.Code}" FontSize="12"
+                           Foreground="{DynamicResource Brush.TextMuted}" DataContext="{Binding SelectedAttack}">
+                    <Run Text="{Binding Scenario.Category, Converter={StaticResource CategoryDisplayConverter}, Mode=OneWay}"/>
+                    <Run Text=" › "/>
+                    <Run Text="{Binding Scenario.Title, Mode=OneWay}"/>
+                </TextBlock>
+
+                <Button x:Name="DifficultyChipButton" DockPanel.Dock="Right" VerticalAlignment="Center"
+                        Style="{StaticResource Button.DifficultyChip}" Cursor="Hand" Click="DifficultyChip_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Difficulty}"/>
+                        <TextBlock Text=" ▾" Margin="2,0,0,0"/>
+                    </StackPanel>
+                    <Button.ContextMenu>
+                        <ContextMenu x:Name="DifficultyChipMenu">
+                            <MenuItem Header="Beginner" Command="{Binding SetDifficultyCommand}" CommandParameter="Beginner"/>
+                            <MenuItem Header="Intermediate" Command="{Binding SetDifficultyCommand}" CommandParameter="Intermediate"/>
+                            <MenuItem Header="Expert" Command="{Binding SetDifficultyCommand}" CommandParameter="Expert"/>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+
+                <StackPanel DockPanel.Dock="Right" Width="170" Margin="0,0,22,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="CLEARED" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,6,0"/>
+                        <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold">
+                            <Run Text="0"/><Run Text=" / "/><Run Text="{Binding AttackCount, Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Bg2}" Margin="0,5,0,0">
+                        <Border HorizontalAlignment="Left" Width="0" CornerRadius="2" Background="{DynamicResource Brush.GradientProgress}"/>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
         <!-- ================= LEFT NAV ================= -->
-        <Border Grid.Row="2" Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
+        <Border Grid.Row="3" Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
                 BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
@@ -166,91 +221,127 @@
         <!-- Spans BOTH columns and sits above the left-nav Border in z-order, so it genuinely
              blocks picking a scenario from the list underneath — not just the content area.
              DataContext here is still the MainViewModel (nothing below overrides it). -->
-        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-              Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="{DynamicResource Color.Bg0}" Offset="0"/>
-                    <GradientStop Color="{DynamicResource Color.Bg1}" Offset="1"/>
-                </LinearGradientBrush>
-            </Grid.Background>
+        <Grid Grid.Row="2" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
+              Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+              Background="{DynamicResource Brush.Bg0}">
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,28,0">
+                <Button Content="QUIZ" Style="{StaticResource Button.CornerLink}" Margin="0,0,18,0" Click="QuizButton_Click"/>
+                <Button Content="HELP" Style="{StaticResource Button.CornerLink}" Margin="0,0,18,0" Click="HelpButton_Click"/>
+                <Button Content="◐ THEME" Style="{StaticResource Button.CornerLink}" Command="{Binding ToggleThemeCommand}"/>
+            </StackPanel>
 
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="620" Margin="0,24,0,24">
-                <Grid x:Name="WelcomeIconGrid" HorizontalAlignment="Center" Width="440" Height="440"
-                      RenderTransformOrigin="0.5,0.5" Opacity="0">
-                    <Grid.RenderTransform>
-                        <ScaleTransform ScaleX="0.4" ScaleY="0.4"/>
-                    </Grid.RenderTransform>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="640" Margin="0,34,0,34">
 
-                    <Ellipse Width="440" Height="440" Fill="{DynamicResource Brush.Accent}" Opacity="0.22">
+                <Grid x:Name="WelcomeIconGrid" HorizontalAlignment="Center" Width="440" Height="440" Margin="0,70,0,0">
+                    <Ellipse x:Name="WelcomeGlow" Width="420" Height="420" Fill="{DynamicResource Brush.NeonViolet}" Opacity="0"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="WelcomeGlowScale" ScaleX="0.4" ScaleY="0.4"/>
+                        </Ellipse.RenderTransform>
                         <Ellipse.Effect>
-                            <BlurEffect Radius="70"/>
+                            <BlurEffect Radius="80"/>
                         </Ellipse.Effect>
                     </Ellipse>
-                    <Image Source="Resources/Branding/AppIcon.png" Width="320" Height="320" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image x:Name="WelcomeMascot" Source="Resources/Branding/AppIcon.png" Width="330" Height="330"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        <Image.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="WelcomeMascotScale" ScaleX="0.3" ScaleY="0.3"/>
+                                <TranslateTransform x:Name="WelcomeMascotFloat" Y="0"/>
+                            </TransformGroup>
+                        </Image.RenderTransform>
                         <Image.Effect>
-                            <DropShadowEffect Color="Black" BlurRadius="32" ShadowDepth="8" Opacity="0.45"/>
+                            <DropShadowEffect Color="Black" BlurRadius="40" ShadowDepth="24" Opacity="0.65"/>
                         </Image.Effect>
                     </Image>
                 </Grid>
 
-                <TextBlock Text="FROM" Style="{StaticResource Text.Muted}" FontSize="10" FontWeight="Bold"
-                           HorizontalAlignment="Center" Margin="0,30,0,10"/>
-                <Button x:Name="WelcomeLogoButton" HorizontalAlignment="Center" Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        ToolTip="minionware.net" Click="MinionwareLogo_Click"
-                        RenderTransformOrigin="0.5,0.5" Opacity="0">
-                    <Button.RenderTransform>
-                        <ScaleTransform ScaleX="0.3" ScaleY="0.3"/>
-                    </Button.RenderTransform>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter/>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="68"/>
-                </Button>
-
-                <StackPanel x:Name="WelcomeTitleStack" Opacity="0">
-                    <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="36" FontWeight="Bold"
-                               HorizontalAlignment="Center" Margin="0,26,0,6"/>
-                    <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
-                               Style="{StaticResource Text.Muted}" FontSize="15" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                <StackPanel x:Name="WelcomeFromRow" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0" Opacity="0"
+                            RenderTransformOrigin="0.5,0.5">
+                    <StackPanel.RenderTransform>
+                        <ScaleTransform x:Name="WelcomeFromRowScale" ScaleX="0.3" ScaleY="0.3"/>
+                    </StackPanel.RenderTransform>
+                    <TextBlock Text="FROM" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <Button x:Name="WelcomeLogoButton" Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                            ToolTip="minionware.net" Click="MinionwareLogo_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="44"/>
+                    </Button>
                 </StackPanel>
 
-                <Border Style="{StaticResource Card}" Margin="0,28,0,0" BorderBrush="{DynamicResource Brush.Blocked}" BorderThickness="1.5">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{DynamicResource Brush.Blocked}" Margin="0,0,10,0">
-                                <TextBlock Text="🛡" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <TextBlock Text="This app never touches a real database" Style="{StaticResource Text.H2}" FontSize="14" VerticalAlignment="Center"/>
+                <StackPanel x:Name="WelcomeTitleStack" Opacity="0">
+                    <StackPanel.RenderTransform>
+                        <TranslateTransform x:Name="WelcomeTitleStackTranslate" Y="14"/>
+                    </StackPanel.RenderTransform>
+                    <TextBlock Text="INJECTIONLAB" FontFamily="{StaticResource Font.Hud}" FontSize="64" FontWeight="Bold"
+                               HorizontalAlignment="Center" Margin="0,14,0,0">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush x:Name="WelcomeWordmarkBrush" StartPoint="0,0.5" EndPoint="1,0.5" SpreadMethod="Repeat">
+                                <LinearGradientBrush.Transform>
+                                    <TranslateTransform x:Name="WelcomeWordmarkShimmer" X="0"/>
+                                </LinearGradientBrush.Transform>
+                                <GradientStop Color="#FF3B5C" Offset="0"/>
+                                <GradientStop Color="#C25CFF" Offset="0.5"/>
+                                <GradientStop Color="#4D8BFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
+                               FontFamily="{StaticResource Font.Body}" FontSize="16" Foreground="#AEB5C3" Margin="0,14,0,0"
+                               HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <StackPanel x:Name="WelcomeCtaRow" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,0" Opacity="0">
+                    <StackPanel.RenderTransform>
+                        <TranslateTransform x:Name="WelcomeCtaRowTranslate" Y="14"/>
+                    </StackPanel.RenderTransform>
+                    <Button Style="{StaticResource Button.GradientCta}" Margin="0,0,14,0" Click="TutorialButton_Click">
+                        <StackPanel>
+                            <TextBlock Text="START TRAINING" FontFamily="{StaticResource Font.Hud}" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="9 steps · about 5 minutes" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                       Opacity="0.85" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                         </StackPanel>
-                        <TextBlock Style="{StaticResource Text.Body}" Margin="0,8,0,0" TextWrapping="Wrap">
-                            It never opens a database connection and never executes anything. Every query, every
-                            result, every "leaked row" is a string this app built and a rule-based narration of
-                            what a real SQL Server engine would do with it — safe to run anywhere, with nothing
-                            to break and nothing to point at something real.
+                    </Button>
+                    <Button Style="{StaticResource Button.OutlineBlue}" Command="{Binding BrowseCatalogCommand}">
+                        <StackPanel>
+                            <TextBlock Text="MISSION SELECT" FontFamily="{StaticResource Font.Hud}" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="11.5" Foreground="#AEB5C3" HorizontalAlignment="Center" Margin="0,3,0,0">
+                                <Run Text="{Binding AttackCount, Mode=OneWay}"/><Run Text=" attacks · 7 sectors"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <Border x:Name="WelcomeSafetyPill" HorizontalAlignment="Center" Margin="0,32,0,0" Opacity="0"
+                        CornerRadius="30" Padding="18,10" BorderThickness="1" BorderBrush="#1F3B2E" Background="#0F3DD68C">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="WelcomeSafetyPillTranslate" Y="14"/>
+                    </Border.RenderTransform>
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Blocked}" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <Ellipse.Effect>
+                                <DropShadowEffect Color="{DynamicResource Color.Blocked}" ShadowDepth="0" BlurRadius="10" Opacity="0.8"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                        <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="12.5" Foreground="#AEB5C3" TextWrapping="Wrap" MaxWidth="460">
+                            <Run Text="This app never touches a real database." FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                            <Run Text=" Every query and every &quot;leaked row&quot; is simulated text. Safe to run anywhere."/>
                         </TextBlock>
                     </StackPanel>
                 </Border>
-
-                <TextBlock HorizontalAlignment="Center" Margin="0,20,0,0" Style="{StaticResource Text.Muted}" FontSize="12">
-                    <Run Text="{Binding AttackCount, Mode=OneWay}"/><Run Text=" attacks · 6 categories · SQL, C#, and PowerShell, every time"/>
-                </TextBlock>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,24,0,0">
-                    <Button Content="🎓  Start the tutorial" Style="{StaticResource Button.Primary}" Padding="20,11" Margin="0,0,10,0"
-                            FontSize="13" Click="TutorialButton_Click"/>
-                    <Button Content="📂  Browse the attack catalog" Padding="20,11" FontSize="13"
-                            Command="{Binding BrowseCatalogCommand}"/>
-                </StackPanel>
             </StackPanel>
             </ScrollViewer>
         </Grid>
 
         <!-- ================= RIGHT CONTENT (a scenario is selected) ================= -->
-        <ScrollViewer Grid.Row="2" Grid.Column="1" VerticalScrollBarVisibility="Auto"
+        <ScrollViewer Grid.Row="3" Grid.Column="1" VerticalScrollBarVisibility="Auto"
                       Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Margin="28,24,28,32" DataContext="{Binding SelectedAttack}">
 
