@@ -24,6 +24,10 @@
             <conv:FixGradeToTabStyleConverter x:Key="FixGradeToTabStyleConverter"/>
             <conv:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter"/>
             <conv:CategoryDisplayConverter x:Key="CategoryDisplayConverter"/>
+            <conv:CategoryToSectorBrushConverter x:Key="CategoryToSectorBrushConverter"/>
+            <conv:SeverityToTagConverter x:Key="SeverityToTagConverter"/>
+            <conv:GradeToBrushConverter x:Key="GradeToBrushConverter"/>
+            <conv:ProgressWidthConverter x:Key="ProgressWidthConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

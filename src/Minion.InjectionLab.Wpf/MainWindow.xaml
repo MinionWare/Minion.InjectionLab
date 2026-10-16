@@ -21,13 +21,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
         <!-- ================= MENU BAR ================= -->
-        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{DynamicResource Brush.Bg0}"
+        <Menu Grid.Row="0" Background="{DynamicResource Brush.Bg0}"
               Foreground="{DynamicResource Brush.TextSecondary}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1">
             <MenuItem Header="_File">
                 <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
@@ -51,7 +46,7 @@
         <!-- ================= UPDATE BANNER =================
              Collapsed until MainWindow.xaml.cs's startup update check finds a newer,
              non-skipped version. See CheckForUpdatesAsync. -->
-        <Border x:Name="UpdateBanner" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+        <Border x:Name="UpdateBanner" Grid.Row="1"
                 Background="{DynamicResource Brush.AccentMuted}" BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="0,0,0,1"
                 Visibility="Collapsed" Padding="16,8">
             <Grid>
@@ -72,28 +67,40 @@
             </Grid>
         </Border>
 
-        <!-- ================= TOP BAR (shown once a mission is selected; hidden on Welcome) ================= -->
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Height="58"
+        <!-- ================= TOP BAR (hidden on Welcome) ================= -->
+        <Border Grid.Row="2" Height="58"
                 Background="{DynamicResource Brush.Bg1}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1"
-                Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
+                Visibility="{Binding IsWelcome, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
             <DockPanel Margin="26,0" LastChildFill="False">
-                <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
-                    <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
-                </Border>
-                <TextBlock DockPanel.Dock="Left" Text="INJECTIONLAB" VerticalAlignment="Center" Margin="0,0,22,0"
-                           FontFamily="{StaticResource Font.Hud}" FontSize="15" FontWeight="Bold"/>
+                <Button DockPanel.Dock="Left" Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        ToolTip="Back to the welcome screen" Command="{Binding GoHomeCommand}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter/>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="34" Height="34" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
+                            <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
+                        </Border>
+                        <TextBlock Text="INJECTIONLAB" VerticalAlignment="Center"
+                                   FontFamily="{StaticResource Font.Hud}" FontSize="15" FontWeight="Bold"/>
+                    </StackPanel>
+                </Button>
 
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Margin="0,0,22,0" VerticalAlignment="Center">
-                    <ToggleButton Content="MISSIONS" Style="{StaticResource Button.NavItem}" IsChecked="True"/>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Margin="22,0,22,0" VerticalAlignment="Center">
+                    <ToggleButton Content="MISSIONS" Style="{StaticResource Button.NavItem}"
+                                  IsChecked="{Binding IsMissionsAreaActive, Mode=OneWay}" Command="{Binding BrowseCatalogCommand}"/>
                     <ToggleButton Content="TRAINING" Style="{StaticResource Button.NavItem}" Click="TutorialButton_Click"/>
                     <ToggleButton Content="QUIZ" Style="{StaticResource Button.NavItem}" Click="QuizButton_Click"/>
                 </StackPanel>
 
                 <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" FontFamily="{StaticResource Font.Code}" FontSize="12"
-                           Foreground="{DynamicResource Brush.TextMuted}" DataContext="{Binding SelectedAttack}">
-                    <Run Text="{Binding Scenario.Category, Converter={StaticResource CategoryDisplayConverter}, Mode=OneWay}"/>
+                           Foreground="{DynamicResource Brush.TextMuted}"
+                           Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Run Text="{Binding SelectedAttack.Scenario.Category, Converter={StaticResource CategoryDisplayConverter}, Mode=OneWay}"/>
                     <Run Text=" › "/>
-                    <Run Text="{Binding Scenario.Title, Mode=OneWay}"/>
+                    <Run Text="{Binding SelectedAttack.Scenario.Title, Mode=OneWay}"/>
                 </TextBlock>
 
                 <Button x:Name="DifficultyChipButton" DockPanel.Dock="Right" VerticalAlignment="Center"
@@ -116,104 +123,20 @@
                         <TextBlock Text="CLEARED" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,6,0"/>
                         <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold">
-                            <Run Text="0"/><Run Text=" / "/><Run Text="{Binding AttackCount, Mode=OneWay}"/>
+                            <Run Text="{Binding ClearedCount, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding AttackCount, Mode=OneWay}"/>
                         </TextBlock>
                     </StackPanel>
-                    <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Bg2}" Margin="0,5,0,0">
-                        <Border HorizontalAlignment="Left" Width="0" CornerRadius="2" Background="{DynamicResource Brush.GradientProgress}"/>
+                    <Border Width="170" Height="4" CornerRadius="2" Background="{DynamicResource Brush.Bg2}" Margin="0,5,0,0">
+                        <Border HorizontalAlignment="Left" CornerRadius="2" Background="{DynamicResource Brush.GradientProgress}">
+                            <Border.Width>
+                                <MultiBinding Converter="{StaticResource ProgressWidthConverter}">
+                                    <Binding Path="ClearedCount"/>
+                                    <Binding Path="AttackCount"/>
+                                </MultiBinding>
+                            </Border.Width>
+                        </Border>
                     </Border>
                 </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <!-- ================= LEFT NAV ================= -->
-        <Border Grid.Row="3" Grid.Column="0" Background="{DynamicResource Brush.Bg1}"
-                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
-            <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10">
-                    <Button HorizontalAlignment="Left" Margin="0,0,0,14" Padding="0" Background="Transparent" BorderThickness="0"
-                            Cursor="Hand" ToolTip="minionware.net" Click="MinionwareLogo_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <ContentPresenter/>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Image Source="Resources/Branding/MinionwareWordmark.png" Stretch="Uniform" Height="20"/>
-                    </Button>
-
-                    <Button Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
-                            ToolTip="Back to the welcome screen" Click="HomeButton_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <ContentPresenter/>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource Brush.Bg2}" Margin="0,0,10,0" ClipToBounds="True">
-                                <Image Source="Resources/Branding/AppIcon.png" Stretch="Uniform" Margin="2"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Minion.InjectionLab" Style="{StaticResource Text.H1}" FontSize="16"/>
-                                <TextBlock Text="SQL injection, attack by attack" Style="{StaticResource Text.Muted}"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Content="🌓  Toggle theme" Margin="0,14,0,0" HorizontalAlignment="Stretch"
-                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
-                            Command="{Binding ToggleThemeCommand}"/>
-                    <Button Content="🎓  Tutorial" Margin="0,4,0,0" HorizontalAlignment="Stretch"
-                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
-                            Click="TutorialButton_Click"/>
-                    <Button Content="❓  Help" Margin="0,4,0,0" HorizontalAlignment="Stretch"
-                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
-                            Click="HelpButton_Click" ToolTip="Opens the feature list (help/index.md) — the full in-app help viewer is coming later"/>
-                    <Button Content="🏆  Quiz mode" Margin="0,4,0,0" HorizontalAlignment="Stretch"
-                            Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left"
-                            Click="QuizButton_Click" ToolTip="Capstone missions — devise your own attack, open-ended grading"/>
-
-                    <StackPanel Orientation="Horizontal" Margin="2,16,0,6">
-                        <TextBlock Text="DIFFICULTY" Style="{StaticResource Text.Muted}" FontWeight="Bold"/>
-                        <TextBlock Text="ⓘ" Margin="5,0,0,0" Cursor="Help" Foreground="{DynamicResource Brush.TextMuted}"
-                                   ToolTip="Changes how forgiving the weak 'Partial' fixes are at catching an attack — Beginner lets obvious attempts through easily, Expert makes you work harder to find the gap. It never changes which techniques exist, only how easily the naive fix catches them."/>
-                    </StackPanel>
-                    <Border Background="{DynamicResource Brush.Bg2}" CornerRadius="16" Padding="3">
-                        <UniformGrid Columns="3">
-                            <ToggleButton Content="Beginner" Style="{StaticResource Button.Segment}"
-                                          IsChecked="{Binding Difficulty, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Beginner, Mode=OneWay}"
-                                          Command="{Binding SetDifficultyCommand}" CommandParameter="Beginner"/>
-                            <ToggleButton Content="Intermediate" Style="{StaticResource Button.Segment}"
-                                          IsChecked="{Binding Difficulty, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Intermediate, Mode=OneWay}"
-                                          Command="{Binding SetDifficultyCommand}" CommandParameter="Intermediate"/>
-                            <ToggleButton Content="Expert" Style="{StaticResource Button.Segment}"
-                                          IsChecked="{Binding Difficulty, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Expert, Mode=OneWay}"
-                                          Command="{Binding SetDifficultyCommand}" CommandParameter="Expert"/>
-                        </UniformGrid>
-                    </Border>
-                </StackPanel>
-
-                <ListBox x:Name="AttacksList" DockPanel.Dock="Top"
-                         Background="Transparent" BorderThickness="0"
-                         ItemsSource="{Binding Attacks}"
-                         SelectedItem="{Binding SelectedAttack}"
-                         ItemContainerStyle="{StaticResource AttackListItem}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:AttackViewModel}">
-                            <TextBlock Text="{Binding Scenario.Title}" FontSize="13" FontWeight="Medium" TextWrapping="Wrap"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.GroupStyle>
-                        <GroupStyle>
-                            <GroupStyle.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Muted}" FontWeight="Bold"
-                                               FontSize="11" Margin="10,14,0,4"/>
-                                </DataTemplate>
-                            </GroupStyle.HeaderTemplate>
-                        </GroupStyle>
-                    </ListBox.GroupStyle>
-                </ListBox>
             </DockPanel>
         </Border>
 
@@ -221,7 +144,7 @@
         <!-- Spans BOTH columns and sits above the left-nav Border in z-order, so it genuinely
              blocks picking a scenario from the list underneath — not just the content area.
              DataContext here is still the MainViewModel (nothing below overrides it). -->
-        <Grid Grid.Row="2" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
+        <Grid Grid.Row="2" Grid.RowSpan="2"
               Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
               Background="{DynamicResource Brush.Bg0}">
 
@@ -337,6 +260,143 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ================= MISSION SELECT ================= -->
+        <Grid Grid.Row="3" Visibility="{Binding IsMissionSelect, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Sectors column -->
+            <Border Grid.Column="0" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,1,0">
+                <DockPanel Margin="26,24,18,24">
+                    <TextBlock DockPanel.Dock="Top" Text="SECTORS" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,14"/>
+                    <ListBox ItemsSource="{Binding Sectors}" SelectedIndex="{Binding SelectedSectorIndex}"
+                             Background="Transparent" BorderThickness="0" ItemContainerStyle="{StaticResource SectorCard}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:SectorViewModel}">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Font.Hud}" FontSize="13.5" FontWeight="Bold"
+                                                   Foreground="{Binding Category, Converter={StaticResource CategoryToSectorBrushConverter}}"
+                                                   HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,0,50,0"/>
+                                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Top" FontFamily="{StaticResource Font.Code}" FontSize="11"
+                                                   Foreground="{DynamicResource Brush.TextMuted}">
+                                            <Run Text="{Binding ClearedCount, Mode=OneWay}"/><Run Text="/"/><Run Text="{Binding TotalCount, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </Grid>
+                                    <Border Width="246" Height="3" CornerRadius="1.5" Background="{DynamicResource Brush.Bg2}" Margin="0,8,0,0">
+                                        <Border HorizontalAlignment="Left" CornerRadius="1.5"
+                                                Background="{Binding Category, Converter={StaticResource CategoryToSectorBrushConverter}}">
+                                            <Border.Width>
+                                                <MultiBinding Converter="{StaticResource ProgressWidthConverter}" ConverterParameter="246">
+                                                    <Binding Path="ClearedCount"/>
+                                                    <Binding Path="TotalCount"/>
+                                                </MultiBinding>
+                                            </Border.Width>
+                                        </Border>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- Missions area -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" DataContext="{Binding CurrentSector}">
+                <StackPanel Margin="30,20,30,24">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"
+                                       Foreground="{Binding Category, Converter={StaticResource CategoryToSectorBrushConverter}}">
+                                <Run Text="SECTOR "/><Run Text="{Binding SectorNumber, StringFormat=D2}"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Font.Hud}" FontSize="32" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding TotalCount, StringFormat='{}{0} scenarios in this sector.'}"
+                                       FontFamily="{StaticResource Font.Body}" FontSize="14" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,6,0,0"/>
+                        </StackPanel>
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Top" FontFamily="{StaticResource Font.Code}" FontSize="11"
+                                   FontWeight="Bold" Foreground="{DynamicResource Brush.TextMuted}">
+                            <Run Text="{Binding TotalCount, Mode=OneWay}"/><Run Text=" MISSIONS"/>
+                        </TextBlock>
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding Missions}" Margin="0,18,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:AttackViewModel}">
+                                <Button Margin="0,0,12,12"
+                                        Command="{Binding DataContext.SelectMissionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource MissionCard}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Status}" Value="InProgress">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="11" FontWeight="Bold"
+                                                       HorizontalAlignment="Left"
+                                                       Foreground="{Binding Scenario.Category, Converter={StaticResource CategoryToSectorBrushConverter}}"/>
+                                            <Border HorizontalAlignment="Right" Background="#1A9AA3B2">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource StatusPill}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Cleared">
+                                                                <Setter Property="Background" Value="#1E3DD68C"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="InProgress">
+                                                                <Setter Property="Background" Value="#24FF2D55"/>
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
+                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="NEW" FontFamily="{StaticResource Font.Code}" FontSize="9.5" FontWeight="Bold"
+                                                           Foreground="{DynamicResource Brush.TextSecondary}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Cleared">
+                                                                    <Setter Property="Text" Value="CLEARED"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blocked}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="InProgress">
+                                                                    <Setter Property="Text" Value="IN PROGRESS"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.NeonRedLabel}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Scenario.Title}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="{Binding Scenario.Premise}" FontFamily="{StaticResource Font.Body}" FontSize="12"
+                                                   Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" MaxHeight="34"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
             </ScrollViewer>
         </Grid>
 

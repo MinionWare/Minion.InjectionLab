@@ -5,8 +5,11 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Wpf.Services;
 
 namespace Minion.InjectionLab.Wpf.ViewModels;
+
+public enum MissionStatus { New, InProgress, Cleared }
 
 /// <summary>
 /// Wraps one AttackScenario with mutable field values, the fix on/off state, and the
@@ -15,6 +18,12 @@ namespace Minion.InjectionLab.Wpf.ViewModels;
 public partial class AttackViewModel : ObservableObject
 {
     public AttackScenario Scenario { get; }
+
+    /// <summary>1-based, in catalog order — assigned once by MainViewModel at startup so Mission
+    /// Select can show stable "M01".."M26" labels.</summary>
+    public int MissionNumber { get; set; }
+
+    public string MissionCode => $"M{MissionNumber:D2}";
 
     public ObservableCollection<FieldValueViewModel> Fields { get; }
 
@@ -117,6 +126,18 @@ public partial class AttackViewModel : ObservableObject
 
     public bool HasHints => Scenario.Hints is { Count: > 0 };
 
+    /// <summary>Whether a Challenge-mode submit has ever classified this scenario's input as the
+    /// Malicious decision path — persisted via ProgressService, read once at construction since
+    /// this instance is the only thing that can ever flip its own scenario's cleared state.</summary>
+    public bool IsCleared { get; private set; }
+
+    /// <summary>Set by MainViewModel.SelectMission the first time this mission is opened. In-memory
+    /// only — unlike IsCleared, "in progress" doesn't need to survive a restart.</summary>
+    [ObservableProperty]
+    private bool hasBeenOpened;
+
+    public MissionStatus Status => IsCleared ? MissionStatus.Cleared : HasBeenOpened ? MissionStatus.InProgress : MissionStatus.New;
+
     public int HintBudget => Scenario.Hints is not { Count: > 0 } hints ? 0 : Difficulty switch
     {
         DifficultyLevel.Beginner => hints.Count,
@@ -154,14 +175,11 @@ public partial class AttackViewModel : ObservableObject
         foreach (var f in Fields)
             f.PropertyChanged += (_, __) => OnFieldEdited();
 
+        IsCleared = ProgressService.IsCleared(Scenario.Id);
         RecomputeCode();
     }
 
-    private void OnFieldEdited()
-    {
-        RecomputeCode();
-        HasSubmitted = false; // input changed since the last reveal — stale until they submit again
-    }
+    private void OnFieldEdited() => RecomputeCode();
 
     partial void OnCurrentFixIndexChanged(int value)
     {
@@ -171,7 +189,6 @@ public partial class AttackViewModel : ObservableObject
         OnPropertyChanged(nameof(IsFix1Selected));
         OnPropertyChanged(nameof(CurrentFixGap));
         RecomputeCode();
-        HasSubmitted = false; // the fix changed — make them re-submit to see the new outcome
     }
 
     [RelayCommand]
@@ -249,28 +266,6 @@ public partial class AttackViewModel : ObservableObject
         RecomputeCode();
     }
 
-    /// <summary>The "moment" — runs both the baseline (normal user) and your actual input through the
-    /// simulator and reveals both outcomes side by side, with the view animating the reveal.</summary>
-    [RelayCommand]
-    private void Submit()
-    {
-        var values = Fields.ToDictionary(f => f.Field.Key, f => f.Value ?? string.Empty);
-        ShowResultRows = false;
-        ShowNormalResultRows = false;
-
-        var active = CurrentFixIndex >= 0 && CurrentFixIndex < _fixes.Count ? _fixes[CurrentFixIndex] : null;
-
-        Result = active != null ? active.Simulate(values, Difficulty) : Scenario.SimulateVulnerable(values);
-
-        if (Scenario.BaselineValues is { Count: > 0 } baseline)
-        {
-            NormalResult = active != null ? active.Simulate(baseline, Difficulty) : Scenario.SimulateVulnerable(baseline);
-        }
-
-        HasSubmitted = true;
-        ResultVersion++;
-    }
-
     private void RecomputeCode()
     {
         var values = Fields.ToDictionary(f => f.Field.Key, f => f.Value ?? string.Empty);
@@ -292,7 +287,40 @@ public partial class AttackViewModel : ObservableObject
         // Classification reflects the nature of the typed input itself, not whether a fix is
         // selected — so it's computed here too but independent of CurrentFixIndex.
         ActivePathKey = Scenario.ClassifyInput?.Invoke(values);
+
+        RecomputeResult(values, active);
+        MaybeMarkCleared();
     }
+
+    /// <summary>Live verdict — recomputed on every keystroke, not gated behind a Submit button.
+    /// ResultVersion (the shake/flash trigger) only bumps when the severity actually changes.</summary>
+    private void RecomputeResult(IReadOnlyDictionary<string, string> values, FixOption? active)
+    {
+        var newResult = active != null ? active.Simulate(values, Difficulty) : Scenario.SimulateVulnerable(values);
+        var severityChanged = Result == null || Result.Severity != newResult.Severity;
+        Result = newResult;
+
+        if (Scenario.BaselineValues is { Count: > 0 } baseline)
+            NormalResult = active != null ? active.Simulate(baseline, Difficulty) : Scenario.SimulateVulnerable(baseline);
+
+        HasSubmitted = true;
+        if (severityChanged) ResultVersion++;
+    }
+
+    private void MaybeMarkCleared()
+    {
+        if (!IsChallengeMode || IsCleared) return;
+
+        var kind = Scenario.DecisionPaths?.FirstOrDefault(p => p.Key == ActivePathKey)?.Kind;
+        if (kind != PathKind.Malicious) return;
+
+        IsCleared = true;
+        OnPropertyChanged(nameof(IsCleared));
+        OnPropertyChanged(nameof(Status));
+        ProgressService.MarkCleared(Scenario.Id);
+    }
+
+    partial void OnHasBeenOpenedChanged(bool value) => OnPropertyChanged(nameof(Status));
 
     /// <summary>
     /// Naive but effective: walks the generated text left to right and marks any span that

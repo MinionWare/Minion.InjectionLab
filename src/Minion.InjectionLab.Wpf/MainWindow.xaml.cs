@@ -42,11 +42,6 @@ public partial class MainWindow : Window
         CSharpEditor.SyntaxHighlighting = CodeHighlightingLoader.CSharp;
         PowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
 
-        // Group the left-nav list by category, on the same default view the ListBox's own
-        // {Binding Attacks} ends up using.
-        var view = CollectionViewSource.GetDefaultView(viewModel.Attacks);
-        view.GroupDescriptions.Add(new PropertyGroupDescription("Scenario.Category", new CategoryDisplayConverter()));
-
         // The three code editors are driven explicitly from code-behind rather than XAML data
         // binding to a custom attached property — AvalonEdit's TextEditor has no bindable Text
         // dependency property, and binding through a custom one proved unreliable (blank/stale
@@ -59,21 +54,19 @@ public partial class MainWindow : Window
 
             // Replays every time the welcome screen comes back (not just the very first time the
             // window loads) — e.g. after clicking the app icon/title in the nav to come "home".
-            if (e.PropertyName is nameof(MainViewModel.HasSelectedAttack) or null && !viewModel.HasSelectedAttack)
+            if (e.PropertyName is nameof(MainViewModel.CurrentView) or null && viewModel.IsWelcome)
                 PlayWelcomeIntro();
         };
         TrackAttack(viewModel.SelectedAttack);
 
         Loaded += (_, _) =>
         {
-            if (!viewModel.HasSelectedAttack)
+            if (viewModel.IsWelcome)
                 PlayWelcomeIntro();
 
             _ = CheckForUpdatesAsync();
         };
     }
-
-    private void HomeButton_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).SelectedAttack = null;
 
     private void DifficultyChip_Click(object sender, RoutedEventArgs e)
     {
