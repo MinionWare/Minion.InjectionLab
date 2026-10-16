@@ -28,6 +28,7 @@
             <conv:SeverityToTagConverter x:Key="SeverityToTagConverter"/>
             <conv:GradeToBrushConverter x:Key="GradeToBrushConverter"/>
             <conv:ProgressWidthConverter x:Key="ProgressWidthConverter"/>
+            <conv:UrlToSourceKindConverter x:Key="UrlToSourceKindConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -93,15 +93,8 @@ public partial class AttackViewModel : ObservableObject
 
     public bool HasBaseline => Scenario.BaselineValues is { Count: > 0 };
 
-    /// <summary>Toggled by the "View results" button under the YOU card.</summary>
-    [ObservableProperty]
-    private bool showResultRows;
-
-    /// <summary>Toggled by the "View results" button under the NORMAL USER card.</summary>
-    [ObservableProperty]
-    private bool showNormalResultRows;
-
-    /// <summary>False until Submit is clicked (or re-clicked after the input/fix changes) — drives the "fill this in and hit Submit" placeholder.</summary>
+    /// <summary>True once the live simulation has run at least once — in practice always true
+    /// after construction, since results are live rather than Submit-gated.</summary>
     [ObservableProperty]
     private bool hasSubmitted;
 
@@ -111,6 +104,9 @@ public partial class AttackViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isChallengeMode;
+
+    [ObservableProperty]
+    private bool isIntelOpen;
 
     [ObservableProperty]
     private DifficultyLevel difficulty = DifficultyLevel.Beginner;
@@ -191,6 +187,25 @@ public partial class AttackViewModel : ObservableObject
         RecomputeCode();
     }
 
+    /// <summary>Fills the primary (first) field with a sample payload chip's text.</summary>
+    [RelayCommand]
+    private void FillPayload(string payload)
+    {
+        if (Fields.Count > 0)
+            Fields[0].Value = payload;
+    }
+
+    /// <summary>The sample-chip row's final "(normal)" entry — fills every field with the scenario's
+    /// baseline values instead of just the primary field.</summary>
+    [RelayCommand]
+    private void FillBaseline()
+    {
+        if (Scenario.BaselineValues is not { Count: > 0 } baseline) return;
+        foreach (var f in Fields)
+            if (baseline.TryGetValue(f.Field.Key, out var value))
+                f.Value = value;
+    }
+
     [RelayCommand]
     private void SetFixIndex(string indexText)
     {
@@ -220,12 +235,6 @@ public partial class AttackViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleResultRows() => ShowResultRows = !ShowResultRows;
-
-    [RelayCommand]
-    private void ToggleNormalResultRows() => ShowNormalResultRows = !ShowNormalResultRows;
-
-    [RelayCommand]
     private void RevealNextHint()
     {
         if (RevealedHintCount < HintBudget)
@@ -247,8 +256,6 @@ public partial class AttackViewModel : ObservableObject
         foreach (var f in Fields)
             f.Value = string.Empty;
         HasSubmitted = false;
-        ShowResultRows = false;
-        ShowNormalResultRows = false;
     }
 
     /// <summary>Puts the scenario back exactly how it looked when you first opened it — fix off, defaults restored.</summary>
@@ -259,8 +266,6 @@ public partial class AttackViewModel : ObservableObject
         RevealedHintCount = 0;
         IsAnswerRevealed = false;
         HasSubmitted = false;
-        ShowResultRows = false;
-        ShowNormalResultRows = false;
         foreach (var f in Fields)
             f.Value = f.Field.DefaultValue;
         RecomputeCode();

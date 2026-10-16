@@ -41,6 +41,7 @@ public partial class MainWindow : Window
         SqlEditor.SyntaxHighlighting = CodeHighlightingLoader.Sql;
         CSharpEditor.SyntaxHighlighting = CodeHighlightingLoader.CSharp;
         PowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
+        SqlEditor.TextArea.TextView.LineTransformers.Add(new DeadCodeAfterCommentColorizer());
 
         // The three code editors are driven explicitly from code-behind rather than XAML data
         // binding to a custom attached property — AvalonEdit's TextEditor has no bindable Text

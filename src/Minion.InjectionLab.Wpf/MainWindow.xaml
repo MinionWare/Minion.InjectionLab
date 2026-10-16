@@ -400,429 +400,532 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- ================= RIGHT CONTENT (a scenario is selected) ================= -->
-        <ScrollViewer Grid.Row="3" Grid.Column="1" VerticalScrollBarVisibility="Auto"
-                      Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel Margin="28,24,28,32" DataContext="{Binding SelectedAttack}">
+        <!-- ================= MISSION (2c/2d) ================= -->
+        <Grid Grid.Row="3" Visibility="{Binding IsMission, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="26,18,26,24" DataContext="{Binding SelectedAttack}">
 
-                <!-- Header -->
-                <Grid>
-                    <StackPanel>
-                        <TextBlock Text="{Binding Scenario.Title}" Style="{StaticResource Text.H1}"/>
-                        <TextBlock Text="{Binding Scenario.Premise}" Style="{StaticResource Text.Body}" Margin="0,6,0,0" MaxWidth="760" HorizontalAlignment="Left"/>
+                <!-- Title row -->
+                <Grid Margin="0,0,0,14">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                        <TextBlock Text="{Binding Scenario.Title}" FontFamily="{StaticResource Font.Hud}" FontSize="24" FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Button Content="↺  Reset scenario" HorizontalAlignment="Right" VerticalAlignment="Top"
-                            Command="{Binding ResetScenarioCommand}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <ToggleButton Content="◎ CHALLENGE" Style="{StaticResource Button.TitleToggle.Challenge}"
+                                      IsChecked="{Binding IsChallengeMode}" Margin="0,0,8,0"/>
+                        <ToggleButton Content="▤ INTEL" Style="{StaticResource Button.TitleToggle.Intel}"
+                                      IsChecked="{Binding IsIntelOpen}" Margin="0,0,14,0"/>
+                        <Button Content="↺ RESET" Style="{StaticResource Button.Ghost}" Command="{Binding ResetScenarioCommand}"/>
+                    </StackPanel>
                 </Grid>
 
-                <!-- Controls row -->
-                <Border Style="{StaticResource Card}" Margin="0,18,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Single-fix scenarios: the simple on/off switch (multi-fix scenarios compare
-                             fixes down in the "What actually runs" code box instead — see below) -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0" VerticalAlignment="Center"
-                                    Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-                            <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsFixApplied}" VerticalAlignment="Center"/>
-                            <TextBlock Text="Apply the fix" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                <!-- Objective banner (Challenge mode) -->
+                <Border Margin="0,0,0,14" CornerRadius="14" Padding="20,18" BorderThickness="1" BorderBrush="#3A2E1A"
+                        Visibility="{Binding IsChallengeMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#17FFB454" Offset="0"/>
+                            <GradientStop Color="#03FFB454" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.9*"/>
+                            <ColumnDefinition Width="22"/>
+                            <ColumnDefinition Width="1.6*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="OBJECTIVE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.Warning}" Margin="0,0,0,6"/>
+                            <TextBlock Text="{Binding Scenario.ChallengeGoal}" FontFamily="{StaticResource Font.Hud}" FontSize="22" FontWeight="Bold"
+                                       TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                <Button Style="{StaticResource Button.ObjectiveSolid}" Margin="0,0,8,0"
+                                        Command="{Binding RevealNextHintCommand}" IsEnabled="{Binding HasMoreHints}">
+                                    <TextBlock>
+                                        <Run Text="REVEAL HINT · "/><Run Text="{Binding HintBudget, Mode=OneWay}"/>
+                                        <Run Text="-"/><Run Text="{Binding RevealedHintCount, Mode=OneWay}"/><Run Text=" LEFT"/>
+                                    </TextBlock>
+                                </Button>
+                                <Button Content="SHOW ANSWER" Style="{StaticResource Button.ObjectiveOutline}"
+                                        Command="{Binding RevealAnswerCommand}" IsEnabled="{Binding CanRevealAnswer}"
+                                        ToolTip="Not available on Expert"/>
+                            </StackPanel>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsChallengeMode}" VerticalAlignment="Center"/>
-                            <TextBlock Text="Try it yourself" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <StackPanel Grid.Column="2">
+                            <ItemsControl ItemsSource="{Binding RevealedHints}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="8" Padding="12,8" Margin="0,0,0,7" BorderThickness="1"
+                                                BorderBrush="#5A4520" Background="#0FFFB454">
+                                            <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="13" TextWrapping="Wrap">
+                                                <Run Text="HINT: " FontWeight="Bold" Foreground="{DynamicResource Brush.Warning}"/>
+                                                <Run Text="{Binding Mode=OneTime}"/>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Border Margin="0,0,0,7" CornerRadius="8" Padding="12,8" BorderThickness="1" BorderBrush="#1F2433"
+                                    Visibility="{Binding HasMoreHints, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Locked" FontFamily="{StaticResource Font.Code}" FontSize="11" Foreground="#4A5066"/>
+                            </Border>
+                            <Border CornerRadius="8" Padding="12,10" BorderThickness="1" BorderBrush="{DynamicResource Brush.NeonRed}"
+                                    Background="#1AFF2D55" Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="ANSWER" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
+                                               Foreground="{DynamicResource Brush.NeonRedLabel}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{Binding Scenario.ChallengeAnswer, Mode=OneTime}" FontFamily="{StaticResource Font.Code}"
+                                               FontSize="14" Foreground="{DynamicResource Brush.UserInputText}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
-                <!-- Challenge panel -->
-                <Border Style="{StaticResource Card}" Margin="0,14,0,0"
-                        Visibility="{Binding IsChallengeMode, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel>
-                        <TextBlock Text="Challenge" Style="{StaticResource Text.H2}"/>
-                        <TextBlock Text="{Binding Scenario.ChallengeGoal}" Style="{StaticResource Text.Body}"/>
+                <!-- Main grid: Threat Route | Form + Code | Verdict/Intel -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="230"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="290"/>
+                    </Grid.ColumnDefinitions>
 
-                        <ItemsControl ItemsSource="{Binding RevealedHints}" Margin="0,10,0,0">
+                    <!-- Left: Threat Route -->
+                    <StackPanel Grid.Column="0" Visibility="{Binding HasDecisionPaths, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Image Source="Resources/Branding/AppIcon.png" Width="170" Height="170" HorizontalAlignment="Center" Margin="0,0,0,16">
+                            <Image.Effect>
+                                <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="10" Opacity="0.5"/>
+                            </Image.Effect>
+                        </Image>
+                        <TextBlock Text="THREAT ROUTE · LIVE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,10"/>
+
+                        <ItemsControl ItemsSource="{Binding Scenario.DecisionPaths}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Style="{StaticResource Text.Muted}" Margin="0,2,0,2">
-                                        <Run Text="Hint: " FontWeight="SemiBold"/>
-                                        <Run Text="{Binding Mode=OneTime}"/>
-                                    </TextBlock>
+                                <DataTemplate DataType="{x:Type core:DecisionPathDef}">
+                                    <Border>
+                                        <Border.Style>
+                                            <Style TargetType="Border" BasedOn="{StaticResource ThreatRouteRow}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource PathActiveConverter}">
+                                                                <Binding Path="Key"/>
+                                                                <Binding Path="DataContext.ActivePathKey" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                        <Setter Property="BorderBrush" Value="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
+                                                        <Setter Property="Background" Value="{DynamicResource Brush.Bg1}"/>
+                                                        <Setter Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect ShadowDepth="0" BlurRadius="22" Opacity="0.35"
+                                                                                  Color="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                     Fill="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
+                                            <TextBlock Text="{Binding Label}" FontFamily="{StaticResource Font.Hud}" FontSize="13.5" FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Center: fields, chips, code panel -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{Binding Scenario.Premise}" FontFamily="{StaticResource Font.Body}" FontSize="13"
+                                   Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                        <ItemsControl ItemsSource="{Binding Fields}" Margin="0,0,0,10">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:FieldValueViewModel}">
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="76"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Field.Label}" FontFamily="{StaticResource Font.Code}" FontSize="11"
+                                                   FontWeight="SemiBold" VerticalAlignment="Top" Margin="0,10,8,0" TextWrapping="Wrap"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource Font.Code}">
+                                                <TextBox.Style>
+                                                    <Style TargetType="TextBox">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderInput}"/>
+                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.TextBody}"/>
+                                                        <Setter Property="FontSize" Value="14"/>
+                                                        <Setter Property="Padding" Value="11,9"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="TextBox">
+                                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                                        <ScrollViewer x:Name="PART_ContentHost"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </TextBox.Style>
+                                            </TextBox>
+                                            <TextBlock FontSize="11" Margin="2,3,0,0" Foreground="{DynamicResource Brush.TextMuted}"
+                                                       Visibility="{Binding HasBaselineValue, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <Run Text="Correct value: "/>
+                                                <Run Text="{Binding BaselineValue, Mode=OneTime}" FontFamily="{StaticResource Font.Code}" FontWeight="SemiBold"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
-                                    Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <TextBlock Text="Answer: " FontWeight="SemiBold" Style="{StaticResource Text.Body}" VerticalAlignment="Top"/>
-                            <TextBox Text="{Binding Scenario.ChallengeAnswer, Mode=OneTime}" Style="{StaticResource TextBox.Selectable}"
-                                     FontFamily="{StaticResource Font.Code}" FontSize="13"/>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Content="💡 Give me a hint" Style="{StaticResource Button.Primary}" Margin="0,0,8,0"
-                                    Command="{Binding RevealNextHintCommand}"
-                                    IsEnabled="{Binding HasMoreHints}"/>
-                            <Button Content="Show the answer" Margin="0,0,8,0"
-                                    Command="{Binding RevealAnswerCommand}"
-                                    IsEnabled="{Binding CanRevealAnswer}"
-                                    ToolTip="Not available on Expert — you have to crack it yourself"/>
-                            <Button Content="Reset" Command="{Binding ResetChallengeCommand}"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Main column (form, then code — full width) + slim sidebar (decision paths, sample payloads) -->
-                <Grid Margin="0,14,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="14"/>
-                        <ColumnDefinition Width="240"/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0">
-                        <!-- Live mock app preview -->
-                        <Border CornerRadius="10" Background="{DynamicResource Brush.Bg2}"
-                                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
-                            <StackPanel>
-                                <Border Background="{DynamicResource Brush.Bg0}" CornerRadius="10,10,0,0" Padding="12,8">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="10" Height="10" Fill="#FF5F57" Margin="0,0,6,0"/>
-                                        <Ellipse Width="10" Height="10" Fill="#FEBC2E" Margin="0,0,6,0"/>
-                                        <Ellipse Width="10" Height="10" Fill="#28C840" Margin="0,0,14,0"/>
-                                        <TextBlock Text="{Binding Scenario.MockAppLabel}" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <StackPanel Margin="20">
-                                    <ItemsControl ItemsSource="{Binding Fields}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="{x:Type vm:FieldValueViewModel}">
-                                                <StackPanel Margin="0,0,0,10" MaxWidth="360" HorizontalAlignment="Left">
-                                                    <TextBlock Text="{Binding Field.Label}" Style="{StaticResource Text.Muted}" Margin="0,0,0,4"/>
-                                                    <TextBox Style="{StaticResource TextBox.Field}"
-                                                             Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"/>
-                                                    <TextBlock FontSize="11" Margin="2,3,0,0" Foreground="{DynamicResource Brush.TextMuted}"
-                                                               Visibility="{Binding HasBaselineValue, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                        <Run Text="Correct value: "/>
-                                                        <Run Text="{Binding BaselineValue, Mode=OneTime}" FontFamily="{StaticResource Font.Code}" FontWeight="SemiBold"/>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <Button Content="▶  Submit" Style="{StaticResource Button.Primary}" HorizontalAlignment="Left" Padding="22,9"
-                                            FontSize="14" Command="{Binding SubmitCommand}" Margin="0,6,0,0"/>
-
-                                    <Border Margin="0,16,0,0" CornerRadius="8" Padding="14" BorderThickness="1" BorderBrush="{DynamicResource Brush.Border}"
-                                            Visibility="{Binding HasSubmitted, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-                                        <TextBlock Text="Fill in the form above and hit Submit to see what the server actually does with it." Style="{StaticResource Text.Muted}"/>
-                                    </Border>
-
-                                    <!-- After Submit: normal user vs. you -->
-                                    <Grid Margin="0,16,0,0" Visibility="{Binding HasSubmitted, Converter={StaticResource BoolToVisibilityConverter}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="14"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <Border Grid.Column="0" CornerRadius="8" Padding="14" Background="{DynamicResource Brush.Bg1}" BorderThickness="1"
-                                                Visibility="{Binding HasBaseline, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                behaviors:ImpactBehavior.Trigger="{Binding ResultVersion}"
-                                                behaviors:ImpactBehavior.Severity="{Binding NormalResult.Severity}">
-                                            <Border.BorderBrush><SolidColorBrush Color="{DynamicResource Color.Border}"/></Border.BorderBrush>
-                                            <StackPanel>
-                                                <TextBlock Text="A NORMAL USER" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="0,0,0,8"/>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding NormalResult.Severity, Converter={StaticResource SeverityToIconConverter}}" FontSize="20" Margin="0,0,10,0"/>
-                                                    <TextBlock Text="{Binding NormalResult.Headline}" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"
-                                                               Foreground="{Binding NormalResult.Severity, Converter={StaticResource SeverityToBrushConverter}}"/>
-                                                </StackPanel>
-                                                <TextBlock Text="{Binding NormalResult.Detail}" Style="{StaticResource Text.Muted}" Margin="0,8,0,0"/>
-
-                                                <Button Content="{Binding NormalResult.RowCountLabel, StringFormat='👁 View results ({0})'}"
-                                                        Style="{StaticResource Button.Ghost}" HorizontalAlignment="Left" Padding="0" Margin="0,8,0,0" FontSize="11"
-                                                        Command="{Binding ToggleNormalResultRowsCommand}"
-                                                        Visibility="{Binding NormalResult.LeakedRows, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
-                                                <ItemsControl ItemsSource="{Binding NormalResult.LeakedRows}" Margin="0,8,0,0"
-                                                              Visibility="{Binding ShowNormalResultRows, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border Background="{DynamicResource Brush.CodeBg}" BorderBrush="{DynamicResource Brush.Border}"
-                                                                    BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,2,0,2">
-                                                                <ItemsControl ItemsSource="{Binding}">
-                                                                    <ItemsControl.ItemsPanel>
-                                                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-                                                                    </ItemsControl.ItemsPanel>
-                                                                    <ItemsControl.ItemTemplate>
-                                                                        <DataTemplate>
-                                                                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" Margin="0,0,16,0">
-                                                                                <Run Text="{Binding Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
-                                                                                <Run Text="="/>
-                                                                                <Run Text="{Binding Value, Mode=OneTime}" Foreground="{DynamicResource Brush.Accent}"/>
-                                                                            </TextBlock>
-                                                                        </DataTemplate>
-                                                                    </ItemsControl.ItemTemplate>
-                                                                </ItemsControl>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Column="2" CornerRadius="8" Padding="14" Background="{DynamicResource Brush.Bg1}" BorderThickness="1"
-                                                behaviors:ImpactBehavior.Trigger="{Binding ResultVersion}"
-                                                behaviors:ImpactBehavior.Severity="{Binding Result.Severity}">
-                                            <Border.BorderBrush><SolidColorBrush Color="{DynamicResource Color.Border}"/></Border.BorderBrush>
-                                            <StackPanel>
-                                                <TextBlock Text="YOU" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="0,0,0,8"/>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Result.Severity, Converter={StaticResource SeverityToIconConverter}}" FontSize="20" Margin="0,0,10,0"/>
-                                                    <TextBlock Text="{Binding Result.Headline}" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"
-                                                               Foreground="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}"/>
-                                                </StackPanel>
-                                                <TextBlock Text="{Binding Result.Detail}" Style="{StaticResource Text.Muted}" Margin="0,8,0,0"/>
-
-                                                <!-- Compound-attack groundwork: blast radius + leaked data preview (hidden unless a scenario sets them) -->
-                                                <ItemsControl ItemsSource="{Binding Result.AffectedAssets}" Margin="0,10,0,0"
-                                                              Visibility="{Binding Result.AffectedAssets, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding}" Style="{StaticResource Text.Muted}" FontFamily="{StaticResource Font.Code}"
-                                                                       Foreground="{DynamicResource Brush.Critical}" Margin="0,1,0,1"/>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-
-                                                <Button Content="{Binding Result.RowCountLabel, StringFormat='👁 View results ({0})'}"
-                                                        Style="{StaticResource Button.Ghost}" HorizontalAlignment="Left" Padding="0" Margin="0,8,0,0" FontSize="11"
-                                                        Command="{Binding ToggleResultRowsCommand}"
-                                                        Visibility="{Binding Result.LeakedRows, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
-                                                <ItemsControl ItemsSource="{Binding Result.LeakedRows}" Margin="0,8,0,0"
-                                                              Visibility="{Binding ShowResultRows, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border Background="{DynamicResource Brush.CodeBg}" BorderBrush="{DynamicResource Brush.Border}"
-                                                                    BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,2,0,2">
-                                                                <ItemsControl ItemsSource="{Binding}">
-                                                                    <ItemsControl.ItemsPanel>
-                                                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-                                                                    </ItemsControl.ItemsPanel>
-                                                                    <ItemsControl.ItemTemplate>
-                                                                        <DataTemplate>
-                                                                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" Margin="0,0,16,0">
-                                                                                <Run Text="{Binding Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
-                                                                                <Run Text="="/>
-                                                                                <Run Text="{Binding Value, Mode=OneTime}" Foreground="{DynamicResource Brush.Critical}"/>
-                                                                            </TextBlock>
-                                                                        </DataTemplate>
-                                                                    </ItemsControl.ItemTemplate>
-                                                                </ItemsControl>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-
-                                    <TextBlock Text="This is what the end user sees." Style="{StaticResource Text.Muted}" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Code tabs: SQL / C# / PowerShell — live, no Submit needed, full width right under the form -->
-                        <Border Style="{StaticResource Card}" Margin="0,14,0,0">
-                            <StackPanel>
-                                <Grid>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <TextBlock Text="What actually runs" Style="{StaticResource Text.H2}"/>
-                                        <TextBlock Text="ⓘ" Margin="6,0,0,0" Cursor="Help" Foreground="{DynamicResource Brush.TextMuted}"
-                                                   ToolTip="Switch between Vulnerable and each graded fix using the tabs below — red/amber/green shows how good that fix really is. SQL, C# and PowerShell tabs below that all show the same logic in each language."/>
-                                    </StackPanel>
-                                    <Border CornerRadius="10" Padding="10,2" HorizontalAlignment="Right" VerticalAlignment="Top"
-                                            Background="{DynamicResource Brush.AccentMuted}"
-                                            Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-                                        <TextBlock FontSize="11" FontWeight="Bold">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="VULNERABLE"/>
-                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Critical}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsFixApplied}" Value="True">
-                                                            <Setter Property="Text" Value="FIX APPLIED"/>
-                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blocked}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
+                        <!-- Sample payload chips -->
+                        <WrapPanel Margin="0,0,0,16">
+                            <ItemsControl ItemsSource="{Binding Scenario.SamplePayloads}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Margin="0,0,6,6" Padding="9,4" Cursor="Hand"
+                                                Command="{Binding DataContext.FillPayloadCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderInput}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                                                    <Setter Property="FontFamily" Value="{StaticResource Font.Code}"/>
+                                                    <Setter Property="FontSize" Value="11.5"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
                                                 </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Border>
+                                            </Button.Style>
+                                            <TextBlock Text="{Binding Mode=OneTime}"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button Content="{} (normal)" Margin="0,0,6,6" Padding="9,4" Cursor="Hand"
+                                    Command="{Binding FillBaselineCommand}"
+                                    Visibility="{Binding HasBaseline, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderInput}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                                        <Setter Property="FontFamily" Value="{StaticResource Font.Code}"/>
+                                        <Setter Property="FontSize" Value="11.5"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </WrapPanel>
+
+                        <!-- Code panel -->
+                        <Border CornerRadius="12" Background="{DynamicResource Brush.CodeBg}" BorderBrush="{DynamicResource Brush.Border}"
+                                BorderThickness="1" ClipToBounds="True">
+                            <StackPanel>
+                                <Grid Background="{DynamicResource Brush.Bg1}">
+                                    <StackPanel Orientation="Horizontal" Margin="10,8">
+                                        <ToggleButton x:Name="SqlTabButton" Content="SQL" Style="{StaticResource Button.NavItem}" IsChecked="True" Margin="0,0,4,0"/>
+                                        <ToggleButton x:Name="CSharpTabButton" Content="C#" Style="{StaticResource Button.NavItem}" Margin="0,0,4,0"
+                                                      Visibility="{Binding GeneratedCSharp, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
+                                        <ToggleButton x:Name="PowerShellTabButton" Content="POWERSHELL" Style="{StaticResource Button.NavItem}"
+                                                      Visibility="{Binding GeneratedPowerShell, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                    <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"
+                                               FontFamily="{StaticResource Font.Code}" FontSize="11" Foreground="#4A5066"
+                                               Text="what SQL Server receives"/>
                                 </Grid>
 
-                                <!-- Multi-fix scenarios: a real tab per variant — Vulnerable, then each graded fix -->
-                                <TabControl Margin="0,10,0,0" Padding="0"
-                                            Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}}"
-                                            SelectedIndex="{Binding CurrentFixIndex, Converter={StaticResource FixTabIndexConverter}}">
-                                    <TabItem Header="⚠ Vulnerable" Style="{StaticResource TabItem.Code.Vulnerable}"/>
-                                    <TabItem Header="{Binding Fixes[0].Label}" Style="{Binding Fixes[0].Grade, Converter={StaticResource FixGradeToTabStyleConverter}}"/>
-                                    <TabItem Header="{Binding Fixes[1].Label}" Style="{Binding Fixes[1].Grade, Converter={StaticResource FixGradeToTabStyleConverter}}"/>
-                                </TabControl>
-
-                                <!-- What the currently-selected fix still misses, if anything -->
-                                <Border Margin="0,8,0,0" Padding="10,8" CornerRadius="6" Background="{DynamicResource Brush.AccentMuted}"
+                                <!-- What the currently-selected fix still misses -->
+                                <Border Padding="16,9" BorderThickness="0,1,0,0" BorderBrush="#1C2030" Background="#13FFB454"
                                         Visibility="{Binding CurrentFixGap, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Warning}">
-                                        <Run Text="⚠ This fix doesn't cover: " FontWeight="Bold"/>
+                                    <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Warning}">
+                                        <Run Text="This fix doesn't cover: " FontWeight="Bold"/>
                                         <Run Text="{Binding CurrentFixGap, Mode=OneWay}"/>
                                     </TextBlock>
                                 </Border>
 
-                                <TabControl Margin="0,10,0,0" MinHeight="220">
-                                    <TabItem Header="SQL" Style="{StaticResource TabItem.Code}">
-                                        <Border Style="{StaticResource CodeBlock}" Margin="0,10,0,0" Padding="0">
-                                            <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="False"
-                                                                   WordWrap="True" FontFamily="{StaticResource Font.Code}" FontSize="13"
-                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"/>
-                                        </Border>
-                                    </TabItem>
-                                    <TabItem Header="C#" Style="{StaticResource TabItem.Code}"
-                                             Visibility="{Binding GeneratedCSharp, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                                        <Border Style="{StaticResource CodeBlock}" Margin="0,10,0,0" Padding="0">
-                                            <avalonEdit:TextEditor x:Name="CSharpEditor" IsReadOnly="True" ShowLineNumbers="False"
-                                                                   WordWrap="True" FontFamily="{StaticResource Font.Code}" FontSize="13"
-                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"/>
-                                        </Border>
-                                    </TabItem>
-                                    <TabItem Header="PowerShell" Style="{StaticResource TabItem.Code}"
-                                             Visibility="{Binding GeneratedPowerShell, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                                        <Border Style="{StaticResource CodeBlock}" Margin="0,10,0,0" Padding="0">
-                                            <avalonEdit:TextEditor x:Name="PowerShellEditor" IsReadOnly="True" ShowLineNumbers="False"
-                                                                   WordWrap="True" FontFamily="{StaticResource Font.Code}" FontSize="13"
-                                                                   Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="12"/>
-                                        </Border>
-                                    </TabItem>
-                                </TabControl>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                    <Border Width="14" Height="14" CornerRadius="3" Margin="0,0,6,0" BorderThickness="1.4" BorderBrush="#E05CC9" Background="Transparent"/>
-                                    <TextBlock Text="= dotted outline around exactly what came from the form above — live, as you type." Style="{StaticResource Text.Muted}"/>
-                                </StackPanel>
+                                <Grid MinHeight="220">
+                                    <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                                           FontFamily="{StaticResource Font.Code}" FontSize="12.5"
+                                                           Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
+                                                           Visibility="{Binding IsChecked, ElementName=SqlTabButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <avalonEdit:TextEditor x:Name="CSharpEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                                           FontFamily="{StaticResource Font.Code}" FontSize="12.5"
+                                                           Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
+                                                           Visibility="{Binding IsChecked, ElementName=CSharpTabButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <avalonEdit:TextEditor x:Name="PowerShellEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                                           FontFamily="{StaticResource Font.Code}" FontSize="12.5"
+                                                           Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
+                                                           Visibility="{Binding IsChecked, ElementName=PowerShellTabButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </Grid>
+
+                                <!-- Runtime strip (C#/PowerShell only) -->
+                                <Border Padding="16,9" BorderThickness="0,1,0,0" BorderBrush="#1C2030"
+                                        Visibility="{Binding IsChecked, ElementName=SqlTabButton, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                    <StackPanel>
+                                        <TextBlock Text="AT RUNTIME" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
+                                                   Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,6"/>
+                                        <ItemsControl ItemsSource="{Binding Fields}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:FieldValueViewModel}">
+                                                    <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="12" Margin="0,0,0,2">
+                                                        <Run Text="{Binding Field.Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                        <Run Text=" = &quot;"/>
+                                                        <Run Text="{Binding Value, Mode=OneWay}" Foreground="{DynamicResource Brush.UserInputText}"/>
+                                                        <Run Text="&quot;"/>
+                                                    </TextBlock>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </Border>
                     </StackPanel>
 
-                    <!-- Sidebar: decision paths (compact) + sample payloads -->
-                    <StackPanel Grid.Column="2">
-                        <Border Style="{StaticResource Card}"
-                                Visibility="{Binding HasDecisionPaths, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <StackPanel>
-                                <TextBlock Text="Where you're headed" Style="{StaticResource Text.H2}"/>
-                                <TextBlock Text="Live, before you submit." Style="{StaticResource Text.Muted}" Margin="0,0,0,10"/>
+                    <!-- Right: Verdict or Intel -->
+                    <Grid Grid.Column="4">
+                        <!-- Verdict column -->
+                        <StackPanel Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                                    behaviors:ImpactBehavior.Trigger="{Binding ResultVersion}"
+                                    behaviors:ImpactBehavior.Severity="{Binding Result.Severity}">
+                            <TextBlock Text="VERDICT" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,8"/>
+                            <TextBlock Text="{Binding Result.Severity, Converter={StaticResource SeverityToTagConverter}}"
+                                       FontFamily="{StaticResource Font.Hud}" FontSize="42" FontWeight="Bold"
+                                       Foreground="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="30" Opacity="0.5"
+                                                       Color="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Result.Headline}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="SemiBold"
+                                       TextWrapping="Wrap" Margin="0,8,0,0"/>
+                            <TextBlock Text="{Binding Result.Detail}" FontFamily="{StaticResource Font.Body}" FontSize="12.5"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0" MaxHeight="110"/>
 
-                                <ItemsControl ItemsSource="{Binding Scenario.DecisionPaths}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type core:DecisionPathDef}">
-                                            <Border Margin="0,0,0,8" CornerRadius="7" Padding="10,8" BorderThickness="2">
-                                                <Border.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="{DynamicResource Brush.Bg2}"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
-                                                        <Setter Property="Opacity" Value="0.45"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Value="True">
-                                                                <DataTrigger.Binding>
-                                                                    <MultiBinding Converter="{StaticResource PathActiveConverter}">
-                                                                        <Binding Path="Key"/>
-                                                                        <Binding Path="DataContext.ActivePathKey" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
-                                                                    </MultiBinding>
-                                                                </DataTrigger.Binding>
-                                                                <Setter Property="Opacity" Value="1"/>
-                                                                <Setter Property="BorderBrush" Value="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
-                                                                <Setter Property="Background" Value="{DynamicResource Brush.Bg1}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Resources>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Icon}" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding Label}" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
+                            <ItemsControl ItemsSource="{Binding Result.AffectedAssets}" Margin="0,10,0,0"
+                                          Visibility="{Binding Result.AffectedAssets, Converter={StaticResource NotEmptyToVisibilityConverter}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontFamily="{StaticResource Font.Code}" FontSize="11"
+                                                   Foreground="{DynamicResource Brush.Critical}" Margin="0,1,0,1"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                        <!-- Sample payloads -->
-                        <Border Style="{StaticResource Card}" Margin="0,14,0,0">
-                            <StackPanel>
-                                <TextBlock Text="Sample payloads" Style="{StaticResource Text.H2}"/>
-                                <ItemsControl ItemsSource="{Binding Scenario.SamplePayloads}">
+                            <StackPanel Margin="0,16,0,0" VerticalAlignment="Bottom"
+                                        Visibility="{Binding Result.LeakedRows, Converter={StaticResource NotEmptyToVisibilityConverter}}">
+                                <TextBlock Text="{Binding Result.RowCountLabel}" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
+                                           Foreground="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}" Margin="0,0,0,6"/>
+                                <ItemsControl ItemsSource="{Binding Result.LeakedRows}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="{DynamicResource Brush.Bg2}" CornerRadius="5" Padding="8,5" Margin="0,3,0,3">
-                                                <TextBox Text="{Binding Mode=OneTime}" Style="{StaticResource TextBox.Selectable}"
-                                                         FontFamily="{StaticResource Font.Code}" FontSize="11"
-                                                         Foreground="{DynamicResource Brush.Accent}"/>
+                                            <Border Background="{DynamicResource Brush.CodeBg}" BorderBrush="{DynamicResource Brush.Border}"
+                                                    BorderThickness="1" CornerRadius="5" Padding="9,5" Margin="0,0,0,4">
+                                                <ItemsControl ItemsSource="{Binding}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="12" Margin="0,0,16,0">
+                                                                <Run Text="{Binding Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                                <Run Text="="/>
+                                                                <Run Text="{Binding Value, Mode=OneTime}" Foreground="{DynamicResource Brush.Critical}"/>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
+                        </StackPanel>
+
+                        <!-- Intel panel -->
+                        <Border Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}}"
+                                CornerRadius="12" BorderThickness="1" BorderBrush="#1F3350" Background="#D90A101C">
+                            <DockPanel>
+                                <StackPanel x:Name="IntelTabsPanel" DockPanel.Dock="Top" Orientation="Horizontal">
+                                    <ToggleButton x:Name="IntelTabHow" Content="HOW IT WORKS" Style="{StaticResource IntelTab}" IsChecked="True"/>
+                                    <ToggleButton x:Name="IntelTabWhy" Content="WHY THE FIX" Style="{StaticResource IntelTab}"/>
+                                    <ToggleButton x:Name="IntelTabName" Content="THE NAME" Style="{StaticResource IntelTab}"/>
+                                    <ToggleButton x:Name="IntelTabSources" Content="SOURCES" Style="{StaticResource IntelTab}"/>
+                                    <ToggleButton x:Name="IntelTabNormal" Content="NORMAL USER" Style="{StaticResource IntelTab}"/>
+                                </StackPanel>
+
+                                <ScrollViewer Padding="20,18">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Scenario.HowItWorks}" FontFamily="{StaticResource Font.Body}" FontSize="14.5"
+                                                   Foreground="{DynamicResource Brush.TextBody}" TextWrapping="Wrap" LineHeight="24"
+                                                   Visibility="{Binding IsChecked, ElementName=IntelTabHow, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        <TextBlock Text="{Binding Scenario.WhyTheFixWorks}" FontFamily="{StaticResource Font.Body}" FontSize="14.5"
+                                                   Foreground="{DynamicResource Brush.TextBody}" TextWrapping="Wrap" LineHeight="24"
+                                                   Visibility="{Binding IsChecked, ElementName=IntelTabWhy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        <TextBlock Text="{Binding Scenario.TerminologyNote}" FontFamily="{StaticResource Font.Body}" FontSize="14.5"
+                                                   Foreground="{DynamicResource Brush.TextBody}" TextWrapping="Wrap" LineHeight="24"
+                                                   Visibility="{Binding IsChecked, ElementName=IntelTabName, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                                        <ItemsControl ItemsSource="{Binding Scenario.References}"
+                                                      Visibility="{Binding IsChecked, ElementName=IntelTabSources, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border CornerRadius="10" Padding="14,12" Margin="0,0,0,8" BorderThickness="1" BorderBrush="#1F3350">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Url, Converter={StaticResource UrlToSourceKindConverter}}"
+                                                                       FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,4"/>
+                                                            <TextBlock TextWrapping="Wrap">
+                                                                <Hyperlink NavigateUri="{Binding Url, Mode=OneTime}" RequestNavigate="Hyperlink_RequestNavigate">
+                                                                    <Run Text="{Binding Label, Mode=OneTime}" Foreground="#6FB2FF"/>
+                                                                </Hyperlink>
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <StackPanel Visibility="{Binding IsChecked, ElementName=IntelTabNormal, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <TextBlock Text="A NORMAL USER" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
+                                                       Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,8"/>
+                                            <TextBlock Text="{Binding NormalResult.Headline}" FontFamily="{StaticResource Font.Hud}" FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="{Binding NormalResult.Severity, Converter={StaticResource SeverityToBrushConverter}}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding NormalResult.Detail}" FontFamily="{StaticResource Font.Body}" FontSize="13"
+                                                       Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        </StackPanel>
+
+                                        <TextBlock Margin="0,18,0,0" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                                   Foreground="{DynamicResource Brush.TextMuted}" TextWrapping="Wrap"
+                                                   Text="Every claim here is backed by an independently published source. Links open in your browser."/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </DockPanel>
                         </Border>
-                    </StackPanel>
+                    </Grid>
                 </Grid>
 
-                <!-- How it works / Why the fix works -->
-                <Grid Margin="0,14,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="14"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="How it works" Style="{StaticResource Text.H2}"/>
-                            <TextBlock Text="{Binding Scenario.HowItWorks}" Style="{StaticResource Text.Body}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2" Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Why the fix works" Style="{StaticResource Text.H2}"/>
-                            <TextBlock Text="{Binding Scenario.WhyTheFixWorks}" Style="{StaticResource Text.Body}"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                <!-- Defense tiles -->
+                <UniformGrid Margin="0,16,0,0" Columns="2" Rows="1">
+                    <UniformGrid.Style>
+                        <Style TargetType="UniformGrid">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasMultipleFixes}" Value="True">
+                                    <Setter Property="Columns" Value="3"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </UniformGrid.Style>
 
-                <!-- Terminology & further reading -->
-                <Border Style="{StaticResource Card}" Margin="0,14,0,0">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Where the name comes from" Style="{StaticResource Text.H2}"/>
-                            <TextBlock Text="ⓘ" Margin="6,0,0,6" Cursor="Help" Foreground="{DynamicResource Brush.TextMuted}"
-                                       ToolTip="Every attack here is checked against independent, external sources — OWASP, PortSwigger, Microsoft Learn, or the original academic literature — not just this app's own say-so. Click any link below to open it in your browser."/>
+                    <Button Margin="0,0,14,0" Command="{Binding SetFixIndexCommand}" CommandParameter="-1">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource DefenseTile}">
+                                <Setter Property="BorderBrush" Value="#2B313F"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsVulnerableSelected}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Critical}"/>
+                                        <Setter Property="Background" Value="#17FF2D55"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel>
+                            <TextBlock Text="VULNERABLE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.Critical}" Margin="0,0,0,8"/>
+                            <TextBlock Text="No fix applied" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold"/>
+                            <TextBlock Text="String concatenation" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding Scenario.TerminologyNote}" Style="{StaticResource Text.Body}" Margin="0,0,0,10"/>
+                    </Button>
 
-                        <TextBlock Text="Further reading" Style="{StaticResource Text.Muted}" FontWeight="Bold" Margin="0,4,0,4"/>
-                        <ItemsControl ItemsSource="{Binding Scenario.References}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Margin="0,0,0,4" Style="{StaticResource Text.Body}" TextWrapping="Wrap">
-                                        <Run Text="🔗 "/>
-                                        <Hyperlink NavigateUri="{Binding Url, Mode=OneTime}" RequestNavigate="Hyperlink_RequestNavigate">
-                                            <Run Text="{Binding Label, Mode=OneTime}"/>
-                                        </Hyperlink>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
+                    <Button Margin="0,0,14,0" Command="{Binding SetFixIndexCommand}" CommandParameter="0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource DefenseTile}">
+                                <Setter Property="BorderBrush" Value="{Binding Fixes[0].Grade, Converter={StaticResource GradeToBrushConverter}}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFix0Selected}" Value="True">
+                                        <Setter Property="Background" Value="#17FFB454"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel>
+                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold" Margin="0,0,0,8"
+                                       Foreground="{Binding Fixes[0].Grade, Converter={StaticResource GradeToBrushConverter}}">
+                                <Run Text="{Binding Fixes[0].Grade, Mode=OneTime}"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Fixes[0].Label}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Fixes[0].Gap}" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Command="{Binding SetFixIndexCommand}" CommandParameter="1">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource DefenseTile}">
+                                <Setter Property="BorderBrush" Value="{Binding Fixes[1].Grade, Converter={StaticResource GradeToBrushConverter}}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFix1Selected}" Value="True">
+                                        <Setter Property="Background" Value="#173DD68C"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel>
+                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold" Margin="0,0,0,8"
+                                       Foreground="{Binding Fixes[1].Grade, Converter={StaticResource GradeToBrushConverter}}">
+                                <Run Text="{Binding Fixes[1].Grade, Mode=OneTime}"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Fixes[1].Label}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Fixes[1].Gap}" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
 
             </StackPanel>
-        </ScrollViewer>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Window>
