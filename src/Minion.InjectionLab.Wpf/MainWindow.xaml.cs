@@ -178,17 +178,10 @@ public partial class MainWindow : Window
         WelcomeWordmarkShimmer.BeginAnimation(TranslateTransform.XProperty, shimmer);
     }
 
-    private void TutorialButton_Click(object sender, RoutedEventArgs e) => ShowTutorial();
+    private void TutorialButton_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).OpenTrainingCommand.Execute(null);
 
     private void QuizButton_Click(object sender, RoutedEventArgs e)
         => new QuizWindow { Owner = this }.Show();
-
-    private void ShowTutorial()
-    {
-        var tutorial = new TutorialWindow { Owner = this };
-        tutorial.Closed += (_, _) => TutorialService.MarkSeen();
-        tutorial.ShowDialog();
-    }
 
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => Close();
 

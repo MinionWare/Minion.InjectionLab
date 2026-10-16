@@ -16,6 +16,8 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<SectorViewModel> Sectors { get; }
 
+    public TutorialViewModel Tutorial { get; } = new();
+
     [ObservableProperty]
     private AttackViewModel? selectedAttack;
 
@@ -64,6 +66,14 @@ public partial class MainViewModel : ObservableObject
             Sectors[i].SectorNumber = i + 1;
 
         ProgressService.Changed += () => OnPropertyChanged(nameof(ClearedCount));
+
+        // "Skip training" in the top bar and "Start exploring" on the last step both fire this —
+        // either way Training is done, so mark it seen and drop back to Mission select.
+        Tutorial.CloseRequested += (_, _) =>
+        {
+            TutorialService.MarkSeen();
+            CurrentView = AppView.MissionSelect;
+        };
 
         // Open on the welcome screen rather than jumping straight into the first scenario —
         // SelectedAttack starts null on purpose.

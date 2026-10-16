@@ -29,6 +29,7 @@
             <conv:GradeToBrushConverter x:Key="GradeToBrushConverter"/>
             <conv:ProgressWidthConverter x:Key="ProgressWidthConverter"/>
             <conv:UrlToSourceKindConverter x:Key="UrlToSourceKindConverter"/>
+            <conv:TutorialShortTitleConverter x:Key="TutorialShortTitleConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

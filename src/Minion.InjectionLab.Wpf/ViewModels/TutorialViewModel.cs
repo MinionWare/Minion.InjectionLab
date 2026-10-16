@@ -8,6 +8,17 @@ using Minion.InjectionLab.Core.Tutorial;
 
 namespace Minion.InjectionLab.Wpf.ViewModels;
 
+/// <summary>One pill in the Training step bar.</summary>
+public sealed class TutorialStepRow
+{
+    public required int Index { get; init; }
+    public required TutorialStep Step { get; init; }
+    public required bool IsCurrent { get; init; }
+    public required bool IsPast { get; init; }
+    public bool HasDemo => Step.Demo != null;
+    public int DisplayNumber => Index + 1;
+}
+
 /// <summary>Drives the opening wizard: step navigation plus the live single-field demo embedded
 /// in whichever step is current.</summary>
 public partial class TutorialViewModel : ObservableObject
@@ -20,7 +31,25 @@ public partial class TutorialViewModel : ObservableObject
     {
         DemoInput = _steps[0].Demo?.DefaultValue ?? string.Empty;
         DotStates = Enumerable.Range(0, StepCount).Select(i => i <= StepIndex).ToList();
+        RebuildStepRows();
     }
+
+    public IReadOnlyList<TutorialStepRow> StepRows { get; private set; } = Array.Empty<TutorialStepRow>();
+
+    private void RebuildStepRows()
+    {
+        StepRows = _steps.Select((s, i) => new TutorialStepRow
+        {
+            Index = i,
+            Step = s,
+            IsCurrent = i == StepIndex,
+            IsPast = i < StepIndex
+        }).ToList();
+        OnPropertyChanged(nameof(StepRows));
+    }
+
+    [RelayCommand]
+    private void SetStep(int index) => StepIndex = index;
 
     [ObservableProperty]
     private int stepIndex;
@@ -60,6 +89,7 @@ public partial class TutorialViewModel : ObservableObject
         OnPropertyChanged(nameof(DemoFieldLabel));
         OnPropertyChanged(nameof(DemoHint));
         OnPropertyChanged(nameof(DotStates));
+        RebuildStepRows();
     }
 
     partial void OnDemoInputChanged(string value)
