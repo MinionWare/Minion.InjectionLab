@@ -158,11 +158,9 @@
         </Border>
 
         <!-- ================= WELCOME SCREEN ================= -->
-        <!-- Spans BOTH columns and sits above the left-nav Border in z-order, so it genuinely
-             blocks picking a scenario from the list underneath — not just the content area.
-             DataContext here is still the MainViewModel (nothing below overrides it). -->
+        <!-- DataContext here is still the MainViewModel (nothing below overrides it). -->
         <Grid Grid.Row="2" Grid.RowSpan="2"
-              Visibility="{Binding HasSelectedAttack, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+              Visibility="{Binding IsWelcome, Converter={StaticResource BoolToVisibilityConverter}}"
               Background="{DynamicResource Brush.Bg0}">
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,28,0">
