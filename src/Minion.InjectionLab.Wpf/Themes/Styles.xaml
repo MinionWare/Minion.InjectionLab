@@ -217,11 +217,24 @@
          Window's light TextElement.Foreground, but its background stays the system default
          (near-white) unless styled here — unstyled, that's light text on a light popup. -->
 
+    <!-- Same story as MenuItem below: the default ContextMenu template draws its own icon-panel
+         background strip down the left edge regardless of what the items themselves look like —
+         Background/BorderBrush alone never reaches it. A full template skips that chrome entirely. -->
     <Style TargetType="ContextMenu">
         <Setter Property="Background" Value="{DynamicResource Brush.Bg1}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                        <StackPanel IsItemsHost="True" Margin="4" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- A full custom template — overriding Background/Foreground alone leaves the default
