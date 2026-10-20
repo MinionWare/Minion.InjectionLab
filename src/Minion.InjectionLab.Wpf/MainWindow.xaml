@@ -650,15 +650,18 @@
                                 </Border>
 
                                 <Grid MinHeight="90">
-                                    <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                    <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
                                                            Visibility="{Binding IsChecked, ElementName=SqlTabButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <avalonEdit:TextEditor x:Name="CSharpEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                    <avalonEdit:TextEditor x:Name="CSharpEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
                                                            Visibility="{Binding IsChecked, ElementName=CSharpTabButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <avalonEdit:TextEditor x:Name="PowerShellEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                    <avalonEdit:TextEditor x:Name="PowerShellEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
                                                            Visibility="{Binding IsChecked, ElementName=PowerShellTabButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
@@ -1229,15 +1232,18 @@
                                         <RadioButton x:Name="QuizPowerShellTab" GroupName="QuizCodeLang" Content="POWERSHELL" Style="{StaticResource Button.NavItem}"
                                                       Visibility="{Binding GeneratedPowerShell, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
                                     </StackPanel>
-                                    <avalonEdit:TextEditor x:Name="QuizSqlEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                    <avalonEdit:TextEditor x:Name="QuizSqlEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,4,16,16"
                                                            Visibility="{Binding IsChecked, ElementName=QuizSqlTab, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <avalonEdit:TextEditor x:Name="QuizCSharpEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                    <avalonEdit:TextEditor x:Name="QuizCSharpEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,4,16,16"
                                                            Visibility="{Binding IsChecked, ElementName=QuizCSharpTab, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <avalonEdit:TextEditor x:Name="QuizPowerShellEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
+                                    <avalonEdit:TextEditor x:Name="QuizPowerShellEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,4,16,16"
                                                            Visibility="{Binding IsChecked, ElementName=QuizPowerShellTab, Converter={StaticResource BoolToVisibilityConverter}}"/>
