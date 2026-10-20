@@ -223,14 +223,14 @@
                                 <LinearGradientBrush.Transform>
                                     <TranslateTransform x:Name="WelcomeWordmarkShimmer" X="0"/>
                                 </LinearGradientBrush.Transform>
-                                <GradientStop Color="#FF3B5C" Offset="0"/>
-                                <GradientStop Color="#C25CFF" Offset="0.5"/>
-                                <GradientStop Color="#4D8BFF" Offset="1"/>
+                                <GradientStop Color="{DynamicResource Color.SectorClassic}" Offset="0"/>
+                                <GradientStop Color="{DynamicResource Color.NeonVioletLabel2}" Offset="0.5"/>
+                                <GradientStop Color="{DynamicResource Color.NeonBlueLight}" Offset="1"/>
                             </LinearGradientBrush>
                         </TextBlock.Foreground>
                     </TextBlock>
                     <TextBlock Text="SQL injection, attack by attack — see exactly how, and exactly why the fix works."
-                               FontFamily="{StaticResource Font.Body}" FontSize="16" Foreground="#AEB5C3" Margin="0,14,0,0"
+                               FontFamily="{StaticResource Font.Body}" FontSize="16" Foreground="{DynamicResource Brush.TextSecondaryAlt}" Margin="0,14,0,0"
                                HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
                 </StackPanel>
 
@@ -248,7 +248,7 @@
                     <Button Style="{StaticResource Button.OutlineBlue}" Command="{Binding BrowseCatalogCommand}">
                         <StackPanel>
                             <TextBlock Text="MISSION SELECT" FontFamily="{StaticResource Font.Hud}" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center"/>
-                            <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="11.5" Foreground="#AEB5C3" HorizontalAlignment="Center" Margin="0,3,0,0">
+                            <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondaryAlt}" HorizontalAlignment="Center" Margin="0,3,0,0">
                                 <Run Text="{Binding AttackCount, Mode=OneWay}"/><Run Text=" attacks · 7 sectors"/>
                             </TextBlock>
                         </StackPanel>
@@ -256,7 +256,7 @@
                 </StackPanel>
 
                 <Border x:Name="WelcomeSafetyPill" HorizontalAlignment="Center" Margin="0,32,0,0" Opacity="0"
-                        CornerRadius="30" Padding="18,10" BorderThickness="1" BorderBrush="#1F3B2E" Background="#0F3DD68C">
+                        CornerRadius="30" Padding="18,10" BorderThickness="1" BorderBrush="{DynamicResource Brush.BorderGreen}" Background="{DynamicResource Brush.TintGreenSubtle}">
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="WelcomeSafetyPillTranslate" Y="14"/>
                     </Border.RenderTransform>
@@ -266,7 +266,7 @@
                                 <DropShadowEffect Color="{DynamicResource Color.Blocked}" ShadowDepth="0" BlurRadius="10" Opacity="0.8"/>
                             </Ellipse.Effect>
                         </Ellipse>
-                        <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="12.5" Foreground="#AEB5C3" TextWrapping="Wrap" MaxWidth="460">
+                        <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondaryAlt}" TextWrapping="Wrap" MaxWidth="460">
                             <Run Text="This app never touches a real database." FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                             <Run Text=" Every query and every &quot;leaked row&quot; is simulated text. Safe to run anywhere."/>
                         </TextBlock>
@@ -365,15 +365,15 @@
                                             <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="11" FontWeight="Bold"
                                                        HorizontalAlignment="Left"
                                                        Foreground="{Binding Scenario.Category, Converter={StaticResource CategoryToSectorBrushConverter}}"/>
-                                            <Border HorizontalAlignment="Right" Background="#1A9AA3B2">
+                                            <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.TintNeutralSubtle}">
                                                 <Border.Style>
                                                     <Style TargetType="Border" BasedOn="{StaticResource StatusPill}">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Status}" Value="Cleared">
-                                                                <Setter Property="Background" Value="#1E3DD68C"/>
+                                                                <Setter Property="Background" Value="{DynamicResource Brush.TintGreenStrong}"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Status}" Value="InProgress">
-                                                                <Setter Property="Background" Value="#24FF2D55"/>
+                                                                <Setter Property="Background" Value="{DynamicResource Brush.TintRedStrong}"/>
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
                                                                 <Setter Property="BorderThickness" Value="1"/>
                                                             </DataTrigger>
@@ -440,12 +440,12 @@
                 </Grid>
 
                 <!-- Objective banner (Challenge mode) -->
-                <Border Margin="0,0,0,14" CornerRadius="14" Padding="20,18" BorderThickness="1" BorderBrush="#3A2E1A"
+                <Border Margin="0,0,0,14" CornerRadius="14" Padding="20,18" BorderThickness="1" BorderBrush="{DynamicResource Brush.BorderAmberDark}"
                         Visibility="{Binding IsChallengeMode, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                            <GradientStop Color="#17FFB454" Offset="0"/>
-                            <GradientStop Color="#03FFB454" Offset="1"/>
+                            <GradientStop Color="{DynamicResource Color.TintAmberSubtle}" Offset="0"/>
+                            <GradientStop Color="{DynamicResource Color.TintAmberSubtle}" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                     <Grid>
@@ -479,7 +479,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="8" Padding="12,8" Margin="0,0,0,7" BorderThickness="1"
-                                                BorderBrush="#5A4520" Background="#0FFFB454">
+                                                BorderBrush="{DynamicResource Brush.BorderAmber}" Background="{DynamicResource Brush.TintAmberSubtle}">
                                             <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="13" TextWrapping="Wrap">
                                                 <Run Text="HINT: " FontWeight="Bold" Foreground="{DynamicResource Brush.Warning}"/>
                                                 <Run Text="{Binding Mode=OneTime}"/>
@@ -488,12 +488,12 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <Border Margin="0,0,0,7" CornerRadius="8" Padding="12,8" BorderThickness="1" BorderBrush="#1F2433"
+                            <Border Margin="0,0,0,7" CornerRadius="8" Padding="12,8" BorderThickness="1" BorderBrush="{DynamicResource Brush.BorderSubtle}"
                                     Visibility="{Binding HasMoreHints, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <TextBlock Text="Locked" FontFamily="{StaticResource Font.Code}" FontSize="11" Foreground="#4A5066"/>
+                                <TextBlock Text="Locked" FontFamily="{StaticResource Font.Code}" FontSize="11" Foreground="{DynamicResource Brush.TextDim}"/>
                             </Border>
                             <Border CornerRadius="8" Padding="12,10" BorderThickness="1" BorderBrush="{DynamicResource Brush.NeonRed}"
-                                    Background="#1AFF2D55" Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Background="{DynamicResource Brush.TintRedSubtle}" Visibility="{Binding IsAnswerRevealed, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <StackPanel>
                                     <TextBlock Text="ANSWER" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
                                                Foreground="{DynamicResource Brush.NeonRedLabel}" Margin="0,0,0,4"/>
@@ -636,12 +636,12 @@
                                                       Visibility="{Binding GeneratedPowerShell, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
                                     </StackPanel>
                                     <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"
-                                               FontFamily="{StaticResource Font.Code}" FontSize="11" Foreground="#4A5066"
+                                               FontFamily="{StaticResource Font.Code}" FontSize="11" Foreground="{DynamicResource Brush.TextDim}"
                                                Text="what SQL Server receives"/>
                                 </Grid>
 
                                 <!-- What the currently-selected fix still misses -->
-                                <Border Padding="16,9" BorderThickness="0,1,0,0" BorderBrush="#1C2030" Background="#13FFB454"
+                                <Border Padding="16,9" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.BorderSubtle}" Background="{DynamicResource Brush.TintAmberSubtle}"
                                         Visibility="{Binding CurrentFixGap, Converter={StaticResource NotEmptyToVisibilityConverter}}">
                                     <TextBlock FontFamily="{StaticResource Font.Body}" FontSize="11.5" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Warning}">
                                         <Run Text="This fix doesn't cover: " FontWeight="Bold"/>
@@ -668,7 +668,7 @@
                                 </Grid>
 
                                 <!-- Runtime strip (C#/PowerShell only) -->
-                                <Border Padding="16,9" BorderThickness="0,1,0,0" BorderBrush="#1C2030"
+                                <Border Padding="16,9" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.BorderSubtle}"
                                         Visibility="{Binding IsChecked, ElementName=SqlTabButton, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
                                     <StackPanel>
                                         <TextBlock Text="AT RUNTIME" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
@@ -754,7 +754,7 @@
 
                         <!-- Intel panel -->
                         <Border Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}}"
-                                CornerRadius="12" BorderThickness="1" BorderBrush="#1F3350" Background="#D90A101C">
+                                CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource Brush.BorderBlue}" Background="{DynamicResource Brush.PanelBgStrong}">
                             <DockPanel>
                                 <StackPanel x:Name="IntelTabsPanel" DockPanel.Dock="Top" Orientation="Horizontal">
                                     <RadioButton x:Name="IntelTabHow" GroupName="MissionIntelTab" Content="HOW IT WORKS" Style="{StaticResource IntelTab}" IsChecked="True"/>
@@ -780,14 +780,14 @@
                                                       Visibility="{Binding IsChecked, ElementName=IntelTabSources, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border CornerRadius="10" Padding="14,12" Margin="0,0,0,8" BorderThickness="1" BorderBrush="#1F3350">
+                                                    <Border CornerRadius="10" Padding="14,12" Margin="0,0,0,8" BorderThickness="1" BorderBrush="{DynamicResource Brush.BorderBlue}">
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding Url, Converter={StaticResource UrlToSourceKindConverter}}"
                                                                        FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
                                                                        Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,4"/>
                                                             <TextBlock TextWrapping="Wrap">
                                                                 <Hyperlink NavigateUri="{Binding Url, Mode=OneTime}" RequestNavigate="Hyperlink_RequestNavigate">
-                                                                    <Run Text="{Binding Label, Mode=OneTime}" Foreground="#6FB2FF"/>
+                                                                    <Run Text="{Binding Label, Mode=OneTime}" Foreground="{DynamicResource Brush.LinkBlue}"/>
                                                                 </Hyperlink>
                                                             </TextBlock>
                                                         </StackPanel>
@@ -831,12 +831,12 @@
                     <Button Margin="0,0,14,0" Command="{Binding SetFixIndexCommand}" CommandParameter="-1">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource DefenseTile}">
-                                <Setter Property="BorderBrush" Value="#2B313F"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderMuted}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsVulnerableSelected}" Value="True">
                                         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Critical}"/>
                                         <Setter Property="BorderThickness" Value="2.5"/>
-                                        <Setter Property="Background" Value="#26FF2D55"/>
+                                        <Setter Property="Background" Value="{DynamicResource Brush.TintRedStrong}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -862,7 +862,7 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsFix0Selected}" Value="True">
                                         <Setter Property="BorderThickness" Value="2.5"/>
-                                        <Setter Property="Background" Value="#26FFB454"/>
+                                        <Setter Property="Background" Value="{DynamicResource Brush.TintAmberStrong}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -891,7 +891,7 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsFix1Selected}" Value="True">
                                         <Setter Property="BorderThickness" Value="2.5"/>
-                                        <Setter Property="Background" Value="#263DD68C"/>
+                                        <Setter Property="Background" Value="{DynamicResource Brush.TintGreenStrong}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -939,7 +939,7 @@
                                 CommandParameter="{Binding Index}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Background" Value="#141724"/>
+                                    <Setter Property="Background" Value="{DynamicResource Brush.StepFutureBg}"/>
                                     <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}"/>
                                     <Setter Property="BorderThickness" Value="0"/>
                                     <Setter Property="Template">
@@ -953,7 +953,7 @@
                                     </Setter>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsPast}" Value="True">
-                                            <Setter Property="Background" Value="#2A2F44"/>
+                                            <Setter Property="Background" Value="{DynamicResource Brush.StepPastBg}"/>
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.TextBody}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsCurrent}" Value="True">
@@ -991,7 +991,7 @@
 
                 <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" FontWeight="Bold" Foreground="#C29BFF" Margin="0,0,0,8">
+                        <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.NeonVioletLabel}" Margin="0,0,0,8">
                             <Run Text="STEP "/><Run Text="{Binding StepNumber, Mode=OneWay}"/><Run Text=" OF "/><Run Text="{Binding StepCount, Mode=OneWay}"/>
                         </TextBlock>
                         <TextBlock Text="{Binding CurrentStep.Title}" FontFamily="{StaticResource Font.Hud}" FontSize="30" FontWeight="Bold"
@@ -1010,7 +1010,7 @@
                 <Grid Grid.Column="2">
                     <!-- With a demo -->
                     <StackPanel Visibility="{Binding HasDemo, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Border CornerRadius="16" Padding="22" BorderThickness="1" BorderBrush="{DynamicResource Brush.Border}" Background="#D90A0C12">
+                        <Border CornerRadius="16" Padding="22" BorderThickness="1" BorderBrush="{DynamicResource Brush.Border}" Background="{DynamicResource Brush.PanelBgStrong}">
                             <StackPanel>
                                 <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
                                            Foreground="{DynamicResource Brush.NeonRedLabel}" Margin="0,0,0,10">
@@ -1020,7 +1020,7 @@
                                          FontSize="18" Padding="14,11">
                                     <TextBox.Style>
                                         <Style TargetType="TextBox">
-                                            <Setter Property="Background" Value="#0FFF2D55"/>
+                                            <Setter Property="Background" Value="{DynamicResource Brush.TintRedSubtle}"/>
                                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
                                             <Setter Property="BorderThickness" Value="1.5"/>
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.NeonRedLight}"/>
@@ -1041,7 +1041,7 @@
                                 <TextBlock Text="{Binding DemoHint}" FontFamily="{StaticResource Font.Body}" FontSize="12.5"
                                            Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"
                                            Visibility="{Binding DemoHint, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
-                                <Border Background="#05060A" CornerRadius="10" Padding="14" Margin="0,14,0,0">
+                                <Border Background="{DynamicResource Brush.CodeFlatBg}" CornerRadius="10" Padding="14" Margin="0,14,0,0">
                                     <TextBlock Text="{Binding DemoSql}" FontFamily="{StaticResource Font.Code}" FontSize="14"
                                                Foreground="{DynamicResource Brush.CodeText}" TextWrapping="Wrap"/>
                                 </Border>
@@ -1052,11 +1052,11 @@
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
-                                    <Setter Property="Background" Value="#0F5AA7FF"/>
+                                    <Setter Property="Background" Value="{DynamicResource Brush.TintBlueSubtle}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding DemoIsDangerous}" Value="True">
                                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Critical}"/>
-                                            <Setter Property="Background" Value="#17FF2D55"/>
+                                            <Setter Property="Background" Value="{DynamicResource Brush.TintRedSubtle}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -1149,11 +1149,11 @@
                             <TextBlock Text="{Binding CurrentQuestion.Category, Converter={StaticResource CategoryDisplayConverter}}" FontFamily="{StaticResource Font.Code}"
                                        FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Bottom" Margin="12,0,0,2"/>
                         </StackPanel>
-                        <TextBlock Text="██████ ████████" FontFamily="{StaticResource Font.Hud}" FontSize="26" FontWeight="Bold" Foreground="#4A5066"
+                        <TextBlock Text="██████ ████████" FontFamily="{StaticResource Font.Hud}" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource Brush.TextDim}"
                                    Visibility="{Binding ShowTitleAndCategory, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
 
                         <TextBlock Text="{Binding CurrentQuestion.Premise}" FontFamily="{StaticResource Font.Body}" FontSize="14.5"
-                                   Foreground="#AEB5C3" TextWrapping="Wrap" MaxWidth="720" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource Brush.TextSecondaryAlt}" TextWrapping="Wrap" MaxWidth="720" Margin="0,8,0,0"
                                    Visibility="{Binding ShowPremise, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         <TextBlock Text="No briefing at Expert. Work out what's wrong from the form alone." FontFamily="{StaticResource Font.Body}"
                                    FontSize="13" Foreground="{DynamicResource Brush.TextMuted}" FontStyle="Italic" Margin="0,8,0,0"
@@ -1197,7 +1197,7 @@
                                                          FontSize="16" Padding="12,10">
                                                     <TextBox.Style>
                                                         <Style TargetType="TextBox">
-                                                            <Setter Property="Background" Value="#0FFF2D55"/>
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.TintRedSubtle}"/>
                                                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
                                                             <Setter Property="BorderThickness" Value="1.5"/>
                                                             <Setter Property="Foreground" Value="{DynamicResource Brush.NeonRedLight}"/>
@@ -1295,7 +1295,7 @@
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsCurrent}" Value="True">
                                                     <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
-                                                    <Setter Property="Background" Value="#14FF2D55"/>
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.TintRedSubtle}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -1318,7 +1318,7 @@
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Text" Value="·"/>
-                                                    <Setter Property="Foreground" Value="#4A5066"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.TextDim}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsCurrent}" Value="True">
                                                             <Setter Property="Text" Value="▶"/>
@@ -1400,7 +1400,7 @@
                     <ItemsControl ItemsSource="{Binding Results}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:QuizQuestionResult}">
-                                <Border CornerRadius="12" Padding="16,13" Margin="0,0,0,8" BorderThickness="1" BorderBrush="#1F2433">
+                                <Border CornerRadius="12" Padding="16,13" Margin="0,0,0,8" BorderThickness="1" BorderBrush="{DynamicResource Brush.BorderSubtle}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="34"/>
@@ -1419,12 +1419,12 @@
                                             <TextBlock Text="{Binding LastPayload}" FontFamily="{StaticResource Font.Code}" FontSize="12"
                                                        Foreground="{DynamicResource Brush.UserInputText}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
                                         </StackPanel>
-                                        <Border Grid.Column="2" HorizontalAlignment="Right" CornerRadius="5" Padding="9,4" Background="#1AFF5C6C">
+                                        <Border Grid.Column="2" HorizontalAlignment="Right" CornerRadius="5" Padding="9,4" Background="{DynamicResource Brush.TintRedSubtle}">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Solved}" Value="True">
-                                                            <Setter Property="Background" Value="#1A3DD68C"/>
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.TintGreenSubtle}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -1451,7 +1451,7 @@
                     </ItemsControl>
 
                     <TextBlock Margin="0,8,0,0">
-                        <Hyperlink Click="OpenMissedMissions_Click" Foreground="#6FB2FF">
+                        <Hyperlink Click="OpenMissedMissions_Click" Foreground="{DynamicResource Brush.LinkBlue}">
                             <Run Text="Open the "/><Run Text="{Binding MissedCount, Mode=OneWay}"/><Run Text=" missed missions in Mission select →"/>
                         </Hyperlink>
                     </TextBlock>

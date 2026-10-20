@@ -69,4 +69,37 @@
     <Color x:Key="Color.SectorPostInjection">#4D8BFF</Color>
     <Color x:Key="Color.SectorSqlAgent">#3DD6C8</Color>
 
+    <!-- Panel/card surfaces — translucent dark layers that read as "glass over the ambient glow"
+         in this theme. (Light theme reinterprets these as solid, bordered surfaces instead —
+         translucency doesn't carry the same depth cue over a light page.) -->
+    <Color x:Key="Color.PanelBgStrong">#D90D0F16</Color>
+    <Color x:Key="Color.PanelBgMedium">#B20A0C12</Color>
+    <Color x:Key="Color.PanelBgSubtle">#990D0F16</Color>
+    <Color x:Key="Color.CodeFlatBg">#05060A</Color>
+
+    <!-- Status-tint overlays (a severity color at low alpha, for active/selected chips and tiles) -->
+    <Color x:Key="Color.TintRedSubtle">#14FF2D55</Color>
+    <Color x:Key="Color.TintRedStrong">#26FF2D55</Color>
+    <Color x:Key="Color.TintAmberSubtle">#0FFFB454</Color>
+    <Color x:Key="Color.TintAmberStrong">#26FFB454</Color>
+    <Color x:Key="Color.TintGreenSubtle">#0F3DD68C</Color>
+    <Color x:Key="Color.TintGreenStrong">#263DD68C</Color>
+    <Color x:Key="Color.TintBlueSubtle">#142F6BFF</Color>
+    <Color x:Key="Color.TintBlueStrong">#1F2F6BFF</Color>
+    <Color x:Key="Color.TintNeutralSubtle">#1A9AA3B2</Color>
+
+    <!-- Accent-tinted borders (objective banner, safety pill, intel panel) -->
+    <Color x:Key="Color.BorderAmber">#5A4520</Color>
+    <Color x:Key="Color.BorderAmberDark">#3A2E1A</Color>
+    <Color x:Key="Color.BorderGreen">#1F3B2E</Color>
+    <Color x:Key="Color.BorderBlue">#1F3350</Color>
+    <Color x:Key="Color.BorderMuted">#2B313F</Color>
+
+    <!-- Training step bar -->
+    <Color x:Key="Color.StepPastBg">#2A2F44</Color>
+    <Color x:Key="Color.StepFutureBg">#141724</Color>
+
+    <Color x:Key="Color.TextSecondaryAlt">#AEB5C3</Color>
+    <Color x:Key="Color.LinkBlue">#6FB2FF</Color>
+
 </ResourceDictionary>

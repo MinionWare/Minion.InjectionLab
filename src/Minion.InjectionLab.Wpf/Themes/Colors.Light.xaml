@@ -65,4 +65,37 @@
     <!-- The "this text came from the form fields" marker is a fixed dashed outline (see
          UserInputBackgroundRenderer), not a themed brush, so there's nothing to define here. -->
 
+    <!-- Panel/card surfaces — the dark theme uses translucent "glass" layers over an ambient glow;
+         that doesn't carry the same depth cue over a light page, so these become solid, lightly
+         bordered surfaces instead. -->
+    <Color x:Key="Color.PanelBgStrong">#FFFFFFFF</Color>
+    <Color x:Key="Color.PanelBgMedium">#FFF7F8FA</Color>
+    <Color x:Key="Color.PanelBgSubtle">#FFF7F8FA</Color>
+    <Color x:Key="Color.CodeFlatBg">#FFFFFFFF</Color>
+
+    <!-- Status-tint overlays — pastel tints of the deepened light severity colors -->
+    <Color x:Key="Color.TintRedSubtle">#14D6364A</Color>
+    <Color x:Key="Color.TintRedStrong">#26D6364A</Color>
+    <Color x:Key="Color.TintAmberSubtle">#0FC97A14</Color>
+    <Color x:Key="Color.TintAmberStrong">#26C97A14</Color>
+    <Color x:Key="Color.TintGreenSubtle">#0F1F9D5C</Color>
+    <Color x:Key="Color.TintGreenStrong">#261F9D5C</Color>
+    <Color x:Key="Color.TintBlueSubtle">#141C6FE0</Color>
+    <Color x:Key="Color.TintBlueStrong">#1F1C6FE0</Color>
+    <Color x:Key="Color.TintNeutralSubtle">#1A525A68</Color>
+
+    <!-- Accent-tinted borders (objective banner, safety pill, intel panel) -->
+    <Color x:Key="Color.BorderAmber">#E0C08A</Color>
+    <Color x:Key="Color.BorderAmberDark">#C9A165</Color>
+    <Color x:Key="Color.BorderGreen">#BFE3CC</Color>
+    <Color x:Key="Color.BorderBlue">#C7DBFA</Color>
+    <Color x:Key="Color.BorderMuted">#D7DCE3</Color>
+
+    <!-- Training step bar -->
+    <Color x:Key="Color.StepPastBg">#E3E7ED</Color>
+    <Color x:Key="Color.StepFutureBg">#F4F6F9</Color>
+
+    <Color x:Key="Color.TextSecondaryAlt">#5B6472</Color>
+    <Color x:Key="Color.LinkBlue">#1C6FE0</Color>
+
 </ResourceDictionary>

@@ -362,7 +362,7 @@
     <Style x:Key="SectorCard" TargetType="ListBoxItem">
         <Setter Property="Padding" Value="13,11"/>
         <Setter Property="Margin" Value="0,0,0,6"/>
-        <Setter Property="Background" Value="#990D0F16"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.PanelBgSubtle}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
@@ -386,8 +386,8 @@
 
     <!-- Mission card (Mission select grid) — a Button so Click/Command both work, styled as a card -->
     <Style x:Key="MissionCard" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Background" Value="#D90D0F16"/>
-        <Setter Property="BorderBrush" Value="#1F2433"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.PanelBgStrong}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Template">
@@ -466,7 +466,7 @@
 
     <Style x:Key="Button.ObjectiveOutline" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="#5A4520"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderAmber}"/>
         <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
     </Style>
 
@@ -501,8 +501,8 @@
 
     <!-- Defense tile -->
     <Style x:Key="DefenseTile" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Background" Value="#B20A0C12"/>
-        <Setter Property="BorderBrush" Value="#2B313F"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.PanelBgMedium}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderMuted}"/>
         <Setter Property="BorderThickness" Value="1.5"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="Template">
@@ -599,7 +599,7 @@
 
     <!-- Secondary outline CTA (Welcome: MISSION SELECT) -->
     <Style x:Key="Button.OutlineBlue" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Background" Value="#142F6BFF"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.TintBlueSubtle}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonBlueAlt}"/>
         <Setter Property="BorderThickness" Value="1.5"/>
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
@@ -613,7 +613,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#1F2F6BFF"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.TintBlueStrong}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

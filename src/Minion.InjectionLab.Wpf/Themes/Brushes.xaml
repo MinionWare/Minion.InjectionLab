@@ -71,9 +71,36 @@
 
     <!-- Wordmark text gradient: red -> violet-pink -> blue -->
     <LinearGradientBrush x:Key="Brush.GradientWordmark" StartPoint="0,0.5" EndPoint="1,0.5">
-        <GradientStop Color="#FF3B5C" Offset="0"/>
-        <GradientStop Color="#C25CFF" Offset="0.5"/>
-        <GradientStop Color="#4D8BFF" Offset="1"/>
+        <GradientStop Color="{DynamicResource Color.SectorClassic}" Offset="0"/>
+        <GradientStop Color="{DynamicResource Color.NeonVioletLabel2}" Offset="0.5"/>
+        <GradientStop Color="{DynamicResource Color.NeonBlueLight}" Offset="1"/>
     </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="Brush.PanelBgStrong" Color="{DynamicResource Color.PanelBgStrong}"/>
+    <SolidColorBrush x:Key="Brush.PanelBgMedium" Color="{DynamicResource Color.PanelBgMedium}"/>
+    <SolidColorBrush x:Key="Brush.PanelBgSubtle" Color="{DynamicResource Color.PanelBgSubtle}"/>
+    <SolidColorBrush x:Key="Brush.CodeFlatBg" Color="{DynamicResource Color.CodeFlatBg}"/>
+
+    <SolidColorBrush x:Key="Brush.TintRedSubtle" Color="{DynamicResource Color.TintRedSubtle}"/>
+    <SolidColorBrush x:Key="Brush.TintRedStrong" Color="{DynamicResource Color.TintRedStrong}"/>
+    <SolidColorBrush x:Key="Brush.TintAmberSubtle" Color="{DynamicResource Color.TintAmberSubtle}"/>
+    <SolidColorBrush x:Key="Brush.TintAmberStrong" Color="{DynamicResource Color.TintAmberStrong}"/>
+    <SolidColorBrush x:Key="Brush.TintGreenSubtle" Color="{DynamicResource Color.TintGreenSubtle}"/>
+    <SolidColorBrush x:Key="Brush.TintGreenStrong" Color="{DynamicResource Color.TintGreenStrong}"/>
+    <SolidColorBrush x:Key="Brush.TintBlueSubtle" Color="{DynamicResource Color.TintBlueSubtle}"/>
+    <SolidColorBrush x:Key="Brush.TintBlueStrong" Color="{DynamicResource Color.TintBlueStrong}"/>
+    <SolidColorBrush x:Key="Brush.TintNeutralSubtle" Color="{DynamicResource Color.TintNeutralSubtle}"/>
+
+    <SolidColorBrush x:Key="Brush.BorderAmber" Color="{DynamicResource Color.BorderAmber}"/>
+    <SolidColorBrush x:Key="Brush.BorderAmberDark" Color="{DynamicResource Color.BorderAmberDark}"/>
+    <SolidColorBrush x:Key="Brush.BorderGreen" Color="{DynamicResource Color.BorderGreen}"/>
+    <SolidColorBrush x:Key="Brush.BorderBlue" Color="{DynamicResource Color.BorderBlue}"/>
+    <SolidColorBrush x:Key="Brush.BorderMuted" Color="{DynamicResource Color.BorderMuted}"/>
+
+    <SolidColorBrush x:Key="Brush.StepPastBg" Color="{DynamicResource Color.StepPastBg}"/>
+    <SolidColorBrush x:Key="Brush.StepFutureBg" Color="{DynamicResource Color.StepFutureBg}"/>
+
+    <SolidColorBrush x:Key="Brush.TextSecondaryAlt" Color="{DynamicResource Color.TextSecondaryAlt}"/>
+    <SolidColorBrush x:Key="Brush.LinkBlue" Color="{DynamicResource Color.LinkBlue}"/>
 
 </ResourceDictionary>
