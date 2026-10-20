@@ -224,22 +224,39 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
     </Style>
 
+    <!-- A full custom template — overriding Background/Foreground alone leaves the default
+         template's icon/check gutter in place (a fixed-width empty column reserved for an icon or
+         checkmark neither the menu bar nor the difficulty dropdown ever uses), and still bleeds
+         system chrome through its hover/arrow glyph colors. This app only ever needs two states:
+         a plain leaf item, and a top-level item with a dropdown (File/View/Help/Minionware) — no
+         icons, no checkable items, no nested flyout submenus — so the template only covers those. -->
     <Style TargetType="MenuItem">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Grid>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Border>
+                        <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade"
+                               IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border Background="{DynamicResource Brush.Bg1}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Bg2}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
-
-    <!-- The default MenuItem ControlTemplate hardcodes its icon/check gutter and hover highlight to
-         these SystemColors keys rather than templbinding to Background/Foreground — styling the
-         MenuItem itself (above) never reaches that strip. Overriding the keys themselves is the
-         standard fix: anything using the default template picks these up automatically. -->
-    <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="{DynamicResource Color.Bg1}"/>
-    <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="{DynamicResource Color.TextPrimary}"/>
-    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{DynamicResource Color.Bg1}"/>
-    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="{DynamicResource Color.Bg2}"/>
-    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource Color.Bg2}"/>
-    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{DynamicResource Color.TextPrimary}"/>
-    <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="{DynamicResource Color.TextMuted}"/>
 
     <!-- ===================== Buttons ===================== -->
 
