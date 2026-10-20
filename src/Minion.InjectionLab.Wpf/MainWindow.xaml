@@ -11,7 +11,6 @@
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
         Title="Minion.InjectionLab" Height="900" Width="1420" MinHeight="680" MinWidth="1150"
-        WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow" ResizeMode="CanResize"
         Icon="Resources/Branding/AppIcon.png">
     <Grid>
@@ -421,7 +420,7 @@
             <!-- Whole screen scrolls as one unit. VerticalScrollBarVisibility is forced to Visible
                  (not Auto) so the scrollbar track always renders, even when the content happens to
                  fit — Auto was apparently not reading as "this scrolls" at a glance. -->
-            <ScrollViewer VerticalScrollBarVisibility="Visible">
+            <ScrollViewer x:Name="MissionScrollViewer" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="26,18,26,24">
 
                 <!-- Title row -->

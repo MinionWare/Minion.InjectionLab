@@ -29,11 +29,20 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         // Height/Width in XAML are a preferred starting size, not a guarantee — on a screen whose
-        // work area is shorter (smaller display, taskbar, scaling), CenterScreen would otherwise
-        // center a too-tall window so its top sits above y=0, off-screen. Clamp to what actually fits.
+        // work area is shorter (smaller display, taskbar, scaling), the window needs to both
+        // shrink to fit AND be positioned so every edge lands inside the work area. XAML's
+        // WindowStartupLocation="CenterScreen" centers against the monitor's full bounds, not the
+        // work area — on a short display that silently puts the window's bottom behind the
+        // taskbar, invisible but logically still "on screen" as far as layout is concerned (this is
+        // what the Mission screen's reported "cut off at the bottom" turned out to be: the content
+        // fit its ScrollViewer with room to spare, but part of that ScrollViewer was rendering
+        // beneath the taskbar). Position manually against the work area instead.
         var workArea = SystemParameters.WorkArea;
         Height = Math.Min(Height, workArea.Height);
         Width = Math.Min(Width, workArea.Width);
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = workArea.Left + (workArea.Width - Width) / 2;
+        Top = workArea.Top + (workArea.Height - Height) / 2;
 
         var viewModel = new MainViewModel();
         DataContext = viewModel;
