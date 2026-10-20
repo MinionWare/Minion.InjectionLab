@@ -677,10 +677,10 @@
                             <StackPanel>
                                 <Grid Background="{DynamicResource Brush.Bg1}">
                                     <StackPanel Orientation="Horizontal" Margin="10,8">
-                                        <ToggleButton x:Name="SqlTabButton" Content="SQL" Style="{StaticResource Button.NavItem}" IsChecked="True" Margin="0,0,4,0"/>
-                                        <ToggleButton x:Name="CSharpTabButton" Content="C#" Style="{StaticResource Button.NavItem}" Margin="0,0,4,0"
+                                        <RadioButton x:Name="SqlTabButton" GroupName="MissionCodeLang" Content="SQL" Style="{StaticResource Button.NavItem}" IsChecked="True" Margin="0,0,4,0"/>
+                                        <RadioButton x:Name="CSharpTabButton" GroupName="MissionCodeLang" Content="C#" Style="{StaticResource Button.NavItem}" Margin="0,0,4,0"
                                                       Visibility="{Binding GeneratedCSharp, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
-                                        <ToggleButton x:Name="PowerShellTabButton" Content="POWERSHELL" Style="{StaticResource Button.NavItem}"
+                                        <RadioButton x:Name="PowerShellTabButton" GroupName="MissionCodeLang" Content="POWERSHELL" Style="{StaticResource Button.NavItem}"
                                                       Visibility="{Binding GeneratedPowerShell, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
                                     </StackPanel>
                                     <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"
@@ -697,7 +697,7 @@
                                     </TextBlock>
                                 </Border>
 
-                                <Grid MinHeight="220">
+                                <Grid MinHeight="130">
                                     <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
@@ -802,11 +802,11 @@
                                 CornerRadius="12" BorderThickness="1" BorderBrush="#1F3350" Background="#D90A101C">
                             <DockPanel>
                                 <StackPanel x:Name="IntelTabsPanel" DockPanel.Dock="Top" Orientation="Horizontal">
-                                    <ToggleButton x:Name="IntelTabHow" Content="HOW IT WORKS" Style="{StaticResource IntelTab}" IsChecked="True"/>
-                                    <ToggleButton x:Name="IntelTabWhy" Content="WHY THE FIX" Style="{StaticResource IntelTab}"/>
-                                    <ToggleButton x:Name="IntelTabName" Content="THE NAME" Style="{StaticResource IntelTab}"/>
-                                    <ToggleButton x:Name="IntelTabSources" Content="SOURCES" Style="{StaticResource IntelTab}"/>
-                                    <ToggleButton x:Name="IntelTabNormal" Content="NORMAL USER" Style="{StaticResource IntelTab}"/>
+                                    <RadioButton x:Name="IntelTabHow" GroupName="MissionIntelTab" Content="HOW IT WORKS" Style="{StaticResource IntelTab}" IsChecked="True"/>
+                                    <RadioButton x:Name="IntelTabWhy" GroupName="MissionIntelTab" Content="WHY THE FIX" Style="{StaticResource IntelTab}"/>
+                                    <RadioButton x:Name="IntelTabName" GroupName="MissionIntelTab" Content="THE NAME" Style="{StaticResource IntelTab}"/>
+                                    <RadioButton x:Name="IntelTabSources" GroupName="MissionIntelTab" Content="SOURCES" Style="{StaticResource IntelTab}"/>
+                                    <RadioButton x:Name="IntelTabNormal" GroupName="MissionIntelTab" Content="NORMAL USER" Style="{StaticResource IntelTab}"/>
                                 </StackPanel>
 
                                 <ScrollViewer Padding="20,18">
@@ -1249,10 +1249,10 @@
                             <Border CornerRadius="10" Background="{DynamicResource Brush.CodeBg}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="10,8">
-                                        <ToggleButton x:Name="QuizSqlTab" Content="SQL" Style="{StaticResource Button.NavItem}" IsChecked="True" Margin="0,0,4,0"/>
-                                        <ToggleButton x:Name="QuizCSharpTab" Content="C#" Style="{StaticResource Button.NavItem}" Margin="0,0,4,0"
+                                        <RadioButton x:Name="QuizSqlTab" GroupName="QuizCodeLang" Content="SQL" Style="{StaticResource Button.NavItem}" IsChecked="True" Margin="0,0,4,0"/>
+                                        <RadioButton x:Name="QuizCSharpTab" GroupName="QuizCodeLang" Content="C#" Style="{StaticResource Button.NavItem}" Margin="0,0,4,0"
                                                       Visibility="{Binding GeneratedCSharp, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
-                                        <ToggleButton x:Name="QuizPowerShellTab" Content="POWERSHELL" Style="{StaticResource Button.NavItem}"
+                                        <RadioButton x:Name="QuizPowerShellTab" GroupName="QuizCodeLang" Content="POWERSHELL" Style="{StaticResource Button.NavItem}"
                                                       Visibility="{Binding GeneratedPowerShell, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
                                     </StackPanel>
                                     <TextBlock Text="{Binding GeneratedSql}" FontFamily="{StaticResource Font.Code}" FontSize="12.5"
