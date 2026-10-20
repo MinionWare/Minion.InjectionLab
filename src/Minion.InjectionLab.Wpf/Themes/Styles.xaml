@@ -165,45 +165,6 @@
         </Setter>
     </Style>
 
-    <!-- ===================== Scrollbars =====================
-         The default chrome is thin and low-contrast against this theme's near-black backgrounds —
-         easy to miss entirely, which reads as "the page doesn't scroll." A visible, theme-colored
-         thumb makes it obvious there's more below the fold. -->
-
-    <Style x:Key="ScrollBar.Thumb" TargetType="Thumb">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Thumb">
-                    <Border Background="{DynamicResource Brush.BorderStrong}" CornerRadius="4" Margin="2"/>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style TargetType="ScrollBar">
-        <Setter Property="Width" Value="12"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ScrollBar">
-                    <Grid Background="{TemplateBinding Background}">
-                        <Track x:Name="PART_Track" IsDirectionReversed="True">
-                            <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Background="Transparent" BorderThickness="0"/>
-                            </Track.DecreaseRepeatButton>
-                            <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Background="Transparent" BorderThickness="0"/>
-                            </Track.IncreaseRepeatButton>
-                            <Track.Thumb>
-                                <Thumb Style="{StaticResource ScrollBar.Thumb}"/>
-                            </Track.Thumb>
-                        </Track>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <!-- ===================== Menus / context menus =====================
          Popup-hosted content (ContextMenu, and a Menu's own dropdown submenus) still inherits the
          Window's light TextElement.Foreground, but its background stays the system default
