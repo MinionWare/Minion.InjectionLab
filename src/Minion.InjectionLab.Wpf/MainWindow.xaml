@@ -518,11 +518,6 @@
 
                     <!-- Left: Threat Route -->
                     <StackPanel Grid.Column="0" Visibility="{Binding HasDecisionPaths, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Image Source="Resources/Branding/AppIcon.png" Width="120" Height="120" HorizontalAlignment="Center" Margin="0,0,0,10">
-                            <Image.Effect>
-                                <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="10" Opacity="0.5"/>
-                            </Image.Effect>
-                        </Image>
                         <TextBlock Text="THREAT ROUTE · LIVE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,10"/>
 
