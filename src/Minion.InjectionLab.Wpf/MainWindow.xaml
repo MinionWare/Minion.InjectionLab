@@ -417,25 +417,34 @@
 
         <!-- ================= MISSION (2c/2d) ================= -->
         <Grid Grid.Row="3" Visibility="{Binding IsMission, Converter={StaticResource BoolToVisibilityConverter}}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="26,18,26,24" DataContext="{Binding SelectedAttack}">
+        <Grid DataContext="{Binding SelectedAttack}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-                <!-- Title row -->
-                <Grid Margin="0,0,0,14">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
-                                   Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center" Margin="0,0,14,0"/>
-                        <TextBlock Text="{Binding Scenario.Title}" FontFamily="{StaticResource Font.Hud}" FontSize="24" FontWeight="Bold"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <ToggleButton Content="◎ CHALLENGE" Style="{StaticResource Button.TitleToggle.Challenge}"
-                                      IsChecked="{Binding IsChallengeMode}" Margin="0,0,8,0"/>
-                        <ToggleButton Content="▤ INTEL" Style="{StaticResource Button.TitleToggle.Intel}"
-                                      IsChecked="{Binding IsIntelOpen}" Margin="0,0,14,0"/>
-                        <Button Content="↺ RESET" Style="{StaticResource Button.Ghost}" Command="{Binding ResetScenarioCommand}"/>
-                    </StackPanel>
-                </Grid>
+            <!-- Title row — pinned; always reachable regardless of how tall the scrollable body gets -->
+            <Grid Grid.Row="0" Margin="26,18,26,14">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                    <TextBlock Text="{Binding Scenario.Title}" FontFamily="{StaticResource Font.Hud}" FontSize="24" FontWeight="Bold"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <ToggleButton Content="◎ CHALLENGE" Style="{StaticResource Button.TitleToggle.Challenge}"
+                                  IsChecked="{Binding IsChallengeMode}" Margin="0,0,8,0"/>
+                    <ToggleButton Content="▤ INTEL" Style="{StaticResource Button.TitleToggle.Intel}"
+                                  IsChecked="{Binding IsIntelOpen}" Margin="0,0,14,0"/>
+                    <Button Content="↺ RESET" Style="{StaticResource Button.Ghost}" Command="{Binding ResetScenarioCommand}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Scrollable body: objective banner + the 3-column grid. Defense tiles stay pinned
+                 below this regardless of how tall the code panel/hints/threat route get. -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="26,0,26,0">
+            <StackPanel>
 
                 <!-- Objective banner (Challenge mode) -->
                 <Border Margin="0,0,0,14" CornerRadius="14" Padding="20,18" BorderThickness="1" BorderBrush="#3A2E1A"
@@ -860,9 +869,11 @@
                         </Border>
                     </Grid>
                 </Grid>
+            </StackPanel>
+            </ScrollViewer>
 
-                <!-- Defense tiles -->
-                <UniformGrid Margin="0,16,0,0" Columns="2" Rows="1">
+            <!-- Defense tiles — pinned; always reachable without scrolling -->
+            <UniformGrid Grid.Row="2" Margin="26,16,26,20" Columns="2" Rows="1">
                     <UniformGrid.Style>
                         <Style TargetType="UniformGrid">
                             <Style.Triggers>
@@ -956,10 +967,8 @@
                                        Visibility="{Binding IsFix1Selected, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         </Grid>
                     </Button>
-                </UniformGrid>
-
-            </StackPanel>
-            </ScrollViewer>
+            </UniformGrid>
+        </Grid>
         </Grid>
 
         <!-- ================= TRAINING (2e, replaces the modal TutorialWindow) ================= -->
