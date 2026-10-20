@@ -165,6 +165,53 @@
         </Setter>
     </Style>
 
+    <!-- ===================== Scrollbars =====================
+         The system default renders bright/accent-colored against this theme's near-black
+         backgrounds. A muted, low-contrast thumb reads as "there, if you need it" instead of
+         shouting. Track.Orientation is explicitly bound this time — left unbound, Track silently
+         defaults to Horizontal even inside a vertical scrollbar, which broke dragging/paging the
+         first time this was tried. -->
+
+    <Style x:Key="ScrollBar.Thumb" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{DynamicResource Brush.Border}" CornerRadius="4" Margin="3"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Background="Transparent" BorderThickness="0"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Background="Transparent" BorderThickness="0"/>
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ScrollBar.Thumb}" MinHeight="24" MinWidth="24"/>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto"/>
+                <Setter Property="Height" Value="14"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ===================== Menus / context menus =====================
          Popup-hosted content (ContextMenu, and a Menu's own dropdown submenus) still inherits the
          Window's light TextElement.Foreground, but its background stays the system default
