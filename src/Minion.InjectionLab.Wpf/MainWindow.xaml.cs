@@ -52,6 +52,14 @@ public partial class MainWindow : Window
         PowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
         SqlEditor.TextArea.TextView.LineTransformers.Add(new DeadCodeAfterCommentColorizer());
 
+        // The highlighting colors ThemeService.Apply patches in place aren't DynamicResources, so
+        // nothing tells these editors to repaint on their own — force it explicitly.
+        ThemeService.Changed += _ =>
+        {
+            foreach (var editor in new[] { SqlEditor, CSharpEditor, PowerShellEditor, QuizSqlEditor, QuizCSharpEditor, QuizPowerShellEditor })
+                editor.TextArea.TextView.Redraw();
+        };
+
         // AvalonEdit's TextEditor has its own internal ScrollViewer and swallows every mouse-wheel
         // tick for it, even when the code inside doesn't need to scroll — hovering the mouse over
         // the code panel (an easy place to land while trying to scroll the page) silently blocks

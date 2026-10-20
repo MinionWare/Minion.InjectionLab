@@ -41,10 +41,13 @@
     <Color x:Key="Color.UserInputOutline">#C25CB2</Color>
 
     <!-- Neon brand ramps, unchanged from the dark palette; these are accent/category colors,
-         not surface colors, so they don't need a light-mode variant for this pass. -->
+         not surface colors, so they don't need a light-mode variant for this pass.
+         NeonRedLight is the one exception — it doubles as the payload-input field's actual text
+         color, and the dark theme's pale pink is illegible once that field's background goes
+         pale pink too (this theme's version of "on a tinted surface"). -->
     <Color x:Key="Color.NeonRed">#FF2D55</Color>
     <Color x:Key="Color.NeonRedLabel">#D6364A</Color>
-    <Color x:Key="Color.NeonRedLight">#FFE1E8</Color>
+    <Color x:Key="Color.NeonRedLight">#C21E54</Color>
     <Color x:Key="Color.NeonViolet">#8B5CF6</Color>
     <Color x:Key="Color.NeonVioletAlt">#7C4DFF</Color>
     <Color x:Key="Color.NeonVioletLabel">#7C4DFF</Color>

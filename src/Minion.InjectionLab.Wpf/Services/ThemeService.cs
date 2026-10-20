@@ -14,6 +14,10 @@ public static class ThemeService
 {
     public static AppTheme Current { get; private set; } = AppTheme.Dark;
 
+    /// <summary>Fires after a theme switch fully applies — used to force a redraw of anything
+    /// that doesn't react to the DynamicResource swap on its own (the AvalonEdit editors).</summary>
+    public static event Action<AppTheme>? Changed;
+
     public static void Apply(AppTheme theme)
     {
         var dictionaries = Application.Current.Resources.MergedDictionaries;
@@ -31,7 +35,12 @@ public static class ThemeService
         // already in place, so its brushes resolve against it fresh.
         ReplaceDictionary(dictionaries, uriSubstring: "Brushes.xaml", newUri: "Themes/Brushes.xaml");
 
+        // AvalonEdit's syntax-highlighting colors aren't DynamicResources — they don't react to
+        // the dictionary swap above on their own and need patching explicitly.
+        CodeHighlightingLoader.ApplyTheme(theme);
+
         Current = theme;
+        Changed?.Invoke(theme);
     }
 
     private static void ReplaceDictionary(System.Collections.ObjectModel.Collection<ResourceDictionary> dictionaries, string uriSubstring, string newUri)
