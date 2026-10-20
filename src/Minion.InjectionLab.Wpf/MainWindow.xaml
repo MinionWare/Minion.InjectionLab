@@ -865,9 +865,10 @@
                 </Grid>
 
                 <!-- Defense tiles -->
-                <UniformGrid Margin="0,10,0,0" Columns="2">
+                <UniformGrid Margin="0,10,0,0">
                     <UniformGrid.Style>
                         <Style TargetType="UniformGrid">
+                            <Setter Property="Columns" Value="2"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasMultipleFixes}" Value="True">
                                     <Setter Property="Columns" Value="3"/>

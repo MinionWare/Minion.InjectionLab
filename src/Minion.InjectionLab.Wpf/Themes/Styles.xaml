@@ -229,6 +229,18 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
     </Style>
 
+    <!-- The default MenuItem ControlTemplate hardcodes its icon/check gutter and hover highlight to
+         these SystemColors keys rather than templbinding to Background/Foreground — styling the
+         MenuItem itself (above) never reaches that strip. Overriding the keys themselves is the
+         standard fix: anything using the default template picks these up automatically. -->
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="{DynamicResource Color.Bg1}"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="{DynamicResource Color.TextPrimary}"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{DynamicResource Color.Bg1}"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="{DynamicResource Color.Bg2}"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource Color.Bg2}"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{DynamicResource Color.TextPrimary}"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="{DynamicResource Color.TextMuted}"/>
+
     <!-- ===================== Buttons ===================== -->
 
     <!-- Default (secondary/ghost) button — used for everything unless overridden -->
