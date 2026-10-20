@@ -585,6 +585,7 @@
                                                         <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderInput}"/>
                                                         <Setter Property="BorderThickness" Value="1"/>
                                                         <Setter Property="Foreground" Value="{DynamicResource Brush.TextBody}"/>
+                                                        <Setter Property="CaretBrush" Value="{DynamicResource Brush.TextPrimary}"/>
                                                         <Setter Property="FontSize" Value="14"/>
                                                         <Setter Property="Padding" Value="11,9"/>
                                                         <Setter Property="Template">
@@ -879,18 +880,24 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsVulnerableSelected}" Value="True">
                                         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Critical}"/>
-                                        <Setter Property="Background" Value="#17FF2D55"/>
+                                        <Setter Property="BorderThickness" Value="2.5"/>
+                                        <Setter Property="Background" Value="#26FF2D55"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
-                        <StackPanel>
-                            <TextBlock Text="VULNERABLE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
-                                       Foreground="{DynamicResource Brush.Critical}" Margin="0,0,0,8"/>
-                            <TextBlock Text="No fix applied" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold"/>
-                            <TextBlock Text="String concatenation" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
-                                       Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0"/>
-                        </StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="VULNERABLE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold"
+                                           Foreground="{DynamicResource Brush.Critical}" Margin="0,0,0,8"/>
+                                <TextBlock Text="No fix applied" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold"/>
+                                <TextBlock Text="String concatenation" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                           Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="✓ ACTIVE" HorizontalAlignment="Right" VerticalAlignment="Top" FontFamily="{StaticResource Font.Code}"
+                                       FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Critical}"
+                                       Visibility="{Binding IsVulnerableSelected, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
 
                     <Button Margin="0,0,14,0" Command="{Binding SetFixIndexCommand}" CommandParameter="0">
@@ -899,20 +906,26 @@
                                 <Setter Property="BorderBrush" Value="{Binding Fixes[0].Grade, Converter={StaticResource GradeToBrushConverter}}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsFix0Selected}" Value="True">
-                                        <Setter Property="Background" Value="#17FFB454"/>
+                                        <Setter Property="BorderThickness" Value="2.5"/>
+                                        <Setter Property="Background" Value="#26FFB454"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
-                        <StackPanel>
-                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold" Margin="0,0,0,8"
-                                       Foreground="{Binding Fixes[0].Grade, Converter={StaticResource GradeToBrushConverter}}">
-                                <Run Text="{Binding Fixes[0].Grade, Mode=OneTime}"/>
-                            </TextBlock>
-                            <TextBlock Text="{Binding Fixes[0].Label}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
-                            <TextBlock Text="{Binding Fixes[0].Gap}" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
-                                       Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold" Margin="0,0,0,8"
+                                           Foreground="{Binding Fixes[0].Grade, Converter={StaticResource GradeToBrushConverter}}">
+                                    <Run Text="{Binding Fixes[0].Grade, Mode=OneTime}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Fixes[0].Label}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding Fixes[0].Gap}" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                           Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBlock Text="✓ ACTIVE" HorizontalAlignment="Right" VerticalAlignment="Top" FontFamily="{StaticResource Font.Code}"
+                                       FontSize="10" FontWeight="Bold" Foreground="{Binding Fixes[0].Grade, Converter={StaticResource GradeToBrushConverter}}"
+                                       Visibility="{Binding IsFix0Selected, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
 
                     <Button Visibility="{Binding HasMultipleFixes, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -922,20 +935,26 @@
                                 <Setter Property="BorderBrush" Value="{Binding Fixes[1].Grade, Converter={StaticResource GradeToBrushConverter}}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsFix1Selected}" Value="True">
-                                        <Setter Property="Background" Value="#173DD68C"/>
+                                        <Setter Property="BorderThickness" Value="2.5"/>
+                                        <Setter Property="Background" Value="#263DD68C"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
-                        <StackPanel>
-                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold" Margin="0,0,0,8"
-                                       Foreground="{Binding Fixes[1].Grade, Converter={StaticResource GradeToBrushConverter}}">
-                                <Run Text="{Binding Fixes[1].Grade, Mode=OneTime}"/>
-                            </TextBlock>
-                            <TextBlock Text="{Binding Fixes[1].Label}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
-                            <TextBlock Text="{Binding Fixes[1].Gap}" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
-                                       Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="Bold" Margin="0,0,0,8"
+                                           Foreground="{Binding Fixes[1].Grade, Converter={StaticResource GradeToBrushConverter}}">
+                                    <Run Text="{Binding Fixes[1].Grade, Mode=OneTime}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Fixes[1].Label}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding Fixes[1].Gap}" FontFamily="{StaticResource Font.Body}" FontSize="11.5"
+                                           Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBlock Text="✓ ACTIVE" HorizontalAlignment="Right" VerticalAlignment="Top" FontFamily="{StaticResource Font.Code}"
+                                       FontSize="10" FontWeight="Bold" Foreground="{Binding Fixes[1].Grade, Converter={StaticResource GradeToBrushConverter}}"
+                                       Visibility="{Binding IsFix1Selected, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
                 </UniformGrid>
 
@@ -1049,6 +1068,7 @@
                                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
                                             <Setter Property="BorderThickness" Value="1.5"/>
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.NeonRedLight}"/>
+                                            <Setter Property="CaretBrush" Value="{DynamicResource Brush.NeonRedLight}"/>
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="TextBox">
@@ -1225,6 +1245,7 @@
                                                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.NeonRed}"/>
                                                             <Setter Property="BorderThickness" Value="1.5"/>
                                                             <Setter Property="Foreground" Value="{DynamicResource Brush.NeonRedLight}"/>
+                                                            <Setter Property="CaretBrush" Value="{DynamicResource Brush.NeonRedLight}"/>
                                                             <Setter Property="Template">
                                                                 <Setter.Value>
                                                                     <ControlTemplate TargetType="TextBox">
