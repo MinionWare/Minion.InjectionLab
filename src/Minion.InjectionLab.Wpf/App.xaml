@@ -19,8 +19,6 @@
             <conv:NotEmptyToVisibilityConverter x:Key="NotEmptyToVisibilityConverter"/>
             <conv:SeverityToIconConverter x:Key="SeverityToIconConverter"/>
             <conv:FixTabIndexConverter x:Key="FixTabIndexConverter"/>
-            <conv:PathKindToBrushConverter x:Key="PathKindToBrushConverter"/>
-            <conv:PathActiveConverter x:Key="PathActiveConverter"/>
             <conv:FixGradeToTabStyleConverter x:Key="FixGradeToTabStyleConverter"/>
             <conv:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter"/>
             <conv:CategoryDisplayConverter x:Key="CategoryDisplayConverter"/>

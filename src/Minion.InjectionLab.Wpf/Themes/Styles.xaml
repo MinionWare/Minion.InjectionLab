@@ -487,16 +487,6 @@
         </Setter>
     </Style>
 
-    <!-- Threat-route row -->
-    <Style x:Key="ThreatRouteRow" TargetType="Border">
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="12,9"/>
-        <Setter Property="Margin" Value="0,0,0,7"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="#2B313F"/>
-        <Setter Property="Opacity" Value="0.42"/>
-    </Style>
-
     <!-- ===================== Top bar / Neon HUD chrome ===================== -->
 
     <!-- MISSIONS / TRAINING / QUIZ nav items — active state is toggled via IsChecked -->

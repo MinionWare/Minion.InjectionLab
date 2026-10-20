@@ -6,7 +6,6 @@
         xmlns:local="clr-namespace:Minion.InjectionLab.Wpf"
         xmlns:vm="clr-namespace:Minion.InjectionLab.Wpf.ViewModels"
         xmlns:behaviors="clr-namespace:Minion.InjectionLab.Wpf.Behaviors"
-        xmlns:core="clr-namespace:Minion.InjectionLab.Core.Models;assembly=Minion.InjectionLab.Core"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
@@ -506,62 +505,16 @@
                     </Grid>
                 </Border>
 
-                <!-- Main grid: Threat Route | Form + Code | Verdict/Intel -->
+                <!-- Main grid: Form + Code | Verdict/Intel -->
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="230"/>
-                        <ColumnDefinition Width="20"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="20"/>
                         <ColumnDefinition Width="290"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left: Threat Route -->
-                    <StackPanel Grid.Column="0" Visibility="{Binding HasDecisionPaths, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="THREAT ROUTE · LIVE" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,10"/>
-
-                        <ItemsControl ItemsSource="{Binding Scenario.DecisionPaths}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type core:DecisionPathDef}">
-                                    <Border>
-                                        <Border.Style>
-                                            <Style TargetType="Border" BasedOn="{StaticResource ThreatRouteRow}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Value="True">
-                                                        <DataTrigger.Binding>
-                                                            <MultiBinding Converter="{StaticResource PathActiveConverter}">
-                                                                <Binding Path="Key"/>
-                                                                <Binding Path="DataContext.ActivePathKey" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
-                                                            </MultiBinding>
-                                                        </DataTrigger.Binding>
-                                                        <Setter Property="Opacity" Value="1"/>
-                                                        <Setter Property="BorderBrush" Value="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
-                                                        <Setter Property="Background" Value="{DynamicResource Brush.Bg1}"/>
-                                                        <Setter Property="Effect">
-                                                            <Setter.Value>
-                                                                <DropShadowEffect ShadowDepth="0" BlurRadius="22" Opacity="0.35"
-                                                                                  Color="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center"
-                                                     Fill="{Binding Kind, Converter={StaticResource PathKindToBrushConverter}}"/>
-                                            <TextBlock Text="{Binding Label}" FontFamily="{StaticResource Font.Hud}" FontSize="13.5" FontWeight="SemiBold"
-                                                       TextWrapping="Wrap" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-
                     <!-- Center: fields, chips, code panel -->
-                    <StackPanel Grid.Column="2" MaxWidth="720" HorizontalAlignment="Left">
+                    <StackPanel Grid.Column="0" MaxWidth="720" HorizontalAlignment="Left">
                         <TextBlock Text="{Binding Scenario.Premise}" FontFamily="{StaticResource Font.Body}" FontSize="13"
                                    Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
@@ -736,7 +689,7 @@
                     </StackPanel>
 
                     <!-- Right: Verdict or Intel -->
-                    <Grid Grid.Column="4">
+                    <Grid Grid.Column="2">
                         <!-- Verdict column -->
                         <StackPanel Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                     behaviors:ImpactBehavior.Trigger="{Binding ResultVersion}"

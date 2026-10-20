@@ -77,8 +77,6 @@ public partial class AttackViewModel : ObservableObject
 
     public bool HasCodeSamples => Scenario.BuildVulnerableCSharp != null || Scenario.BuildVulnerablePowerShell != null;
 
-    public bool HasDecisionPaths => Scenario.DecisionPaths is { Count: > 0 };
-
     /// <summary>Live, pre-submit: which DecisionPathDef.Key the current (unsubmitted) input would take.</summary>
     [ObservableProperty]
     private string? activePathKey;
