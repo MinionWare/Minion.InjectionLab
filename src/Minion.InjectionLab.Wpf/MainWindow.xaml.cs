@@ -60,6 +60,27 @@ public partial class MainWindow : Window
         CSharpEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
         PowerShellEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
 
+        QuizSqlEditor.SyntaxHighlighting = CodeHighlightingLoader.Sql;
+        QuizCSharpEditor.SyntaxHighlighting = CodeHighlightingLoader.CSharp;
+        QuizPowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
+        QuizSqlEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+        QuizCSharpEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+        QuizPowerShellEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+
+        viewModel.Quiz.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(QuizViewModel.GeneratedSql) or nameof(QuizViewModel.GeneratedCSharp)
+                or nameof(QuizViewModel.GeneratedPowerShell) or null)
+            {
+                SetEditor(QuizSqlEditor, viewModel.Quiz.GeneratedSql, null);
+                SetEditor(QuizCSharpEditor, viewModel.Quiz.GeneratedCSharp, null);
+                SetEditor(QuizPowerShellEditor, viewModel.Quiz.GeneratedPowerShell, null);
+            }
+        };
+        SetEditor(QuizSqlEditor, viewModel.Quiz.GeneratedSql, null);
+        SetEditor(QuizCSharpEditor, viewModel.Quiz.GeneratedCSharp, null);
+        SetEditor(QuizPowerShellEditor, viewModel.Quiz.GeneratedPowerShell, null);
+
         // The three code editors are driven explicitly from code-behind rather than XAML data
         // binding to a custom attached property — AvalonEdit's TextEditor has no bindable Text
         // dependency property, and binding through a custom one proved unreliable (blank/stale
