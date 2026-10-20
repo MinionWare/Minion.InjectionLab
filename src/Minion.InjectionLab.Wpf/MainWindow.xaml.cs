@@ -43,6 +43,14 @@ public partial class MainWindow : Window
         PowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
         SqlEditor.TextArea.TextView.LineTransformers.Add(new DeadCodeAfterCommentColorizer());
 
+        // AvalonEdit's TextEditor has its own internal ScrollViewer and swallows every mouse-wheel
+        // tick for it, even when the code inside doesn't need to scroll — hovering the mouse over
+        // the code panel (an easy place to land while trying to scroll the page) silently blocks
+        // the outer page scroll entirely. Intercept and forward it to the real page ScrollViewer.
+        SqlEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+        CSharpEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+        PowerShellEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+
         // The three code editors are driven explicitly from code-behind rather than XAML data
         // binding to a custom attached property — AvalonEdit's TextEditor has no bindable Text
         // dependency property, and binding through a custom one proved unreliable (blank/stale
@@ -70,6 +78,27 @@ public partial class MainWindow : Window
     }
 
     private void OpenMissedMissions_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).BrowseCatalogCommand.Execute(null);
+
+    private static void ForwardMouseWheelToPageScroll(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        if (e.Handled) return;
+
+        var scrollViewer = FindAncestorScrollViewer((DependencyObject)sender);
+        if (scrollViewer == null) return;
+
+        e.Handled = true;
+        scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta);
+    }
+
+    private static ScrollViewer? FindAncestorScrollViewer(DependencyObject? element)
+    {
+        while (element != null)
+        {
+            element = VisualTreeHelper.GetParent(element);
+            if (element is ScrollViewer scrollViewer) return scrollViewer;
+        }
+        return null;
+    }
 
     private void DifficultyChip_Click(object sender, RoutedEventArgs e)
     {
