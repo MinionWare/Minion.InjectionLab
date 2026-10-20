@@ -865,7 +865,7 @@
                 </Grid>
 
                 <!-- Defense tiles -->
-                <UniformGrid Margin="0,10,0,0" Columns="2" Rows="1">
+                <UniformGrid Margin="0,10,0,0" Columns="2">
                     <UniformGrid.Style>
                         <Style TargetType="UniformGrid">
                             <Style.Triggers>
