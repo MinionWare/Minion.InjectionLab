@@ -21,10 +21,24 @@ public static class ThemeService
             ? "Themes/Colors.Neon.xaml"
             : "Themes/Colors.Light.xaml";
 
-        var existing = dictionaries.FirstOrDefault(d =>
-            d.Source != null && d.Source.OriginalString.Contains("Colors."));
+        ReplaceDictionary(dictionaries, uriSubstring: "Colors.", newUri: colorDictUri);
 
-        var replacement = new ResourceDictionary { Source = new Uri(colorDictUri, UriKind.Relative) };
+        // Brushes.xaml wraps each color in a SolidColorBrush via {DynamicResource Color.X} —
+        // DynamicResource used on a resource's own property (rather than directly on a live UI
+        // element) doesn't reliably re-resolve when the dictionary it points at changes; the brush
+        // objects everything actually binds to were staying frozen at their original colors. The
+        // fix is to force Brushes.xaml itself to re-parse now that the new Colors dictionary is
+        // already in place, so its brushes resolve against it fresh.
+        ReplaceDictionary(dictionaries, uriSubstring: "Brushes.xaml", newUri: "Themes/Brushes.xaml");
+
+        Current = theme;
+    }
+
+    private static void ReplaceDictionary(System.Collections.ObjectModel.Collection<ResourceDictionary> dictionaries, string uriSubstring, string newUri)
+    {
+        var existing = dictionaries.FirstOrDefault(d =>
+            d.Source != null && d.Source.OriginalString.Contains(uriSubstring));
+        var replacement = new ResourceDictionary { Source = new Uri(newUri, UriKind.Relative) };
 
         if (existing != null)
         {
@@ -36,8 +50,6 @@ public static class ThemeService
         {
             dictionaries.Insert(0, replacement);
         }
-
-        Current = theme;
     }
 
     public static void Toggle() => Apply(Current == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark);
