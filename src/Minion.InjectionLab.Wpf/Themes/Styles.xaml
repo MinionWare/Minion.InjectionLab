@@ -420,7 +420,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="18,12">
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="16,9">
                         <ContentPresenter/>
                     </Border>
                 </ControlTemplate>

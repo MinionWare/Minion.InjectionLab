@@ -421,10 +421,10 @@
                  (not Auto) so the scrollbar track always renders, even when the content happens to
                  fit — Auto was apparently not reading as "this scrolls" at a glance. -->
             <ScrollViewer x:Name="MissionScrollViewer" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="26,18,26,24">
+            <StackPanel Margin="26,10,26,10">
 
                 <!-- Title row -->
-                <Grid Margin="0,0,0,14">
+                <Grid Margin="0,0,0,8">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center" Margin="0,0,14,0"/>
@@ -518,7 +518,7 @@
 
                     <!-- Left: Threat Route -->
                     <StackPanel Grid.Column="0" Visibility="{Binding HasDecisionPaths, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Image Source="Resources/Branding/AppIcon.png" Width="170" Height="170" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Image Source="Resources/Branding/AppIcon.png" Width="120" Height="120" HorizontalAlignment="Center" Margin="0,0,0,10">
                             <Image.Effect>
                                 <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="10" Opacity="0.5"/>
                             </Image.Effect>
@@ -701,7 +701,7 @@
                                     </TextBlock>
                                 </Border>
 
-                                <Grid MinHeight="130">
+                                <Grid MinHeight="90">
                                     <avalonEdit:TextEditor x:Name="SqlEditor" IsReadOnly="True" ShowLineNumbers="False" WordWrap="True"
                                                            FontFamily="{StaticResource Font.Code}" FontSize="12.5"
                                                            Background="Transparent" Foreground="{DynamicResource Brush.CodeText}" Padding="16,12"
@@ -865,7 +865,7 @@
                 </Grid>
 
                 <!-- Defense tiles -->
-                <UniformGrid Margin="0,16,0,0" Columns="2" Rows="1">
+                <UniformGrid Margin="0,10,0,0" Columns="2" Rows="1">
                     <UniformGrid.Style>
                         <Style TargetType="UniformGrid">
                             <Style.Triggers>
