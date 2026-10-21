@@ -12,3 +12,6 @@ obj/
 ## OS
 Thumbs.db
 .DS_Store
+
+## Bundled HelpServer (built locally via dotnet publish, not committed - see HelpServer/ comment in the .csproj)
+src/Minion.InjectionLab.Wpf/HelpServer/HelpServer.exe

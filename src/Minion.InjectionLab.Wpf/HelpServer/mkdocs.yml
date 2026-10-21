@@ -1,0 +1,61 @@
+# Navigation/menu structure for Minion.InjectionLab's help content.
+#
+# This is written in mkdocs' own nav format on purpose — it's both a real,
+# runnable mkdocs site (`pip install mkdocs && mkdocs serve` from this
+# folder, after adding a docs_dir pointing at these files) AND a format
+# HelpServer (D:\GitHub\HelpServer) reads natively as a site's nav — no
+# separate sitemap.yml needed. This file doesn't reference article IDs
+# directly; each page's own `support_id:` YAML frontmatter is the ID
+# HelpServer's /__help/open API and the app's "?" icons target (see
+# help/README.md).
+
+site_name: Minion.InjectionLab Help
+site_description: Help, feature tour, and attack catalog reference for Minion.InjectionLab
+
+nav:
+  - Welcome: index.md
+  - Getting Started:
+      - First Launch: getting-started/welcome.md
+      - The Opening Tutorial: getting-started/tutorial-wizard.md
+      - Difficulty Levels: getting-started/difficulty-levels.md
+  - Features:
+      - Feature List: features/overview.md
+  - Attack Catalog:
+      - Overview: catalog/overview.md
+      - Classic / In-Band:
+          - Tautology / Login Bypass: catalog/tautology-login-bypass.md
+          - UNION-Based Injection: catalog/union-based-injection.md
+          - Stacked Queries: catalog/stacked-queries.md
+          - Numeric Injection: catalog/numeric-injection.md
+          - LIKE Wildcard Abuse: catalog/like-wildcard-abuse.md
+          - Comment Truncation: catalog/comment-truncation.md
+          - Error-Based Injection: catalog/error-based-injection.md
+          - INSERT/UPDATE Injection: catalog/insert-update-injection.md
+          - Full-Text Search Injection: catalog/fulltext-contains-injection.md
+          - JSON Path Injection: catalog/json-path-injection.md
+      - Blind / Inferential:
+          - Boolean-Blind Injection: catalog/boolean-blind-injection.md
+          - Time-Based Blind Injection: catalog/time-based-blind-injection.md
+          - Error-Based Blind Injection: catalog/error-based-blind-injection.md
+      - Where Parameters Don't Help:
+          - Identifier Injection (ORDER BY): catalog/order-by-identifier-injection.md
+          - Dynamic SQL in a Stored Procedure: catalog/dynamic-sql-stored-procedure.md
+          - QUOTENAME's 128-Character Limit: catalog/quotename-limit.md
+          - EXECUTE AS Escalation: catalog/execute-as-escalation.md
+          - XQuery Injection: catalog/xquery-injection.md
+      - Delivery & Obfuscation:
+          - Second-Order Injection: catalog/second-order-injection.md
+          - Hex-Encoded Literal Bypass: catalog/hex-encoded-bypass.md
+          - Comment/Whitespace Obfuscation: catalog/comment-whitespace-obfuscation.md
+          - Truncation Attack: catalog/truncation-attack.md
+      - Out-of-Band:
+          - Out-of-Band Exfiltration (DNS): catalog/out-of-band-exfiltration.md
+      - Post-Injection Impact:
+          - xp_cmdshell Remote Code Execution: catalog/xp-cmdshell-rce.md
+          - Linked-Server Pivoting: catalog/linked-server-pivot.md
+      - SQL Server Agent & Jobs:
+          - CmdExec Job Step Escalation: catalog/sql-agent-cmdexec-escalation.md
+  - Challenge Mode: challenge-mode.md
+  - Quiz Mode: quiz-mode.md
+  - About:
+      - Minionware: about/minionware.md

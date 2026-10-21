@@ -33,6 +33,18 @@
     <Resource Include="Resources\Fonts\JetBrainsMono-Italic.ttf" />
   </ItemGroup>
 
+  <!-- Bundled HelpServer: a self-contained copy of D:\GitHub\HelpServer's own release build, plus
+       a copy of this app's help/ content (that folder stays the source of truth — update both,
+       or re-run the copy, when help content changes) and a config scoped to just this app's docs
+       (not the shared team instance's sites/data). The app launches this exe itself on demand;
+       see HelpClient. HelpServer\HelpServer.exe is gitignored (124MB) — publish it locally before
+       building for distribution: from D:\GitHub\HelpServer\HelpServer, run
+       `dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true`
+       and copy the resulting HelpServer.exe here. -->
+  <ItemGroup>
+    <Content Include="HelpServer\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>

@@ -9,12 +9,15 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Navigation;
+using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit;
 using Minion.InjectionLab.Wpf.Behaviors;
 using Minion.InjectionLab.Wpf.Converters;
 using Minion.InjectionLab.Wpf.Services;
 using Minion.InjectionLab.Wpf.ViewModels;
 using Minion.Licensing.Updates;
+using HelpClient = HelpServer.Client.HelpClient;
+using HelpClientOptions = HelpServer.Client.HelpClientOptions;
 
 namespace Minion.InjectionLab.Wpf;
 
@@ -23,6 +26,16 @@ public partial class MainWindow : Window
     private AttackViewModel? _trackedAttack;
     private readonly UpdateCheckService _updateCheckService = new("Minion.InjectionLab");
     private UpdateManifest? _pendingUpdateManifest;
+
+    // The bundled HelpServer (Services/HelpClient.cs, Services/Help.cs, and the HelpServer/ folder
+    // copied alongside this app's own exe — see the .csproj) — same deploy-time-config reasoning
+    // as _updateCheckService's manifest URL: this port never varies per install, so it's a const,
+    // not a settings file.
+    private readonly HelpClient _helpClient = new(new HelpClientOptions
+    {
+        BaseUrl = "http://localhost:5186",
+        ExePath = Path.Combine(AppContext.BaseDirectory, "HelpServer", "HelpServer.exe")
+    });
 
     public MainWindow()
     {
@@ -256,21 +269,23 @@ public partial class MainWindow : Window
     private void MinionwareLogo_Click(object sender, RoutedEventArgs e)
         => Process.Start(new ProcessStartInfo("https://minionware.net") { UseShellExecute = true });
 
-    // Interim stand-in for the real help viewer (a Blazor app, not yet wired to per-topic help
-    // IDs) — just shell out to the markdown file with whatever app Windows has associated.
-    // Walks up from the running exe to find the repo's help/ folder since it isn't published
-    // alongside the app yet.
-    private void HelpButton_Click(object sender, RoutedEventArgs e)
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "help", "index.md")))
-            dir = dir.Parent;
+    private void HelpButton_Click(object sender, RoutedEventArgs e) => _ = OpenHelpAsync("injectionlab.features");
 
-        if (dir != null)
-            Process.Start(new ProcessStartInfo(Path.Combine(dir.FullName, "help", "index.md")) { UseShellExecute = true });
-        else
-            MessageBox.Show("Help pages not found — they live in the help/ folder at the repo root.", "Help",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+    /// <summary>Shared Click handler for every "?" help icon in the app — each one just declares
+    /// its article via the Help.Id attached property (see Services/Help.cs) instead of needing
+    /// its own handler method.</summary>
+    private void HelpIcon_Click(object sender, RoutedEventArgs e)
+    {
+        var id = Help.GetId((DependencyObject)sender);
+        if (!string.IsNullOrWhiteSpace(id))
+            _ = OpenHelpAsync(id);
+    }
+
+    private async Task OpenHelpAsync(string id)
+    {
+        var result = await _helpClient.OpenAsync(id);
+        if (!result.Success)
+            MessageBox.Show(result.Message, "Help", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void AboutMenuItem_Click(object sender, RoutedEventArgs e)

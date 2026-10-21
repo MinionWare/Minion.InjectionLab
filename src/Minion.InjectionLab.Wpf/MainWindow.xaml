@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:Minion.InjectionLab.Wpf"
         xmlns:vm="clr-namespace:Minion.InjectionLab.Wpf.ViewModels"
         xmlns:behaviors="clr-namespace:Minion.InjectionLab.Wpf.Behaviors"
+        xmlns:services="clr-namespace:Minion.InjectionLab.Wpf.Services"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
@@ -286,8 +287,12 @@
             <!-- Sectors column -->
             <Border Grid.Column="0" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,1,0">
                 <DockPanel Margin="26,24,18,24">
-                    <TextBlock DockPanel.Dock="Top" Text="SECTORS" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
-                               Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,14"/>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
+                        <TextBlock Text="SECTORS" FontFamily="{StaticResource Font.Code}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Button Style="{StaticResource Button.HelpIcon}" Click="HelpIcon_Click" services:Help.Id="injectionlab.catalog"
+                                ToolTip="About the attack catalog"/>
+                    </StackPanel>
                     <ListBox ItemsSource="{Binding Sectors}" SelectedIndex="{Binding SelectedSectorIndex}"
                              Background="Transparent" BorderThickness="0" ItemContainerStyle="{StaticResource SectorCard}"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -428,9 +433,13 @@
                         <TextBlock Text="{Binding MissionCode}" FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center" Margin="0,0,14,0"/>
                         <TextBlock Text="{Binding Scenario.Title}" FontFamily="{StaticResource Font.Hud}" FontSize="24" FontWeight="Bold"
-                                   VerticalAlignment="Center"/>
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Style="{StaticResource Button.HelpIcon}" Click="HelpIcon_Click" services:Help.Id="injectionlab.catalog"
+                                ToolTip="About the attack catalog"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Style="{StaticResource Button.HelpIcon}" Click="HelpIcon_Click" services:Help.Id="injectionlab.challenge-mode"
+                                ToolTip="About Challenge mode" Margin="0,0,8,0"/>
                         <ToggleButton Content="◎ CHALLENGE" Style="{StaticResource Button.TitleToggle.Challenge}"
                                       IsChecked="{Binding IsChallengeMode}" Margin="0,0,8,0"/>
                         <ToggleButton Content="▤ INTEL" Style="{StaticResource Button.TitleToggle.Intel}"
@@ -928,6 +937,8 @@
             </Grid.RowDefinitions>
 
             <!-- Step bar -->
+            <Button Grid.Row="0" Style="{StaticResource Button.HelpIcon}" Click="HelpIcon_Click" services:Help.Id="injectionlab.tutorial"
+                    ToolTip="About the training wizard" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,30,0" Panel.ZIndex="1"/>
             <ItemsControl Grid.Row="0" ItemsSource="{Binding StepRows}" Margin="30,22,30,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><UniformGrid Columns="9" Rows="1"/></ItemsPanelTemplate>
@@ -1122,11 +1133,15 @@
                 <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <Grid Margin="0,0,0,14">
-                        <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
-                                   Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center">
-                            <Run Text="QUESTION "/><Run Text="{Binding QuestionNumber, Mode=OneWay, StringFormat='{}{0:00}'}"/>
-                            <Run Text=" / "/><Run Text="{Binding QuestionCount, Mode=OneWay, StringFormat='{}{0:00}'}"/>
-                        </TextBlock>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="12" FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.NeonRedLabel}" VerticalAlignment="Center">
+                                <Run Text="QUESTION "/><Run Text="{Binding QuestionNumber, Mode=OneWay, StringFormat='{}{0:00}'}"/>
+                                <Run Text=" / "/><Run Text="{Binding QuestionCount, Mode=OneWay, StringFormat='{}{0:00}'}"/>
+                            </TextBlock>
+                            <Button Style="{StaticResource Button.HelpIcon}" Click="HelpIcon_Click" services:Help.Id="injectionlab.quiz-mode"
+                                    ToolTip="About Quiz mode" Margin="10,0,0,0"/>
+                        </StackPanel>
                         <Border HorizontalAlignment="Right" CornerRadius="9" Padding="3" BorderThickness="1" BorderBrush="{DynamicResource Brush.Border}">
                             <StackPanel Orientation="Horizontal">
                                 <ToggleButton Content="BEGINNER" Style="{StaticResource Button.Segment}"

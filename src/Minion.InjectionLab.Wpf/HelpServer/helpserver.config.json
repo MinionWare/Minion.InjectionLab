@@ -1,0 +1,11 @@
+{
+  "siteTitle": "Minion.InjectionLab Help",
+  "listenUrls": [ "http://localhost:5186" ],
+  "openBrowser": false,
+  "stopWhenBrowserCloses": true,
+  "docsRoot": "docs",
+  "navigationFile": "mkdocs.yml",
+  "startPage": "index",
+
+  "runWidget": { "enabled": false }
+}
