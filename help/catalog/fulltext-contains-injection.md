@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.fulltext-contains-injection
+---
 # Full-Text Search Injection
 
 > Classic / In-Band · a predicate with its own mini query-language is

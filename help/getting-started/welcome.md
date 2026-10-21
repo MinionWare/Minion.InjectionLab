@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.welcome
+---
 # First Launch
 
 Minion.InjectionLab opens on a **welcome screen**, not straight into a

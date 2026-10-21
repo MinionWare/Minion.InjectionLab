@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.like-wildcard-abuse
+---
 # LIKE Wildcard Abuse
 
 > Classic / In-Band · the one scenario where "parameterize it" isn't the

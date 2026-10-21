@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.dynamic-sql-stored-procedure
+---
 # Dynamic SQL in a Stored Procedure
 
 > Where Parameters Don't Help · "it's in a stored procedure" is not the

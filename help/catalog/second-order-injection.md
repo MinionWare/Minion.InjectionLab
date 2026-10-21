@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.second-order-injection
+---
 # Second-Order Injection
 
 > Delivery & Obfuscation · the entry point and the actual bug are two

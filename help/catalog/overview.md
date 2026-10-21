@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog
+---
 # Attack Catalog
 
 Twenty-six techniques, seven categories. Every one gets real SQL/C#/PowerShell,

@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.tautology-login-bypass
+---
 # Tautology / Login Bypass
 
 > Classic / In-Band · the one everybody's heard of, and the one most people

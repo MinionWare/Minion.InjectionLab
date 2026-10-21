@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.hex-encoded-bypass
+---
 # Hex-Encoded Literal Bypass
 
 > Delivery & Obfuscation · the filter checked the request. It never saw

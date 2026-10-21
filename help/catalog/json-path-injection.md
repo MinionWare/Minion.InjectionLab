@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.json-path-injection
+---
 # JSON Path Injection
 
 > Classic / In-Band · the fix here has no excuse not to exist

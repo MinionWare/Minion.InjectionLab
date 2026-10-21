@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.out-of-band-exfiltration
+---
 # Out-of-Band Exfiltration (DNS)
 
 > Out-of-Band · the response is identical every single time, and that

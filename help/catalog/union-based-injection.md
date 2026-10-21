@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.union-based-injection
+---
 # UNION-Based Injection
 
 > Classic / In-Band · the moment "I can bypass a check" becomes "I can read

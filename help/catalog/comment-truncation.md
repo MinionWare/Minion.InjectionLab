@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.comment-truncation
+---
 # Comment Truncation
 
 > Classic / In-Band · you don't need a clever trick, just a comment marker

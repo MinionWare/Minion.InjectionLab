@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.challenge-mode
+---
 # Challenge Mode
 
 Flip "Try it yourself" on in any scenario that has it (every scenario in

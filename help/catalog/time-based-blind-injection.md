@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.time-based-blind-injection
+---
 # Time-Based Blind Injection
 
 > Blind / Inferential · when there's truly nothing to read, a stopwatch

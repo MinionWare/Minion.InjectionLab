@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.difficulty
+---
 # Difficulty Levels
 
 The **Beginner / Intermediate / Expert** selector in the left nav changes

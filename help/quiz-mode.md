@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.quiz-mode
+---
 # Quiz Mode
 
 `View > Quiz mode`, or the "🏆 Quiz mode" button in the left nav, opens a

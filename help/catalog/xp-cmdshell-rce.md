@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.xp-cmdshell-rce
+---
 # xp_cmdshell Remote Code Execution
 
 > Post-Injection Impact · the actual ceiling of what SQL injection can reach

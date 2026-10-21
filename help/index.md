@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.home
+---
 # Minion.InjectionLab
 
 **See exactly how SQL injection works — in real T-SQL, real C#, and real PowerShell — without ever touching a real database.**

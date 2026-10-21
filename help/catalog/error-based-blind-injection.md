@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.error-based-blind-injection
+---
 # Error-Based Blind Injection
 
 > Blind / Inferential · when there's no delay and no visible difference,

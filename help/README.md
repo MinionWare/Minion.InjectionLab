@@ -6,22 +6,27 @@ the menu/nav structure.
 
 ## Status
 
-Content only, for now. Nothing in the app renders these as HTML yet — the
-"❓ Help" nav button and `Help > Feature list` menu item currently just shell
-out to `index.md` with whatever app Windows has associated with `.md` files.
-The real plan is to render these through the existing Minionware help app
-(hosted in Blazor), the same one other Minionware products already use —
-that app just isn't wired to per-topic **help IDs** yet. When it is:
+Every page now has a `support_id:` YAML frontmatter field (e.g.
+`injectionlab.catalog.tautology-login-bypass`) — the ID HelpServer
+(`D:\GitHub\HelpServer`) and the app's "?" icons target directly. IDs use
+dotted, readable keys rather than numbers, one per topic area:
 
-- Every page here should get an `<!-- id: some-stable-id -->` comment near
-  the top (not added yet — do this when the Blazor side is ready to consume
-  it) that the app's "?" icons and menu items will target directly, instead
-  of opening `index.md` and making the reader navigate from there.
-- `mkdocs.yml`'s `nav:` tree is written so it can be read either by real
-  `mkdocs` (useful for proofreading the site locally: `pip install mkdocs`,
-  then `mkdocs serve` from a copy of this folder with a `docs_dir` pointing
-  here) or by a small script that turns it into whatever nav format the
-  Blazor help app wants.
+- `injectionlab.home`, `.welcome`, `.tutorial`, `.difficulty`, `.features`
+- `injectionlab.catalog` (the overview) and `injectionlab.catalog.<slug>`
+  per attack, matching the file's own slug under `catalog/`
+- `injectionlab.challenge-mode`, `.quiz-mode`, `.about`
+
+`mkdocs.yml`'s `nav:` tree doesn't reference these IDs (HelpServer's nav
+only ever maps a label to a file path) — it's read as-is, either by real
+`mkdocs` (useful for proofreading the site locally: `pip install mkdocs`,
+then `mkdocs serve` from a copy of this folder with a `docs_dir` pointing
+here) or directly by HelpServer, which supports the mkdocs nav dialect
+natively. `site.json` carries this site's title/description/accent/icon.
+
+The in-app wiring (the "❓ Help" nav button, `Help > Feature list`, and
+per-screen "?" icons actually calling HelpServer by ID instead of just
+shelling out to `index.md`) is tracked separately — this folder is the
+content and ID source of truth regardless of when that wiring lands.
 
 ## Conventions
 

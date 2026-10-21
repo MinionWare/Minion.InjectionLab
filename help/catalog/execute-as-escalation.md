@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.execute-as-escalation
+---
 # EXECUTE AS Escalation
 
 > Where Parameters Don't Help · the permissions that matter aren't the

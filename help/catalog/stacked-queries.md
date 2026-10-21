@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.stacked-queries
+---
 # Stacked Queries
 
 > Classic / In-Band · one character, and suddenly you're running a

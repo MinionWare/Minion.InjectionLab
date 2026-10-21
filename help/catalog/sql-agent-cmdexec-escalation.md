@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.sql-agent-cmdexec-escalation
+---
 # SQL Agent CmdExec Job Step Escalation
 
 > SQL Server Agent & Jobs · where this stops being about data and starts

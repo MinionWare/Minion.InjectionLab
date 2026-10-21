@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.linked-server-pivot
+---
 # Linked-Server Pivoting
 
 > Post-Injection Impact · the injection never has to touch the sensitive

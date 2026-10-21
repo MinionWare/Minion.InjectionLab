@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.comment-whitespace-obfuscation
+---
 # Comment/Whitespace Obfuscation
 
 > Delivery & Obfuscation · the filter matched a phrase. SQL Server matched

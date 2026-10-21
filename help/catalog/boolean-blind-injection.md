@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.boolean-blind-injection
+---
 # Boolean-Blind Injection
 
 > Blind / Inferential · the app shows you nothing, and that's still not enough

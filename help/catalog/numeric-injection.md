@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.numeric-injection
+---
 # Numeric Injection
 
 > Classic / In-Band · no quotes needed, no filter to get past

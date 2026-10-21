@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.truncation-attack
+---
 # Truncation Attack
 
 > Delivery & Obfuscation · defending against one error reopens a much

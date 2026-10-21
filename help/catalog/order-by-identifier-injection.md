@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.order-by-identifier-injection
+---
 # Identifier Injection (ORDER BY)
 
 > Where Parameters Don't Help · the one time "just parameterize it" isn't

@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.tutorial
+---
 # The Opening Tutorial
 
 On first launch, this nine-step wizard — **"How SQL Injection Actually

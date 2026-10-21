@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.xquery-injection
+---
 # XQuery Injection
 
 > Where Parameters Don't Help · a structural restriction in SQL Server

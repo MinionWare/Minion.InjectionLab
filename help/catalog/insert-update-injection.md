@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.insert-update-injection
+---
 # INSERT/UPDATE Injection
 
 > Classic / In-Band · every SELECT-based lesson here applies identically

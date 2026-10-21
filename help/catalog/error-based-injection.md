@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.error-based-injection
+---
 # Error-Based Injection
 
 > Classic / In-Band · a page that helpfully shows raw database errors hands

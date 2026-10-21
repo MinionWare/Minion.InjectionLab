@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.about
+---
 # About Minionware
 
 Minion.InjectionLab is a free teaching tool from **Minionware** — click the

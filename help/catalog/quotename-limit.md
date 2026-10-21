@@ -1,3 +1,6 @@
+---
+support_id: injectionlab.catalog.quotename-limit
+---
 # QUOTENAME's 128-Character Limit
 
 > Where Parameters Don't Help · the textbook-correct fix, with one edge
