@@ -39,7 +39,7 @@
        (not the shared team instance's sites/data). The app launches this exe itself on demand;
        see HelpClient. HelpServer\HelpServer.exe is gitignored (124MB) — publish it locally before
        building for distribution: from D:\GitHub\HelpServer\HelpServer, run
-       `dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true`
+       `dotnet publish -c Release -r win-x64 -p:SelfContained=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true`
        and copy the resulting HelpServer.exe here. -->
   <ItemGroup>
     <Content Include="HelpServer\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
