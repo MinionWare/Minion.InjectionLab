@@ -15,3 +15,5 @@ Thumbs.db
 
 ## Bundled HelpServer (built locally via dotnet publish, not committed - see HelpServer/ comment in the .csproj)
 src/Minion.InjectionLab.Wpf/HelpServer/HelpServer.exe
+## Per-Windows-account runtime data (favorites, notes, search) HelpServer generates beside its config
+src/Minion.InjectionLab.Wpf/HelpServer/data/

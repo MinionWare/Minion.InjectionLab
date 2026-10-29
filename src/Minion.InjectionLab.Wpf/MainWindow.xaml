@@ -772,8 +772,11 @@
                     </Grid>
                 </Grid>
 
-                <!-- Defense tiles -->
-                <UniformGrid Margin="0,10,0,0">
+                <!-- Defense tiles: click one to see ITS code (above) and ITS verdict (right) — not
+                     just a status readout. -->
+                <TextBlock Text="CLICK A FIX TO SEE ITS CODE AND VERDICT" FontFamily="{StaticResource Font.Code}" FontSize="10"
+                           FontWeight="Bold" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,18,0,6"/>
+                <UniformGrid Margin="0,0,0,0">
                     <UniformGrid.Style>
                         <Style TargetType="UniformGrid">
                             <Setter Property="Columns" Value="2"/>

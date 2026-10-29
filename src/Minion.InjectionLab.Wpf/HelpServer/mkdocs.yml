@@ -20,6 +20,7 @@ nav:
       - Difficulty Levels: getting-started/difficulty-levels.md
   - Features:
       - Feature List: features/overview.md
+      - Watching the Fix Change the Code: features/comparing-fixes.md
   - Attack Catalog:
       - Overview: catalog/overview.md
       - Classic / In-Band:

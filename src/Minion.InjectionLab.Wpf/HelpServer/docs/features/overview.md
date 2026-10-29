@@ -38,7 +38,9 @@ Every single entry in the catalog — no exceptions — gets:
   plain English — never a straw man, always a mitigation real teams
   genuinely ship.
 
-See the full **[Attack Catalog](../catalog/overview.md)**.
+See the full **[Attack Catalog](../catalog/overview.md)**, and
+**[Watching the Fix Change the Code](comparing-fixes.md)** for how the three fix
+tiles actually work.
 
 ## ⚖️ Honest about what a "fix" actually fixes
 

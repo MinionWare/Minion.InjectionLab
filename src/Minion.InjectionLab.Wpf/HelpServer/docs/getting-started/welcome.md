@@ -29,8 +29,10 @@ replays each time.
   - **"Where you're headed"** — a decision-path diagram that classifies
     your input as you type, before you even submit.
   - **"What actually runs"** — SQL, C#, and PowerShell tabs showing the
-    real code, plus tabs to compare the Vulnerable version against each
-    graded fix.
+    real code, plus tiles to compare the Vulnerable version against each
+    graded fix — click one and the code panel and verdict both switch to
+    that version. See **[Watching the Fix Change the
+    Code](../features/comparing-fixes.md)**.
   - **How it works** / **Why the fix works** / **Where the name comes
     from** — the mechanics, the defense, and the terminology with external
     references.

@@ -505,6 +505,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderMuted}"/>
         <Setter Property="BorderThickness" Value="1.5"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -512,6 +513,14 @@
                             BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="16,9">
                         <ContentPresenter/>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- The only cue these tiles are clickable tabs (not static status cards) —
+                             there's no other hover feedback on them otherwise. -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.PanelBgStrong}"/>
+                            <Setter TargetName="Bd" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
