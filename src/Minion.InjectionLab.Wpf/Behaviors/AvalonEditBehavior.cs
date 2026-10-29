@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using ICSharpCode.AvalonEdit;
+using Minion.InjectionLab.Core.Services;
 using Minion.InjectionLab.Wpf.ViewModels;
 
 namespace Minion.InjectionLab.Wpf.Behaviors;
@@ -38,6 +39,31 @@ public static class AvalonEditBehavior
         }
 
         renderer.Segments = e.NewValue as ObservableCollection<SqlSegment>;
+        editor.TextArea.TextView.InvalidateLayer(ICSharpCode.AvalonEdit.Rendering.KnownLayer.Selection);
+    }
+
+    public static readonly DependencyProperty SyntaxIssuesProperty =
+        DependencyProperty.RegisterAttached("SyntaxIssues", typeof(IReadOnlyList<SqlSyntaxIssue>), typeof(AvalonEditBehavior),
+            new PropertyMetadata(null, OnSyntaxIssuesChanged));
+
+    public static void SetSyntaxIssues(DependencyObject element, IReadOnlyList<SqlSyntaxIssue> value) => element.SetValue(SyntaxIssuesProperty, value);
+    public static IReadOnlyList<SqlSyntaxIssue> GetSyntaxIssues(DependencyObject element) => (IReadOnlyList<SqlSyntaxIssue>)element.GetValue(SyntaxIssuesProperty);
+
+    private static void OnSyntaxIssuesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not TextEditor editor) return;
+
+        var renderer = editor.TextArea.TextView.BackgroundRenderers
+            .OfType<SquigglyUnderlineRenderer>()
+            .FirstOrDefault();
+
+        if (renderer is null)
+        {
+            renderer = new SquigglyUnderlineRenderer();
+            editor.TextArea.TextView.BackgroundRenderers.Add(renderer);
+        }
+
+        renderer.Issues = e.NewValue as IReadOnlyList<SqlSyntaxIssue> ?? Array.Empty<SqlSyntaxIssue>();
         editor.TextArea.TextView.InvalidateLayer(ICSharpCode.AvalonEdit.Rendering.KnownLayer.Selection);
     }
 }

@@ -11,6 +11,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Navigation;
 using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit;
+using Minion.InjectionLab.Core.Services;
 using Minion.InjectionLab.Wpf.Behaviors;
 using Minion.InjectionLab.Wpf.Converters;
 using Minion.InjectionLab.Wpf.Services;
@@ -63,13 +64,14 @@ public partial class MainWindow : Window
         SqlEditor.SyntaxHighlighting = CodeHighlightingLoader.Sql;
         CSharpEditor.SyntaxHighlighting = CodeHighlightingLoader.CSharp;
         PowerShellEditor.SyntaxHighlighting = CodeHighlightingLoader.PowerShell;
+        TutorialSqlEditor.SyntaxHighlighting = CodeHighlightingLoader.Sql;
         SqlEditor.TextArea.TextView.LineTransformers.Add(new DeadCodeAfterCommentColorizer());
 
         // The highlighting colors ThemeService.Apply patches in place aren't DynamicResources, so
         // nothing tells these editors to repaint on their own — force it explicitly.
         ThemeService.Changed += _ =>
         {
-            foreach (var editor in new[] { SqlEditor, CSharpEditor, PowerShellEditor, QuizSqlEditor, QuizCSharpEditor, QuizPowerShellEditor })
+            foreach (var editor in new[] { SqlEditor, CSharpEditor, PowerShellEditor, QuizSqlEditor, QuizCSharpEditor, QuizPowerShellEditor, TutorialSqlEditor })
                 editor.TextArea.TextView.Redraw();
         };
 
@@ -80,6 +82,16 @@ public partial class MainWindow : Window
         SqlEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
         CSharpEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
         PowerShellEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+        TutorialSqlEditor.PreviewMouseWheel += ForwardMouseWheelToPageScroll;
+
+        // Same explicit-assignment pattern as the Quiz/Scenario editors above — AvalonEdit's
+        // TextEditor has no bindable Text dependency property.
+        viewModel.Tutorial.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(TutorialViewModel.DemoSql) or null)
+                SetEditor(TutorialSqlEditor, viewModel.Tutorial.DemoSql, null, isSql: true);
+        };
+        SetEditor(TutorialSqlEditor, viewModel.Tutorial.DemoSql, null, isSql: true);
 
         QuizSqlEditor.SyntaxHighlighting = CodeHighlightingLoader.Sql;
         QuizCSharpEditor.SyntaxHighlighting = CodeHighlightingLoader.CSharp;
@@ -93,12 +105,12 @@ public partial class MainWindow : Window
             if (e.PropertyName is nameof(QuizViewModel.GeneratedSql) or nameof(QuizViewModel.GeneratedCSharp)
                 or nameof(QuizViewModel.GeneratedPowerShell) or null)
             {
-                SetEditor(QuizSqlEditor, viewModel.Quiz.GeneratedSql, null);
+                SetEditor(QuizSqlEditor, viewModel.Quiz.GeneratedSql, null, isSql: true);
                 SetEditor(QuizCSharpEditor, viewModel.Quiz.GeneratedCSharp, null);
                 SetEditor(QuizPowerShellEditor, viewModel.Quiz.GeneratedPowerShell, null);
             }
         };
-        SetEditor(QuizSqlEditor, viewModel.Quiz.GeneratedSql, null);
+        SetEditor(QuizSqlEditor, viewModel.Quiz.GeneratedSql, null, isSql: true);
         SetEditor(QuizCSharpEditor, viewModel.Quiz.GeneratedCSharp, null);
         SetEditor(QuizPowerShellEditor, viewModel.Quiz.GeneratedPowerShell, null);
 
@@ -327,18 +339,24 @@ public partial class MainWindow : Window
     private void SyncCodePanes()
     {
         var attack = _trackedAttack;
-        SetEditor(SqlEditor, attack?.GeneratedSql, attack?.SqlSegments);
+        SetEditor(SqlEditor, attack?.GeneratedSql, attack?.SqlSegments, isSql: true);
         SetEditor(CSharpEditor, attack?.GeneratedCSharp, attack?.CSharpSegments);
         SetEditor(PowerShellEditor, attack?.GeneratedPowerShell, attack?.PowerShellSegments);
     }
 
-    private static void SetEditor(TextEditor editor, string? text, ObservableCollection<SqlSegment>? segments)
+    private static void SetEditor(TextEditor editor, string? text, ObservableCollection<SqlSegment>? segments, bool isSql = false)
     {
         var newText = text ?? string.Empty;
         if (editor.Document.Text != newText)
             editor.Document.Text = newText;
 
         AvalonEditBehavior.SetHighlightSegments(editor, segments ?? new ObservableCollection<SqlSegment>());
+
+        // Live ScriptDom validation, same engine SQL Server itself would use — squiggles appear
+        // the moment a payload doesn't parse and clear the moment it does, exactly like a code
+        // editor's own red squiggly, not a guessed-at "contains --" heuristic.
+        if (isSql)
+            AvalonEditBehavior.SetSyntaxIssues(editor, SqlSyntaxChecker.GetSyntaxIssues(newText));
     }
 
     // Same deploy-time-config pattern as Minion.Agent's ReadApiBaseUrl -- empty/missing

@@ -4,6 +4,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Minion.InjectionLab.Core.Models;
+using Minion.InjectionLab.Core.Services;
 using Minion.InjectionLab.Core.Tutorial;
 
 namespace Minion.InjectionLab.Wpf.ViewModels;
@@ -72,8 +73,13 @@ public partial class TutorialViewModel : ObservableObject
     private string demoInput = string.Empty;
 
     public string DemoSql => CurrentStep.Demo?.BuildSql(DemoInput) ?? string.Empty;
-    public string DemoExplain => CurrentStep.Demo?.Explain(DemoInput) ?? string.Empty;
-    public bool DemoIsDangerous => CurrentStep.Demo?.IsDangerous(DemoInput) ?? false;
+
+    // Computed once, here, and handed to every step's Simulate — not left for each step to
+    // remember to call itself. A step that ignores the flag still can't misreport broken SQL as
+    // an ordinary result, because the flag was already computed before Simulate ever ran.
+    public SimulationResult? DemoResult => CurrentStep.Demo is { } demo
+        ? demo.Simulate(DemoInput, SqlSyntaxChecker.HasSyntaxError(demo.BuildSql(DemoInput)))
+        : null;
 
     partial void OnStepIndexChanged(int value)
     {
@@ -95,8 +101,7 @@ public partial class TutorialViewModel : ObservableObject
     partial void OnDemoInputChanged(string value)
     {
         OnPropertyChanged(nameof(DemoSql));
-        OnPropertyChanged(nameof(DemoExplain));
-        OnPropertyChanged(nameof(DemoIsDangerous));
+        OnPropertyChanged(nameof(DemoResult));
     }
 
     [RelayCommand]

@@ -54,17 +54,28 @@ public static class TutorialContent
                 FieldLabel = "Your name",
                 DefaultValue = "Sean",
                 BuildSql = f => $"SELECT * FROM dbo.Users WHERE Name = '{f}';",
-                Explain = f => f.Contains('\'')
-                    ? "Look closely at the SQL above: your quote mark closed the string early. Everything after " +
-                      "it is no longer \"the value someone typed\" — as far as the database is concerned, it's " +
-                      "fresh SQL syntax, sitting right there in the middle of a WHERE clause. You didn't type a " +
-                      "command on purpose. But you proved the database can't tell your data from its own code " +
-                      "once the two are glued together. Every technique in this tutorial is just a more useful " +
-                      "way to exploit that exact same gap."
-                    : "Right now, your name slots in neatly between two quote marks as an ordinary value. The " +
-                      "database has no idea it came from a textbox on a web page — it only ever sees the " +
-                      "finished sentence above, and today that sentence happens to be well-formed.",
-                IsDangerous = f => f.Contains('\''),
+                Simulate = (f, hasSyntaxError) => hasSyntaxError
+                    ? new SimulationResult
+                      {
+                          Severity = Severity.Warning,
+                          Headline = "SQL Server throws a syntax error here",
+                          Detail = "Look closely at the SQL above: your quote mark closed the string early. " +
+                                    "Everything after it is no longer \"the value someone typed\" — as far as the " +
+                                    "database is concerned, it's fresh SQL syntax, sitting right there in the " +
+                                    "middle of a WHERE clause. You didn't type a command on purpose. But you " +
+                                    "proved the database can't tell your data from its own code once the two are " +
+                                    "glued together. Every technique in this tutorial is just a more useful way " +
+                                    "to exploit that exact same gap."
+                      }
+                    : new SimulationResult
+                      {
+                          Severity = Severity.Success,
+                          Headline = "An ordinary, well-formed lookup",
+                          Detail = "Right now, your name slots in neatly between two quote marks as an ordinary " +
+                                    "value. The database has no idea it came from a textbox on a web page — it " +
+                                    "only ever sees the finished sentence above, and today that sentence happens " +
+                                    "to be well-formed."
+                      },
                 Hint = "Try typing a single quote mark ( ' ) anywhere in the name."
             }
         },
@@ -84,15 +95,24 @@ public static class TutorialContent
                 FieldLabel = "Password (trying to log in as \"alice\")",
                 DefaultValue = "hunter2",
                 BuildSql = f => $"SELECT * FROM dbo.Users WHERE Username = 'alice' AND Password = '{f}';",
-                Explain = f => ContainsAny(f, "' or '1'='1", "' or 1=1")
-                    ? "You're in. Your text closed the Password string early with a quote, then OR'd in " +
-                      "'1'='1' — a condition that is always, unconditionally true. The WHERE clause no longer " +
-                      "cares what the real password is: (Username = 'alice' AND Password = '...') OR (always " +
-                      "true) is true regardless, so alice's row comes back. You just logged in as her without " +
-                      "ever knowing her password."
-                    : "Compared against alice's real password, this (almost certainly) doesn't match — exactly " +
-                      "how a login is supposed to behave.",
-                IsDangerous = f => ContainsAny(f, "' or '1'='1", "' or 1=1"),
+                Simulate = (f, hasSyntaxError) =>
+                {
+                    if (!hasSyntaxError && ContainsAny(f, "' or '1'='1", "' or 1=1"))
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "Signed in as alice — no password needed",
+                            Detail = "Your text closed the Password string early with a quote, then OR'd in " +
+                                      "'1'='1' — a condition that is always, unconditionally true. The WHERE " +
+                                      "clause no longer cares what the real password is: (Username = 'alice' AND " +
+                                      "Password = '...') OR (always true) is true regardless, so alice's row " +
+                                      "comes back. You just logged in as her without ever knowing her password.",
+                            AffectedAssets = new[] { "dbo.Users — authentication bypassed for 'alice'" }
+                        };
+                    if (hasSyntaxError)
+                        return new SimulationResult { Severity = Severity.Warning, Headline = "SQL Server throws a syntax error here", Detail = "A stray quote broke the statement, but nothing after it formed a usable condition — the login fails the same way a typo would." };
+                    return new SimulationResult { Severity = Severity.Info, Headline = "Access denied", Detail = "Compared against alice's real password, this (almost certainly) doesn't match — exactly how a login is supposed to behave." };
+                },
                 Hint = "Try: ' OR '1'='1"
             }
         },
@@ -112,14 +132,31 @@ public static class TutorialContent
                 FieldLabel = "Search for a product",
                 DefaultValue = "laptop",
                 BuildSql = f => $"SELECT ProductName, Price FROM dbo.Products WHERE ProductName LIKE '%{f}%';",
-                Explain = f => ContainsAny(f, "union")
-                    ? "The page only knows how to print two columns, labeled \"ProductName\" and \"Price\" — it " +
-                      "has no idea what's actually inside them. Your UNION SELECT pulls real usernames and real " +
-                      "password hashes out of a totally different table and hands them to the page wearing the " +
-                      "product name and price columns as a disguise. The page dutifully prints them, confident " +
-                      "it's showing a product."
-                    : "An ordinary search — the catalog gets searched normally, nothing unusual in the result.",
-                IsDangerous = f => ContainsAny(f, "union"),
+                Simulate = (f, hasSyntaxError) =>
+                {
+                    if (!hasSyntaxError && ContainsAny(f, "union"))
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "Usernames and password hashes appear in the product list",
+                            Detail = "The page only knows how to print two columns, labeled \"ProductName\" and " +
+                                      "\"Price\" — it has no idea what's actually inside them. Your UNION SELECT " +
+                                      "pulls real usernames and real password hashes out of a totally different " +
+                                      "table and hands them to the page wearing the product name and price " +
+                                      "columns as a disguise. The page dutifully prints them, confident it's " +
+                                      "showing a product.",
+                            RowCountLabel = "2 rows leaked from dbo.Users",
+                            AffectedAssets = new[] { "dbo.Users — UserName/PasswordHash exposed via UNION" },
+                            LeakedRows = new IReadOnlyDictionary<string, string>[]
+                            {
+                                new Dictionary<string, string> { ["ProductName"] = "admin", ["Price"] = "8846F...(hash)" },
+                                new Dictionary<string, string> { ["ProductName"] = "svc_billing", ["Price"] = "2C91A...(hash)" }
+                            }
+                        };
+                    if (hasSyntaxError)
+                        return new SimulationResult { Severity = Severity.Warning, Headline = "SQL Server throws a syntax error here", Detail = "UNION needs a matching column count and a closing comment on the template's own trailing quote — this attempt doesn't parse yet." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "Ordinary search results", Detail = "The catalog gets searched normally — nothing unusual in the result." };
+                },
                 Hint = "Try: nonexistent' UNION SELECT Username, Password FROM dbo.Users--"
             }
         },
@@ -140,20 +177,34 @@ public static class TutorialContent
                 FieldLabel = "Order ID",
                 DefaultValue = "1007",
                 BuildSql = f => $"SELECT COUNT(*) FROM dbo.Orders WHERE OrderId = {f};",
-                Explain = f => ContainsAny(f, "and 1=2", "or 1=2")
-                    ? "\"Not found\" — even though order 1007 is completely real. Forcing the condition false " +
-                      "proves your input is being evaluated as live SQL, not just compared as a plain number. " +
-                      "That one bit of proof is all an attacker needs: ask \"is the first letter of the admin " +
-                      "password 'A'?\" as its own true/false condition, read Found/Not found, then try 'B', then " +
-                      "'C' — and reconstruct an entire password one character at a time without ever seeing a " +
-                      "single row of real data."
-                    : ContainsAny(f, "and 1=1", "or 1=1")
-                        ? "\"Found\" — a condition that's always true doesn't change what you can see, but it " +
-                          "already proves the input reached the SQL engine as code. That's step one of the same " +
-                          "trick; forcing it false (try replacing 1=1 with 1=2) is what makes it undeniable."
-                        : "\"Found\" — an ordinary, boring lookup. Order 1007 exists, nothing unusual to report " +
-                          "yet.",
-                IsDangerous = f => ContainsAny(f, "and 1=2", "or 1=2"),
+                Simulate = (f, hasSyntaxError) =>
+                {
+                    if (!hasSyntaxError && ContainsAny(f, "and 1=2", "or 1=2"))
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "\"Not found\" — even though order 1007 is completely real",
+                            Detail = "Forcing the condition false proves your input is being evaluated as live " +
+                                      "SQL, not just compared as a plain number. That one bit of proof is all an " +
+                                      "attacker needs: ask \"is the first letter of the admin password 'A'?\" as " +
+                                      "its own true/false condition, read Found/Not found, then try 'B', then " +
+                                      "'C' — and reconstruct an entire password one character at a time without " +
+                                      "ever seeing a single row of real data."
+                        };
+                    if (!hasSyntaxError && ContainsAny(f, "and 1=1", "or 1=1"))
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Warning,
+                            Headline = "\"Found\" — the input is reaching the SQL engine as code",
+                            Detail = "A condition that's always true doesn't change what you can see, but it " +
+                                      "already proves the input reached the SQL engine as code. That's step one " +
+                                      "of the same trick; forcing it false (try replacing 1=1 with 1=2) is what " +
+                                      "makes it undeniable."
+                        };
+                    if (hasSyntaxError)
+                        return new SimulationResult { Severity = Severity.Warning, Headline = "SQL Server throws a syntax error here", Detail = "OrderId is a number, not text — whatever you added here doesn't parse as part of that condition." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "\"Found\"", Detail = "An ordinary, boring lookup. Order 1007 exists, nothing unusual to report yet." };
+                },
                 Hint = "Try: 1007 AND 1=2"
             }
         },
@@ -174,14 +225,25 @@ public static class TutorialContent
                 FieldLabel = "Order ID",
                 DefaultValue = "1007",
                 BuildSql = f => $"SELECT * FROM dbo.Orders WHERE OrderId = {f};",
-                Explain = f => f.Contains(';') && ContainsAny(f, "drop", "delete", "insert", "update", "exec")
-                    ? "That semicolon closed the lookup completely. Everything after it is a second, fully " +
-                      "independent SQL statement — not a modified condition, a whole new command — and it runs " +
-                      "with exactly the same database permissions the app itself has. No quote-escaping trick " +
-                      "stops this one, because the first statement was never \"broken out of\"; it was simply " +
-                      "finished early, on purpose."
-                    : "An ordinary lookup — order 1007, nothing else attached to it.",
-                IsDangerous = f => f.Contains(';') && ContainsAny(f, "drop", "delete", "insert", "update", "exec"),
+                Simulate = (f, hasSyntaxError) =>
+                {
+                    if (f.Contains(';') && ContainsAny(f, "drop", "delete", "insert", "update", "exec"))
+                        return new SimulationResult
+                        {
+                            Severity = Severity.Critical,
+                            Headline = "A second, independent statement just ran",
+                            Detail = "That semicolon closed the lookup completely. Everything after it is a " +
+                                      "second, fully independent SQL statement — not a modified condition, a " +
+                                      "whole new command — and it runs with exactly the same database " +
+                                      "permissions the app itself has. No quote-escaping trick stops this one, " +
+                                      "because the first statement was never \"broken out of\"; it was simply " +
+                                      "finished early, on purpose.",
+                            AffectedAssets = new[] { "dbo.Orders — stacked statement executed with app's own permissions" }
+                        };
+                    if (hasSyntaxError)
+                        return new SimulationResult { Severity = Severity.Warning, Headline = "SQL Server throws a syntax error here", Detail = "OrderId is a number, not text — whatever's here doesn't parse as a valid condition." };
+                    return new SimulationResult { Severity = Severity.Success, Headline = "Ordinary lookup", Detail = "Order 1007, nothing else attached to it." };
+                },
                 Hint = "Try: 1007; DROP TABLE Orders--"
             }
         },

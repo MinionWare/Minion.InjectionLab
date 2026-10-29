@@ -7,6 +7,7 @@
         xmlns:vm="clr-namespace:Minion.InjectionLab.Wpf.ViewModels"
         xmlns:behaviors="clr-namespace:Minion.InjectionLab.Wpf.Behaviors"
         xmlns:services="clr-namespace:Minion.InjectionLab.Wpf.Services"
+        xmlns:controls="clr-namespace:Minion.InjectionLab.Wpf.Controls"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Style="{StaticResource BaseWindowStyle}"
@@ -703,63 +704,10 @@
                     <!-- Right: Verdict or Intel -->
                     <Grid Grid.Column="2">
                         <!-- Verdict column -->
-                        <StackPanel Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                    behaviors:ImpactBehavior.Trigger="{Binding ResultVersion}"
-                                    behaviors:ImpactBehavior.Severity="{Binding Result.Severity}">
-                            <TextBlock Text="VERDICT" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource Brush.TextMuted}" Margin="0,0,0,8"/>
-                            <TextBlock Text="{Binding Result.Severity, Converter={StaticResource SeverityToTagConverter}}"
-                                       FontFamily="{StaticResource Font.Hud}" FontSize="42" FontWeight="Bold"
-                                       Foreground="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}">
-                                <TextBlock.Effect>
-                                    <DropShadowEffect ShadowDepth="0" BlurRadius="30" Opacity="0.5"
-                                                       Color="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}"/>
-                                </TextBlock.Effect>
-                            </TextBlock>
-                            <TextBlock Text="{Binding Result.Headline}" FontFamily="{StaticResource Font.Hud}" FontSize="16" FontWeight="SemiBold"
-                                       TextWrapping="Wrap" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding Result.Detail}" FontFamily="{StaticResource Font.Body}" FontSize="12.5"
-                                       Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0" MaxHeight="110"/>
-
-                            <ItemsControl ItemsSource="{Binding Result.AffectedAssets}" Margin="0,10,0,0"
-                                          Visibility="{Binding Result.AffectedAssets, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding}" FontFamily="{StaticResource Font.Code}" FontSize="11"
-                                                   Foreground="{DynamicResource Brush.Critical}" Margin="0,1,0,1"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <StackPanel Margin="0,16,0,0" VerticalAlignment="Bottom"
-                                        Visibility="{Binding Result.LeakedRows, Converter={StaticResource NotEmptyToVisibilityConverter}}">
-                                <TextBlock Text="{Binding Result.RowCountLabel}" FontFamily="{StaticResource Font.Code}" FontSize="10.5" FontWeight="SemiBold"
-                                           Foreground="{Binding Result.Severity, Converter={StaticResource SeverityToBrushConverter}}" Margin="0,0,0,6"/>
-                                <ItemsControl ItemsSource="{Binding Result.LeakedRows}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{DynamicResource Brush.CodeBg}" BorderBrush="{DynamicResource Brush.Border}"
-                                                    BorderThickness="1" CornerRadius="5" Padding="9,5" Margin="0,0,0,4">
-                                                <ItemsControl ItemsSource="{Binding}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock FontFamily="{StaticResource Font.Code}" FontSize="12" Margin="0,0,16,0">
-                                                                <Run Text="{Binding Key, Mode=OneTime}" Foreground="{DynamicResource Brush.TextMuted}"/>
-                                                                <Run Text="="/>
-                                                                <Run Text="{Binding Value, Mode=OneTime}" Foreground="{DynamicResource Brush.Critical}"/>
-                                                            </TextBlock>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </StackPanel>
+                        <controls:VerdictCard Result="{Binding Result}"
+                                               Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                                               behaviors:ImpactBehavior.Trigger="{Binding ResultVersion}"
+                                               behaviors:ImpactBehavior.Severity="{Binding Result.Severity}"/>
 
                         <!-- Intel panel -->
                         <Border Visibility="{Binding IsIntelOpen, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -1053,8 +1001,10 @@
                                            Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"
                                            Visibility="{Binding DemoHint, Converter={StaticResource NotEmptyToVisibilityConverter}}"/>
                                 <Border Background="{DynamicResource Brush.CodeFlatBg}" CornerRadius="10" Padding="14" Margin="0,14,0,0">
-                                    <TextBlock Text="{Binding DemoSql}" FontFamily="{StaticResource Font.Code}" FontSize="14"
-                                               Foreground="{DynamicResource Brush.CodeText}" TextWrapping="Wrap"/>
+                                    <avalonEdit:TextEditor x:Name="TutorialSqlEditor" IsReadOnly="True" ShowLineNumbers="True" WordWrap="True"
+                                                           LineNumbersForeground="{DynamicResource Brush.TextDim}"
+                                                           FontFamily="{StaticResource Font.Code}" FontSize="14"
+                                                           Background="Transparent" Foreground="{DynamicResource Brush.CodeText}"/>
                                 </Border>
                             </StackPanel>
                         </Border>
@@ -1065,31 +1015,18 @@
                                     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
                                     <Setter Property="Background" Value="{DynamicResource Brush.TintBlueSubtle}"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DemoIsDangerous}" Value="True">
+                                        <DataTrigger Binding="{Binding DemoResult.Severity}" Value="Warning">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Warning}"/>
+                                            <Setter Property="Background" Value="{DynamicResource Brush.TintAmberSubtle}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding DemoResult.Severity}" Value="Critical">
                                             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Critical}"/>
                                             <Setter Property="Background" Value="{DynamicResource Brush.TintRedSubtle}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <StackPanel>
-                                <TextBlock FontFamily="{StaticResource Font.Hud}" FontSize="22" FontWeight="Bold" Margin="0,0,0,8">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="ALL NORMAL"/>
-                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding DemoIsDangerous}" Value="True">
-                                                    <Setter Property="Text" Value="THAT BROKE IT"/>
-                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Critical}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBlock Text="{Binding DemoExplain}" FontFamily="{StaticResource Font.Body}" FontSize="13.5"
-                                           Foreground="{DynamicResource Brush.TextBody}" TextWrapping="Wrap"/>
-                            </StackPanel>
+                            <controls:VerdictCard Result="{Binding DemoResult}" HeaderText="WHAT JUST HAPPENED"/>
                         </Border>
                     </StackPanel>
 
