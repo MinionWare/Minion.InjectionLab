@@ -137,7 +137,35 @@ public partial class MainWindow : Window
                 PlayWelcomeIntro();
 
             _ = CheckForUpdatesAsync();
+            _ = WarmUpHelpServerAsync();
         };
+    }
+
+    // Enhancement-only, same as CheckForUpdatesAsync: wrapped whole in try/catch, never surfaces
+    // an error, never blocks startup. Without this, HelpClient only starts HelpServer.exe lazily,
+    // on the first Help click that finds nothing listening — so that first click pays for the
+    // whole process + Kestrel startup. Doing it here instead, right after the window loads, means
+    // by the time anyone actually clicks Help the server's very likely already warm.
+    private async Task WarmUpHelpServerAsync()
+    {
+        try
+        {
+            if (await _helpClient.IsAvailableAsync()) return;
+
+            var exePath = Path.Combine(AppContext.BaseDirectory, "HelpServer", "HelpServer.exe");
+            if (!File.Exists(exePath)) return;
+
+            Process.Start(new ProcessStartInfo(exePath)
+            {
+                UseShellExecute = false,
+                WorkingDirectory = Path.GetDirectoryName(exePath)!,
+                CreateNoWindow = true
+            });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            // Help just won't be pre-warmed this run; HelpClient's own lazy-start on first use still covers it.
+        }
     }
 
     private void OpenMissedMissions_Click(object sender, RoutedEventArgs e) => ((MainViewModel)DataContext).BrowseCatalogCommand.Execute(null);
