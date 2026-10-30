@@ -55,7 +55,7 @@ nav:
           - Linked-Server Pivoting: catalog/linked-server-pivot.md
       - SQL Server Agent & Jobs:
           - CmdExec Job Step Escalation: catalog/sql-agent-cmdexec-escalation.md
-  - Challenge Mode: challenge-mode.md
+  - Challenge: challenge-mode.md
   - Quiz Mode: quiz-mode.md
   - About:
       - Minionware: about/minionware.md
