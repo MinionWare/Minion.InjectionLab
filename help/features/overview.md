@@ -92,8 +92,6 @@ the real answer, not a guess.
 ## 🎨 Polished, theme-aware, and genuinely yours to explore
 
 - Dark and light themes, toggleable any time.
-- Full Minionware branding — the mascot icon, the wordmark, a direct link
-  to [minionware.net](../about/minionware.md).
 - Nothing is ever executed against a real database, ever. Every "query"
   result, every "leaked row," every narrated outcome is a string this app
   built and a rule-based explanation of what a real engine would do with
